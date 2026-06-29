@@ -147,7 +147,7 @@ export default function Home() {
           <motion.div {...fadeUp(0)}>
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-6"
               style={{ background: 'rgba(82,160,67,0.2)', border: '1px solid rgba(82,160,67,0.4)', color: '#7dc070' }}>
-              🌿 Salem Campus, Tamil Nadu
+              🌿 Sona Campus Salem, Tamil Nadu
             </span>
           </motion.div>
 
