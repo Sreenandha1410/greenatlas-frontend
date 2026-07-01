@@ -7,8 +7,8 @@ export default function TreeCard({ tree, dark }) {
                  transition-all duration-200 group flex flex-col">
       <div className="h-40 bg-forest-50 dark:bg-forest-950 flex items-center
                       justify-center overflow-hidden text-5xl">
-        {tree.image_url ? (
-          <img src={tree.image_url} alt={tree.common_name}
+        {(tree.species_image_url || tree.image_link) ? (
+          <img src={tree.species_image_url || tree.image_link} alt={tree.common_name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : '🌿'}
       </div>
