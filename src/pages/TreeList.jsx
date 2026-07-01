@@ -159,8 +159,8 @@ function TreeCard({ tree }) {
         className="card overflow-hidden group cursor-pointer h-full flex flex-col">
         <div className="h-44 overflow-hidden relative"
           style={{ background: 'linear-gradient(135deg, #d9edcf, #f0f7ee)' }}>
-          {tree.image_url
-            ? <img src={tree.image_url} alt={tree.common_name}
+          {tree.image_link || tree.image_url
+            ? <img src={tree.image_link || tree.image_url} alt={tree.common_name}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             : <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -196,8 +196,8 @@ function SpeciesGroupCard({ species, trees, dark }) {
       <div className="relative cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <div className="h-44 overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #d9edcf, #f0f7ee)' }}>
-          {representative.image_url
-            ? <img src={representative.image_url} alt={species}
+          {representative.image_link || representative.image_url
+            ? <img src={representative.image_link || representative.image_url} alt={species}
                 className="w-full h-full object-cover" />
             : <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
