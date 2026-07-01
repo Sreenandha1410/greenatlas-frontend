@@ -92,7 +92,7 @@ export default function TreeDetail() {
   const primaryImage = images.find(i => i.is_primary)?.image_url
     || images[0]?.image_url
     || (!imgFailed && tree.image_link ? tree.image_link : null)
-    || tree.species_image_url 
+    || tree.image_url
     || null;
 
   const ecologyItems = [
@@ -518,7 +518,7 @@ export default function TreeDetail() {
   const heroImage = images.find(i => i.is_primary)?.image_url
     || images[0]?.image_url
     || (!imgFailed && tree.image_link ? tree.image_link : null)
-    || tree.image_url
+    || tree.species_image_url
     || null
 
   const ecologyItems = [
