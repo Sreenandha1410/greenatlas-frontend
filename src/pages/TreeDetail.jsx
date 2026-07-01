@@ -92,7 +92,7 @@ export default function TreeDetail() {
   const primaryImage = images.find(i => i.is_primary)?.image_url
     || images[0]?.image_url
     || (!imgFailed && tree.image_link ? tree.image_link : null)
-    || tree.image_url  // species image fallback
+    || tree.species_image_url 
     || null;
 
   const ecologyItems = [
