@@ -37,14 +37,14 @@ export default function Navbar() {
       <div className="max-w-screen-2xl mx-auto px-6 flex items-center justify-between h-16">
 
         <Link to="/" className="flex items-center gap-2.5">
-          <img
-            src="/images/logo.png"
-            alt="Green Atlas Logo"
-            className="h-10 w-10 object-contain"
-          />
-          <span className="text-white text-lg font-bold tracking-wide"
-            style={{ fontFamily: 'Fraunces, serif' }}>
-            Green Atlas
+           <img
+             src="/logo.png"
+             alt="Green Atlas Logo"
+             className="h-10 w-10 object-contain"
+           />
+
+          <span className="font-display text-white text-lg font-semibold tracking-wide">
+             Green Atlas
           </span>
         </Link>
 
@@ -68,7 +68,7 @@ export default function Navbar() {
           <button onClick={() => setShowThemeModal(true)}
             className="p-2 rounded-lg text-green-100 hover:bg-white/10 transition-colors text-sm font-medium"
             aria-label="Choose theme">
-            🎨 Theme
+             Theme
           </button>
 
           {isLoggedIn && role === 'admin' && (
