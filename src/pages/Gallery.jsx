@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getTrees } from '../api';
+import axios from 'axios';
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const TABS = [
   { key: 'photos', label: '📷 Photos'    },
@@ -9,17 +11,18 @@ const TABS = [
 ];
 
 export default function Gallery() {
-  const [trees, setTrees]     = useState([]);
+  const [images, setImages]   = useState([]);
   const [failed, setFailed]   = useState({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab]         = useState('photos');
 
   useEffect(() => {
-    getTrees().then(r => setTrees(r.data.filter(t => t.image_link)))
-              .finally(() => setLoading(false));
+    axios.get(`${BASE}/trees/gallery`)
+      .then(r => setImages(r.data))
+      .finally(() => setLoading(false));
   }, []);
 
-  const visible = trees.filter(t => !failed[t.tree_id]);
+  const visible = images.filter(img => !failed[img.image_url]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -47,31 +50,50 @@ export default function Gallery() {
       {tab === 'photos' && (
         loading
           ? <p className="text-gray-400">Loading…</p>
-          : <>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                {visible.length} photos
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {visible.map(t => (
-                  <Link key={t.tree_id} to={`/trees/${t.tree_id}`}
-                    className="card overflow-hidden hover:shadow-md hover:-translate-y-1
-                               transition-all duration-200 group">
-                    <div className="h-48 overflow-hidden">
-                      <img src={t.image_link} alt={t.common_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={() => setFailed(f => ({ ...f, [t.tree_id]: true }))} />
-                    </div>
-                    <div className="p-3">
-                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
-                        {t.common_name}
-                      </p>
-                      <p className="text-xs italic text-gray-400 truncate">{t.botanical_name}</p>
-                      <p className="text-xs text-gray-400 mt-1">📍 {t.area}</p>
-                    </div>
-                  </Link>
-                ))}
+          : visible.length === 0
+            ? (
+              <div className="card p-16 text-center">
+                <div className="text-5xl mb-4">📷</div>
+                <h3 className="font-semibold text-forest-600 dark:text-forest-300 text-lg mb-2">
+                  No Photos Yet
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Upload tree images from the Admin panel to see them here.
+                </p>
               </div>
-            </>
+            )
+            : (
+              <>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  {visible.length} photos
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {visible.map((img, i) => (
+                    <Link key={i} to={`/trees/${img.tree_id}`}
+                      className="card overflow-hidden hover:shadow-md hover:-translate-y-1
+                                 transition-all duration-200 group">
+                      <div className="h-48 overflow-hidden">
+                        <img src={img.image_url} alt={img.caption || img.common_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => setFailed(f => ({ ...f, [img.image_url]: true }))} />
+                      </div>
+                      <div className="p-3">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                          {img.common_name}
+                        </p>
+                        <p className="text-xs italic text-gray-400 truncate">{img.botanical_name}</p>
+                        {img.caption && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                            {img.caption}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">📍 {img.area}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )
       )}
 
       {/* Placeholder tabs */}
