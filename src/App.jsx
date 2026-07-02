@@ -15,6 +15,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import PageTransition from './components/PageTransition'
 import { useEffect } from 'react'
+import About from './pages/About';
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
+          <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         </Routes>
       </AnimatePresence>
     </>
