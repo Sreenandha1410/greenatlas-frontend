@@ -105,6 +105,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getStats } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
+import { AboutContent } from './About'
 
 export default function Home() {
   const [stats, setStats] = useState({ trees: 0, species: 0, areas: 0 })
@@ -283,6 +284,10 @@ export default function Home() {
               Each tree carries a QR code. Scan it to instantly access its full botanical profile,
               see where others of its kind grow on campus, and explore why it matters.
             </p>
+            {/* ── About Section ── */}
+            <section style={{ background: dark ? '#0d1117' : '#f9fafb' }}>
+              <AboutContent dark={dark} />
+            </section>
           </motion.div>
         </div>
       </section>
