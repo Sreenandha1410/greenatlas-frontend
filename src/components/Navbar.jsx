@@ -9,6 +9,7 @@ const links = [
   { to: '/areas',   label: 'Areas'   },
   { to: '/map',     label: 'Map'     },
   { to: '/gallery', label: 'Gallery' },
+  { to: '/about', label: 'About' },
 ]
 
 export default function Navbar() {
