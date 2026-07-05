@@ -12,6 +12,7 @@ const people = [
   {
     name: 'Dr. S R R Senthilkumar',
     role: 'Principal & Professor of Civil Engineering',
+    tag: 'Leadership',
     photo: '/photos/principal.png',
     initials: 'SS',
     accent: '#1a4d2e',
@@ -20,6 +21,7 @@ const people = [
   {
     name: 'Dr. Sanjivi Arul',
     role: 'Advisor Innovation · Project Advisor',
+    tag: 'Advisor',
     photo: '/photos/advisor.png',
     initials: 'SA',
     accent: '#2d5a27',
@@ -28,6 +30,7 @@ const people = [
   {
     name: 'Mr. Anandhavel J',
     role: 'Chief Gardener · Horticulturalist',
+    tag: 'Horticulture',
     photo: '/photos/anandhavel.png',
     initials: 'AJ',
     accent: '#3a6b30',
@@ -36,6 +39,7 @@ const people = [
   {
     name: 'Tumili M',
     role: 'III Year · B.E Computer Science and Design',
+    tag: 'Dev Team',
     photo: '/photos/tumili.png',
     initials: 'TM',
     accent: '#3d7a35',
@@ -44,6 +48,7 @@ const people = [
   {
     name: 'Deepak P',
     role: 'III Year · B.E Computer Science and Design',
+    tag: 'Dev Team',
     photo: '/photos/deepak.png',
     initials: 'DP',
     accent: '#4d9a43',
@@ -52,6 +57,7 @@ const people = [
   {
     name: 'Sreenandha S',
     role: 'III Year · B.E Computer Science and Design',
+    tag: 'Dev Team',
     photo: '/photos/sreenandha.png',
     initials: 'SS',
     accent: '#5dba51',
@@ -60,6 +66,7 @@ const people = [
   {
     name: 'Kiruthi Varshni S',
     role: 'III Year · B.E Computer Science and Design',
+    tag: 'Dev Team',
     photo: '/photos/kiruthi.png',
     initials: 'KV',
     accent: '#6dca61',
