@@ -12,7 +12,6 @@ const people = [
   {
     name: 'Dr. S R R Senthilkumar',
     role: 'Principal & Professor of Civil Engineering',
-    tag: 'Leadership',
     photo: '/photos/principal.png',
     initials: 'SS',
     accent: '#1a4d2e',
@@ -21,7 +20,6 @@ const people = [
   {
     name: 'Dr. Sanjivi Arul',
     role: 'Advisor Innovation · Project Advisor',
-    tag: 'Advisor',
     photo: '/photos/advisor.png',
     initials: 'SA',
     accent: '#2d5a27',
@@ -30,7 +28,6 @@ const people = [
   {
     name: 'Mr. Anandhavel J',
     role: 'Chief Gardener · Horticulturalist',
-    tag: 'Horticulture',
     photo: '/photos/anandhavel.png',
     initials: 'AJ',
     accent: '#3a6b30',
@@ -39,7 +36,6 @@ const people = [
   {
     name: 'Tumili M',
     role: 'III Year · B.E Computer Science and Design',
-    tag: 'Dev Team',
     photo: '/photos/tumili.png',
     initials: 'TM',
     accent: '#3d7a35',
@@ -48,7 +44,6 @@ const people = [
   {
     name: 'Deepak P',
     role: 'III Year · B.E Computer Science and Design',
-    tag: 'Dev Team',
     photo: '/photos/deepak.png',
     initials: 'DP',
     accent: '#4d9a43',
@@ -57,7 +52,6 @@ const people = [
   {
     name: 'Sreenandha S',
     role: 'III Year · B.E Computer Science and Design',
-    tag: 'Dev Team',
     photo: '/photos/sreenandha.png',
     initials: 'SS',
     accent: '#5dba51',
@@ -66,7 +60,6 @@ const people = [
   {
     name: 'Kiruthi Varshni S',
     role: 'III Year · B.E Computer Science and Design',
-    tag: 'Dev Team',
     photo: '/photos/kiruthi.png',
     initials: 'KV',
     accent: '#6dca61',
@@ -76,7 +69,7 @@ const people = [
 
 function PhotoCard({ person, dark }) {
   return (
-    <div className="relative flex-shrink-0" style={{ width: 180, height: 210 }}>
+    <div className="relative flex-shrink-0" style={{ width: 165, height: 200 }}>
       <div className="absolute" style={{
         inset: 0, borderRadius: 20,
         background: `linear-gradient(135deg, ${person.accent}44, ${person.accent}18)`,
@@ -121,7 +114,7 @@ function PersonCard({ person, index, dark }) {
 
   return (
     <motion.div {...fadeUp(0.07 * index)}
-      className="flex flex-col md:flex-row items-center gap-10 md:gap-14 py-10"
+      className="flex flex-col md:flex-row items-center gap-8 md:gap-10 py-6"
       style={{ borderBottom: `1px solid ${dark ? '#21262d' : '#e5f0e5'}` }}>
 
       {isEven && <PhotoCard person={person} dark={dark} />}
@@ -165,12 +158,12 @@ function AboutWriteup({ dark }) {
   )
   return (
     <motion.div {...fadeUp(0.1)}
-      className="rounded-2xl p-8 mb-16"
+      className="rounded-2xl p-6 mb-8"
       style={{ background: dark ? '#161b22' : '#f0f7ee', border: `1px solid ${dark ? '#30363d' : '#d1fae5'}` }}>
       <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: '#52a043' }}>
         About Green Atlas
       </p>
-      <p className="text-lg italic mb-6"
+      <p className="text-lg italic mb-4"
         style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: dark ? '#7dc070' : '#2d5a27' }}>
         "Nurturing Nature. Inspiring Sustainability."
       </p>
@@ -192,14 +185,14 @@ function AboutWriteup({ dark }) {
 
 export function AboutContent({ dark }) {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-20">
+    <div className="max-w-4xl mx-auto px-4 py-6">
 
-      <motion.div {...fadeUp(0)} className="text-center mb-12">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-5"
+      <motion.div {...fadeUp(0)} className="text-center mb-6">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-3"
           style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
           About Us
         </span>
-        <h1 className="text-4xl md:text-5xl font-bold mb-4"
+        <h1 className="text-4xl md:text-5xl font-bold mb-3"
           style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827', letterSpacing: '-0.02em' }}>
           Green Atlas
         </h1>
@@ -211,8 +204,8 @@ export function AboutContent({ dark }) {
 
       <AboutWriteup dark={dark} />
 
-      <motion.div {...fadeUp(0)} className="text-center mb-10">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-4"
+      <motion.div {...fadeUp(0)} className="text-center mb-5">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-2"
           style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
           The People Behind It
         </span>
@@ -229,15 +222,12 @@ export function AboutContent({ dark }) {
       </div>
 
       <motion.div {...fadeUp(0.3)}
-        className="mt-16 rounded-2xl p-8 text-center"
+        className="mt-6 rounded-2xl p-5 text-center"
         style={{
           background: dark ? 'linear-gradient(135deg, #161b22, #1c2128)' : 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
           border: `1px solid ${dark ? '#30363d' : '#bbf7d0'}`,
         }}>
-        <div className="text-3xl mb-3">🌿</div>
-        <p className="text-xs font-bold tracking-[0.2em] uppercase mb-1" style={{ color: '#52a043' }}>
-          Department of Computer Science and Design
-        </p>
+        <div className="text-2xl mb-2">🌿</div>
         <p className="font-bold text-lg"
           style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
           Sona College of Technology, Salem
