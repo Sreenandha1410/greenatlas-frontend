@@ -11,8 +11,8 @@ const fadeUp = (delay = 0) => ({
 const people = [
   {
     name: 'Dr. S R R Senthilkumar',
-    role: 'Principal & Professor of Civil Engineering',
-    tag: 'Leadership',
+    role: 'Principal of Sona College of Technology & Professor of Civil Engineering',
+    tag: 'Principal',
     photo: '/photos/principal.png',
     initials: 'SS',
     accent: '#1a4d2e',
@@ -30,7 +30,7 @@ const people = [
   {
     name: 'Mr. Anandhavel J',
     role: 'Chief Gardener · Horticulturalist',
-    tag: 'Horticulture',
+    tag: 'Horticulturalist',
     photo: '/photos/anandhavel.png',
     initials: 'AJ',
     accent: '#3a6b30',
