@@ -12,62 +12,79 @@ const fadeUp = (delay = 0) => ({
 const people = [
   {
     name: 'Dr. S R R Senthilkumar',
-    role: 'Principal',
+    role: 'Principal & Professor of Civil Engineering',
     tag: 'Leadership',
     photo: '/photos/principal.png',
     initials: 'SS',
     accent: '#1a4d2e',
-    bio: 'A visionary academic leader driving excellence in engineering and design education. Under his stewardship, Sona College has cultivated a culture of innovation, sustainability, and student-led impact — of which Green Atlas is a proud example.',
-    tagline: 'Championing green campuses through technology and vision.',
+    credential: 'PhD',
+    bio: 'Principal and Professor of Civil Engineering at Sona College of Technology. His visionary leadership and unwavering support made Green Atlas possible — championing the fusion of technology and environmental stewardship across the campus.',
+    tagline: 'Nurturing a greener, smarter campus community.',
   },
   {
     name: 'Dr. Sanjivi Arul',
-    role: 'Project Advisor',
+    role: 'Advisor Innovation · Project Advisor',
     tag: 'Advisor',
     photo: '/photos/advisor.png',
     initials: 'SA',
     accent: '#2d5a27',
-    bio: 'Faculty of the Department of Computer Science and Design, Dr. Sanjivi Arul guided the Green Atlas team from concept to deployment — shaping its architecture, design philosophy, and commitment to environmental storytelling through code.',
+    credential: null,
+    bio: "Advisor Innovation at Sona College of Technology and the guiding force behind Green Atlas. Dr. Sanjivi Arul mentored the development team from ideation to deployment, shaping every aspect of the platform's design and purpose.",
     tagline: 'Where ecological insight meets elegant engineering.',
   },
   {
+    name: 'Mr. Anandhavel J',
+    role: 'Chief Gardener · Horticulturalist',
+    tag: 'Horticulture',
+    photo: '/photos/anandhavel.png',
+    initials: 'AJ',
+    accent: '#3a6b30',
+    credential: null,
+    bio: "The living encyclopedia of Sona's green spaces. Mr. Anandhavel's deep knowledge of every tree and plant on campus — their names, histories, and care — was the botanical backbone that made accurate documentation possible.",
+    tagline: 'Every tree on this campus has a story I can tell.',
+  },
+  {
     name: 'Tumili M',
-    role: 'Developer',
+    role: 'III Year · B.E Computer Science and Design',
     tag: 'Dev Team',
     photo: '/photos/tumili.png',
     initials: 'TM',
     accent: '#3d7a35',
-    bio: 'Passionate about building interfaces that feel alive. Tumili led frontend architecture, crafting the tree explorer, interactive maps, and the visual identity that makes Green Atlas recognisable at a glance.',
+    credential: null,
+    bio: "A core member of the Green Atlas development team. Tumili contributed to building the platform's interactive features and user interface, helping transform biodiversity data into an engaging digital experience.",
     tagline: 'Code that breathes life into data.',
   },
   {
     name: 'Deepak P',
-    role: 'Developer',
+    role: 'III Year · B.E Computer Science and Design',
     tag: 'Dev Team',
     photo: '/photos/deepak.png',
     initials: 'DP',
     accent: '#4d9a43',
-    bio: 'Backend engineer at heart, Deepak built the API layer, database schema, and cloud integrations that power Green Atlas behind the scenes — ensuring every tree profile loads instantly and reliably.',
+    credential: null,
+    bio: 'Part of the team that brought Green Atlas from concept to reality. Deepak worked on the technical foundations of the platform, ensuring the system reliably serves the entire tree inventory to every campus visitor.',
     tagline: 'Robust systems rooted in clean design.',
   },
   {
     name: 'Sreenandha S',
-    role: 'Developer',
+    role: 'III Year · B.E Computer Science and Design',
     tag: 'Dev Team',
     photo: '/photos/sreenandha.png',
     initials: 'SS',
     accent: '#5dba51',
-    bio: 'Bridging design and development, Sreenandha shaped the species catalog, gallery module, and QR flow — turning complex botanical data into experiences that are intuitive for students and researchers alike.',
+    credential: null,
+    bio: 'A developer and designer on the Green Atlas team. Sreenandha helped craft the visual and functional experience, turning complex botanical information into something intuitive and accessible for all users.',
     tagline: 'Designing the space between nature and interface.',
   },
   {
     name: 'Kiruthi Varshni S',
-    role: 'Developer',
+    role: 'III Year · B.E Computer Science and Design',
     tag: 'Dev Team',
     photo: '/photos/kiruthi.png',
     initials: 'KV',
     accent: '#6dca61',
-    bio: 'With a sharp eye for detail and user experience, Kiruthi refined the admin panel, access control, and content management tools — making it easy for campus staff to keep the atlas accurate and up to date.',
+    credential: null,
+    bio: "An integral part of the Green Atlas development team. Kiruthi contributed to building and refining the platform's features, ensuring the atlas remains accurate, accessible, and useful to the entire college community.",
     tagline: 'Precision in every pixel and permission.',
   },
 ]
@@ -142,17 +159,20 @@ function PersonCard({ person, index, dark }) {
   const isEven = index % 2 === 0
 
   return (
-    <motion.div {...fadeUp(0.1 * index)}
-      className="flex flex-col md:flex-row items-center gap-10 md:gap-16 py-12"
+    <motion.div {...fadeUp(0.08 * index)}
+      className="flex flex-col md:flex-row items-center gap-10 md:gap-16 py-14"
       style={{
-        flexDirection: isEven ? undefined : 'row-reverse',
+        flexDirection: isEven ? undefined : undefined,
         borderBottom: `1px solid ${dark ? '#21262d' : '#d1fae5'}`,
       }}>
 
-      <PhotoCard person={person} dark={dark} />
+      {/* Photo alternates sides */}
+      {isEven
+        ? <PhotoCard person={person} dark={dark} />
+        : null}
 
       {/* Text side */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0" style={{ order: isEven ? 1 : 0 }}>
         {/* Eyebrow */}
         <span className="inline-block text-xs font-bold tracking-[0.2em] uppercase mb-3 px-3 py-1 rounded-full"
           style={{
@@ -163,7 +183,7 @@ function PersonCard({ person, index, dark }) {
           {person.role}
         </span>
 
-        {/* Name */}
+        {/* Name + credential */}
         <h3 className="text-2xl md:text-3xl font-bold mb-1 leading-tight"
           style={{
             fontFamily: 'Cinzel, serif',
@@ -171,10 +191,16 @@ function PersonCard({ person, index, dark }) {
             letterSpacing: '-0.01em',
           }}>
           {person.name}
+          {person.credential && (
+            <span className="ml-2 text-base font-normal"
+              style={{ color: person.accent, fontFamily: 'inherit' }}>
+              {person.credential}
+            </span>
+          )}
         </h3>
 
         {/* Tagline */}
-        <p className="text-sm italic mb-4"
+        <p className="italic mb-4"
           style={{
             fontFamily: 'Cormorant Garamond, serif',
             fontSize: '1.05rem',
@@ -190,10 +216,44 @@ function PersonCard({ person, index, dark }) {
           {person.bio}
         </p>
 
-        {/* Decorative line accent */}
+        {/* Decorative line */}
         <div className="mt-5 h-0.5 w-16 rounded-full"
           style={{ background: `linear-gradient(90deg, ${person.accent}, transparent)` }} />
       </div>
+
+      {!isEven
+        ? <PhotoCard person={person} dark={dark} />
+        : null}
+    </motion.div>
+  )
+}
+
+/* ── About write-up paragraphs ── */
+function AboutWriteup({ dark }) {
+  return (
+    <motion.div {...fadeUp(0.1)}
+      className="rounded-2xl p-8 mb-16"
+      style={{ background: dark ? '#161b22' : '#f0f7ee', border: `1px solid ${dark ? '#30363d' : '#d1fae5'}` }}>
+      <p className="text-xs font-bold tracking-[0.2em] uppercase mb-4"
+        style={{ color: '#52a043' }}>
+        About Green Atlas
+      </p>
+      <p className="text-lg italic mb-6 leading-snug"
+        style={{ fontFamily: 'Cormorant Garamond, serif', color: dark ? '#7dc070' : '#2d5a27', fontSize: '1.25rem' }}>
+        "Nurturing Nature. Inspiring Sustainability."
+      </p>
+      {[
+        <>Green Atlas is an innovative digital platform developed by the students of the <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>Department of Computer Science and Design, Sona College of Technology</strong>, under the guidance of <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>Dr. S R R Senthilkumar</strong>, The Principal, and <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>Dr. Sanjivi Arul</strong>, Advisor Innovation — with the valuable support of <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>Mr. Anandhavelu</strong>, Chief Gardener. The project was created to digitally document, preserve, and promote the rich biodiversity of the <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>Sona campus</strong> while supporting the environmental initiatives of <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>The Nature's Club</strong>.</>,
+        'Designed as a comprehensive digital atlas of the campus flora, Green Atlas enables students, faculty, visitors, and nature enthusiasts to explore the diverse collection of trees and plants spread across the entire campus. Through an intuitive and interactive interface, users can easily navigate the campus map, locate plant species, and access detailed botanical information, making nature exploration both engaging and educational.',
+        'The platform serves as a bridge between technology and environmental conservation by transforming traditional campus biodiversity records into a modern digital experience. Each plant profile provides carefully curated information — including its common and scientific names, botanical classification, ecological importance, and other educational insights — encouraging users to develop a deeper understanding and appreciation of the natural environment.',
+        "Green Atlas also features an interactive campus map that allows users to visually explore plant locations, discover species across different areas of the campus, and learn about the unique green spaces that contribute to Sona College's ecological landscape. By making biodiversity information easily accessible, the platform promotes environmental awareness, supports academic learning, and encourages responsible stewardship of nature.",
+        'More than a digital mapping application, Green Atlas represents a commitment to sustainability, innovation, and knowledge sharing. It demonstrates how technology can be effectively utilised to preserve biodiversity, inspire environmental responsibility, and create meaningful learning experiences for present and future generations. Through this initiative, the development team envisions fostering a greener, smarter, and more environmentally conscious campus community.',
+      ].map((para, i) => (
+        <p key={i} className="leading-relaxed mb-4 text-sm last:mb-0"
+          style={{ color: dark ? '#c9d1d9' : '#374151' }}>
+          {para}
+        </p>
+      ))}
     </motion.div>
   )
 }
@@ -203,31 +263,44 @@ export function AboutContent({ dark }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-20">
 
-      {/* Header */}
-      <motion.div {...fadeUp(0)} className="text-center mb-16">
+      {/* Page header */}
+      <motion.div {...fadeUp(0)} className="text-center mb-12">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-5"
           style={{
             background: 'rgba(82,160,67,0.12)',
             border: '1px solid rgba(82,160,67,0.3)',
             color: '#52a043',
           }}>
-          The People Behind Green Atlas
+          About Us
         </span>
-
         <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
           style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827', letterSpacing: '-0.02em' }}>
-          Meet the Team
+          Green Atlas
         </h1>
-
-        <p className="text-base leading-relaxed max-w-xl mx-auto"
+        <p className="text-base max-w-xl mx-auto"
           style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-          Green Atlas is the work of students and faculty from the{' '}
-          <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>
-            Department of Computer Science and Design, Sona College of Technology
-          </strong>
-          {' '}— built in association with{' '}
-          <strong style={{ color: dark ? '#c9d1d9' : '#374151' }}>The Nature's Club</strong>.
+          A living digital record of every tree on the Sona College campus —
+          built by students, for the campus community.
         </p>
+      </motion.div>
+
+      {/* About write-up */}
+      <AboutWriteup dark={dark} />
+
+      {/* Team section header */}
+      <motion.div {...fadeUp(0)} className="text-center mb-12">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-4"
+          style={{
+            background: 'rgba(82,160,67,0.12)',
+            border: '1px solid rgba(82,160,67,0.3)',
+            color: '#52a043',
+          }}>
+          The People Behind It
+        </span>
+        <h2 className="text-3xl md:text-4xl font-bold"
+          style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
+          Meet the Team
+        </h2>
       </motion.div>
 
       {/* Person cards */}
