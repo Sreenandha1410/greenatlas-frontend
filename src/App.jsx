@@ -14,12 +14,16 @@ import Gallery from './pages/Gallery';
 import { AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import PageTransition from './components/PageTransition'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
+import { recordView } from './api'
 import About from './pages/About';
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    recordView(pathname).catch(() => {})
+  }, [pathname])
   return null
 }
 
