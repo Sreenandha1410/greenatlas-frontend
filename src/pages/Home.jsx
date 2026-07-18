@@ -106,6 +106,7 @@ import { motion } from 'framer-motion'
 import { getStats, getViewCount } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
 import { AboutContent } from './About'
+import JoinNaturesClub from '../components/JoinNaturesClub'
 
 export default function Home() {
   const [stats, setStats] = useState({ trees: 0, species: 0, areas: 0 })
@@ -296,6 +297,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      {/* Join Nature's Club */}
+<JoinNaturesClub dark={dark} />
 
     </div>
   )
