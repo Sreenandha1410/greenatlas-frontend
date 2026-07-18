@@ -129,7 +129,6 @@ export default function Home() {
     { label: 'Trees Mapped', value: stats.trees,   icon: '🌳', suffix: '+' },
     { label: 'Species',      value: stats.species, icon: '🍃', suffix: ''  },
     { label: 'Campus Areas', value: stats.areas,   icon: '📍', suffix: ''  },
-    { label: 'Total Visitors', value: views, icon: '👁️', suffix: '' },
   ]
 
   const fadeUp = (delay = 0) => ({
