@@ -79,4 +79,6 @@ export const exportPDF = () => {
   window.open(`${BASE}/trees/export/pdf?token=${token}`, '_blank');
 };
 
+export const recordView = (path) => api.post('/trees/views', { path });
+export const getViewCount = () => api.get('/trees/views');
 export default api;
