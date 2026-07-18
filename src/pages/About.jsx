@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useDarkMode } from '../context/DarkModeContext'
+import JoinNaturesClub from '../components/JoinNaturesClub'
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -243,6 +244,7 @@ export function AboutContent({ dark }) {
           In association with The Nature's Club
         </p>
       </motion.div>
+      <JoinNaturesClub dark={dark} />
     </div>
   )
 }
