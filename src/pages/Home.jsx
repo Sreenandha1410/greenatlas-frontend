@@ -103,17 +103,21 @@ export default function Home() {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getStats } from '../api'
+import { getStats, getViewCount } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
 import { AboutContent } from './About'
 
 export default function Home() {
   const [stats, setStats] = useState({ trees: 0, species: 0, areas: 0 })
+  const [views, setViews] = useState(0)
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
   const [dark] = useDarkMode()
 
-  useEffect(() => { getStats().then(r => setStats(r.data)) }, [])
+  useEffect(() => {
+  getStats().then(r => setStats(r.data))
+  getViewCount().then(r => setViews(r.data.count)).catch(() => {})
+}, [])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -124,6 +128,7 @@ export default function Home() {
     { label: 'Trees Mapped', value: stats.trees,   icon: '🌳', suffix: '+' },
     { label: 'Species',      value: stats.species, icon: '🍃', suffix: ''  },
     { label: 'Campus Areas', value: stats.areas,   icon: '📍', suffix: ''  },
+    { label: 'Total Visitors', value: views, icon: '👁️', suffix: '' },
   ]
 
   const fadeUp = (delay = 0) => ({
@@ -236,7 +241,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="stats-grid grid grid-cols-3 gap-6">
+          <div className="stats-grid grid grid-cols-2 sm:grid-cols-4 gap-6">
             {statCards.map(({ label, value, icon, suffix }, i) => (
               <motion.div
                 key={label}
