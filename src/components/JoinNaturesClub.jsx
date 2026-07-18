@@ -43,16 +43,15 @@ export default function JoinNaturesClub({ dark }) {
           {/* Body */}
           <div className="p-8">
             {submitted ? (
-              <div className="text-center py-6">
-                <div className="text-6xl mb-4">🎉</div>
-                <h3 className="text-xl font-bold mb-2"
-                  style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                  Welcome to The Nature's Club!
-                </h3>
-                <p className="text-sm" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-                  You've been redirected to the WhatsApp group. See you there! 🌱
-                </p>
-              </div>
+  <div className="text-center py-6">
+    <h3 className="text-xl font-bold mb-2"
+      style={{ color: dark ? '#e6edf3' : '#111827' }}>
+      Welcome to The Nature's Club!
+    </h3>
+    <p className="text-sm" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+      You've been redirected to the WhatsApp group. See you there!
+    </p>
+  </div>
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
