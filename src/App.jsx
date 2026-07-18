@@ -17,6 +17,7 @@ import PageTransition from './components/PageTransition'
 import { useEffect, useCallback } from 'react'
 import { recordView } from './api'
 import About from './pages/About';
+import GoToTop from './components/GoToTop'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         </Routes>
       </AnimatePresence>
+      <GoToTop /> 
     </>
   )
 }
