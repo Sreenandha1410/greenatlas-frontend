@@ -30,7 +30,7 @@ export default function JoinNaturesClub({ dark }) {
           {/* Header */}
           <div className="px-8 py-10 text-center"
             style={{ background: 'linear-gradient(135deg, #1a3618, #2d5a27, #3d7a35)' }}>
-            <motion_div className="text-5xl mb-3">🌿</motion_div>
+            <img src="/favicon.png" alt="Green Atlas" className="w-14 h-14 object-contain mx-auto mb-3" />
             <h2 className="text-2xl font-bold text-white mb-1"
               style={{ fontFamily: 'Cinzel, serif' }}>
               Join The Nature's Club
