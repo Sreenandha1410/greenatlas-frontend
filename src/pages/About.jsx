@@ -186,20 +186,24 @@ function PersonCard({ person, index, dark }) {
         <TextBlock person={person} dark={dark} align="left" />
       </div>
 
-      {/* Desktop layout — alternating left/right */}
-      <div className="hidden md:flex items-center gap-10">
-        {isEven ? (
-          <>
-            <PhotoCard person={person} dark={dark} />
-            <TextBlock person={person} dark={dark} align="left" />
-          </>
-        ) : (
-          <>
-            <TextBlock person={person} dark={dark} align="right" />
-            <PhotoCard person={person} dark={dark} />
-          </>
-        )}
+      {/* Desktop layout — alternating left/right with centred photo */}
+<div className="hidden md:flex items-center gap-10">
+  {isEven ? (
+    <>
+      <div className="flex justify-end" style={{ width: 220 }}>
+        <PhotoCard person={person} dark={dark} />
       </div>
+      <TextBlock person={person} dark={dark} align="left" />
+    </>
+  ) : (
+    <>
+      <TextBlock person={person} dark={dark} align="right" />
+      <div className="flex justify-start" style={{ width: 220 }}>
+        <PhotoCard person={person} dark={dark} />
+      </div>
+    </>
+  )}
+</div>
     </motion.div>
   )
 }
