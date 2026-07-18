@@ -241,7 +241,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="stats-grid grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <div className="stats-grid grid grid-cols-3 gap-6">
             {statCards.map(({ label, value, icon, suffix }, i) => (
               <motion.div
                 key={label}
