@@ -32,12 +32,20 @@ export default function Login() {
                     bg-gradient-to-b from-forest-50 to-bark-100 dark:from-gray-950 dark:to-gray-900">
       <div className="card w-full max-w-sm p-8">
         <div className="text-center mb-8">
-          <img src="/favicon.png" alt="Green Atlas" className="h-10 w-10 object-contain" />
-          <h1 className="font-display text-2xl font-bold text-gray-900 dark:text-gray-100 mt-3">
-            Admin Login
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">Campus Tree Map</p>
-        </div>
+  <img
+    src="/favicon.png"
+    alt="Green Atlas"
+    className="h-14 w-14 object-contain mx-auto"
+  />
+
+  <h1 className="font-display text-2xl font-bold text-gray-900 dark:text-gray-100 mt-3">
+    Admin Login
+  </h1>
+
+  <p className="text-gray-500 text-sm mt-1">
+    Campus Tree Map
+  </p>
+</div>
 
         {error && (
           <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800
