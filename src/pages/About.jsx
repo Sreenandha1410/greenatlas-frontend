@@ -21,8 +21,8 @@ const people = [
   },
   {
     name: 'Dr. Sanjivi Arul',
-    role: 'Advisor Innovation · Project Advisor',
-    tag: 'Advisor',
+    role: 'Project Advisor',
+    tag: 'Mentor',
     photo: '/photos/advisor.png',
     initials: 'SA',
     accent: '#2d5a27',
@@ -30,11 +30,29 @@ const people = [
   },
   {
     name: 'Mr. Anandhavel J',
-    role: 'Chief Gardener · Horticulturalist',
-    tag: 'Horticulturalist',
+    role: 'Horticulturalist',
+    tag: 'Chief Gardener',
     photo: '/photos/anandhavel.png',
     initials: 'AJ',
     accent: '#3a6b30',
+    credential: null,
+  },
+  {
+    name: 'Dr. M. Renuga',
+    role: 'HOD, Department of Humanities and Languages',
+    tag: 'Staff Coordinator',
+    photo: '/photos/renuga.png',
+    initials: 'MR',
+    accent: '#1a6b4d',
+    credential: null,
+  },
+  {
+    name: 'Ms. Shibi B',
+    role: 'Assistant Professor, Department of Computer Science and Engineering',
+    tag: 'Staff Coordinator',
+    photo: '/photos/shibi.png',
+    initials: 'SB',
+    accent: '#2d6b5a',
     credential: null,
   },
   {
@@ -78,6 +96,7 @@ const people = [
 function PhotoCard({ person, dark }) {
   return (
     <div className="relative flex-shrink-0" style={{ width: 165, height: 200 }}>
+      {/* 3D background layers */}
       <div className="absolute" style={{
         inset: 0, borderRadius: 20,
         background: `linear-gradient(135deg, ${person.accent}44, ${person.accent}18)`,
@@ -90,6 +109,7 @@ function PhotoCard({ person, dark }) {
         transform: 'rotate(3deg) scale(0.99)',
         border: `1.5px solid ${person.accent}44`,
       }} />
+      {/* Photo */}
       <div className="absolute inset-0 overflow-hidden flex items-center justify-center"
         style={{
           borderRadius: 16,
@@ -100,7 +120,10 @@ function PhotoCard({ person, dark }) {
         <img
           src={person.photo}
           alt={person.name}
-          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          onError={e => {
+            e.target.style.display = 'none'
+            e.target.nextSibling.style.display = 'flex'
+          }}
           className="w-full h-full object-cover object-top"
           style={{ borderRadius: 14 }}
         />
@@ -118,15 +141,15 @@ function PhotoCard({ person, dark }) {
 }
 
 function PersonCard({ person, index, dark }) {
-  const isEven = index % 2 === 0
-
   return (
     <motion.div {...fadeUp(0.07 * index)}
       className="flex flex-col md:flex-row items-center gap-8 md:gap-10 py-6"
       style={{ borderBottom: `1px solid ${dark ? '#21262d' : '#e5f0e5'}` }}>
 
-      {isEven && <PhotoCard person={person} dark={dark} />}
+      {/* Photo always on LEFT */}
+      <PhotoCard person={person} dark={dark} />
 
+      {/* Text */}
       <div className="flex-1 text-center md:text-left">
         <span className="inline-block text-xs font-bold tracking-[0.18em] uppercase mb-3 px-3 py-1 rounded-full"
           style={{
@@ -154,8 +177,6 @@ function PersonCard({ person, index, dark }) {
         <div className="mt-4 h-0.5 w-10 rounded-full mx-auto md:mx-0"
           style={{ background: `linear-gradient(90deg, ${person.accent}, transparent)` }} />
       </div>
-
-      {!isEven && <PhotoCard person={person} dark={dark} />}
     </motion.div>
   )
 }
@@ -168,13 +189,6 @@ function AboutWriteup({ dark }) {
     <motion.div {...fadeUp(0.1)}
       className="rounded-2xl p-6 mb-8"
       style={{ background: dark ? '#161b22' : '#f0f7ee', border: `1px solid ${dark ? '#30363d' : '#d1fae5'}` }}>
-      <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: '#52a043' }}>
-        About Green Atlas
-      </p>
-      <p className="text-lg italic mb-4"
-        style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: dark ? '#7dc070' : '#2d5a27' }}>
-        "Nurturing Nature. Inspiring Sustainability."
-      </p>
       {[
         <p>Green Atlas is an innovative digital platform developed by the students of the {bold('Department of Computer Science and Design, Sona College of Technology')}, under the guidance of {bold('Dr. S R R Senthilkumar')}, The Principal, and {bold('Dr. Sanjivi Arul')}, Advisor Innovation — with the valuable support of {bold('Mr. Anandhavelu')}, Chief Gardener. The project was created to digitally document, preserve, and promote the rich biodiversity of the {bold('Sona campus')} while supporting the environmental initiatives of {bold("The Nature's Club")}.</p>,
         <p>Designed as a comprehensive digital atlas of the campus flora, Green Atlas enables students, faculty, visitors, and nature enthusiasts to explore the diverse collection of trees and plants spread across the entire campus. Through an intuitive and interactive interface, users can easily navigate the campus map, locate plant species, and access detailed botanical information, making nature exploration both engaging and educational.</p>,
@@ -195,23 +209,25 @@ export function AboutContent({ dark }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
 
-      <motion.div {...fadeUp(0)} className="text-center mb-6">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-3"
+      {/* Header — centred title and tagline only */}
+      <motion.div {...fadeUp(0)} className="text-center mb-8">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-4"
           style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
           About Us
         </span>
         <h1 className="text-4xl md:text-5xl font-bold mb-3"
           style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827', letterSpacing: '-0.02em' }}>
-          Green Atlas
+          About Green Atlas
         </h1>
-        <p className="text-sm max-w-lg mx-auto" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-          A living digital record of every tree on the Sona College campus —
-          built by students, for the campus community.
+        <p className="text-lg italic"
+          style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: dark ? '#7dc070' : '#2d5a27' }}>
+          "Nurturing Nature. Inspiring Sustainability."
         </p>
       </motion.div>
 
       <AboutWriteup dark={dark} />
 
+      {/* Meet the Team */}
       <motion.div {...fadeUp(0)} className="text-center mb-5">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-2"
           style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
@@ -229,13 +245,14 @@ export function AboutContent({ dark }) {
         ))}
       </div>
 
+      {/* Footer card */}
       <motion.div {...fadeUp(0.3)}
         className="mt-6 rounded-2xl p-5 text-center"
         style={{
           background: dark ? 'linear-gradient(135deg, #161b22, #1c2128)' : 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
           border: `1px solid ${dark ? '#30363d' : '#bbf7d0'}`,
         }}>
-        <div className="text-2xl mb-2">🌿</div>
+        <img src="/favicon.png" alt="Green Atlas" className="w-10 h-10 object-contain mx-auto mb-2" />
         <p className="font-bold text-lg"
           style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
           Sona College of Technology, Salem
