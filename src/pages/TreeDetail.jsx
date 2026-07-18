@@ -646,27 +646,56 @@ export default function TreeDetail() {
 
         {/* Ecology & Uses */}
         {ecologyItems.length > 0 && (
-          <RevealSection delay={0.05}>
-            <h2 className="font-display text-2xl font-bold mb-4"
-              style={{ color: dark ? '#e6edf3' : '#111827' }}>Ecology & Uses</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {ecologyItems.map(({ title, content }, i) => (
-                <motion.div key={title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.08 }}
-                  className="card p-5 hover:shadow-md transition-shadow"
-                  style={{ borderLeft: '3px solid var(--color-forest-400)' }}>
-                  <h3 className="font-semibold mb-2 text-sm"
-                    style={{ color: dark ? '#e6edf3' : '#1f2937' }}>{title}</h3>
-                  <p className="text-sm leading-relaxed"
-                    style={{ color: dark ? '#8b949e' : '#6b7280' }}>{content}</p>
-                </motion.div>
-              ))}
+  <RevealSection delay={0.05}>
+    <h2 className="font-display text-2xl font-bold mb-6"
+      style={{ color: dark ? '#e6edf3' : '#111827' }}>🌿 Ecology & Uses</h2>
+    <div className="space-y-4">
+      {ecologyItems.map(({ title, content }, i) => {
+        const palettes = [
+          { bg: '#1b5e20', light: '#e8f5e9' },
+          { bg: '#1565c0', light: '#e3f2fd' },
+          { bg: '#6a1b9a', light: '#f3e5f5' },
+          { bg: '#e65100', light: '#fff3e0' },
+          { bg: '#006064', light: '#e0f7fa' },
+          { bg: '#880e4f', light: '#fce4ec' },
+        ]
+        const { bg, light } = palettes[i % palettes.length]
+        return (
+          <motion.div key={title}
+            initial={{ opacity: 0, x: i % 2 === 0 ? -24 : 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: i * 0.08 }}
+            className="relative overflow-hidden rounded-2xl p-6"
+            style={{
+              background: dark ? '#161b22' : '#fff',
+              border: `1px solid ${bg}25`,
+              boxShadow: `0 4px 20px ${bg}12`
+            }}>
+            {/* Left accent bar */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl"
+              style={{ background: `linear-gradient(to bottom, ${bg}, ${bg}88)` }} />
+            {/* Watermark emoji */}
+            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-7xl opacity-[0.06] select-none pointer-events-none">
+              {title.split(' ')[0]}
             </div>
-          </RevealSection>
-        )}
+            {/* Content */}
+            <div className="pl-5">
+              <span className="inline-block text-xs font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-3"
+                style={{ background: dark ? `${bg}25` : light, color: bg }}>
+                {title}
+              </span>
+              <p className="text-sm leading-relaxed"
+                style={{ color: dark ? '#c9d1d9' : '#374151' }}>
+                {content}
+              </p>
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  </RevealSection>
+)}
 
         {/* Taxonomy */}
         {(tree.kingdom || tree.family || tree.genus) && (
