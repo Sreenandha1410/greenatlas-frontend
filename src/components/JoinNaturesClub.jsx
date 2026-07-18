@@ -56,25 +56,55 @@ export default function JoinNaturesClub({ dark }) {
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { key: 'name', label: 'Full Name *', placeholder: 'Your name' },
-                    { key: 'dept', label: 'Department *', placeholder: 'e.g. CSE, ECE, MECH' },
-                  ].map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
-                        style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-                        {label}
-                      </label>
-                      <input value={form[key]} onChange={e => set(key, e.target.value)}
-                        placeholder={placeholder}
-                        className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all"
-                        style={{
-                          background: dark ? '#0d1117' : '#f9fafb',
-                          border: `1.5px solid ${dark ? '#30363d' : '#e5e7eb'}`,
-                          color: dark ? '#e6edf3' : '#111827'
-                        }} />
-                    </div>
-                  ))}
+                  {/* Name */}
+<div>
+  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+    style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+    Full Name *
+  </label>
+  <input value={form.name} onChange={e => set('name', e.target.value)}
+    placeholder="Your name"
+    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all"
+    style={{
+      background: dark ? '#0d1117' : '#f9fafb',
+      border: `1.5px solid ${dark ? '#30363d' : '#e5e7eb'}`,
+      color: dark ? '#e6edf3' : '#111827'
+    }} />
+</div>
+
+{/* Department */}
+<div>
+  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+    style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+    Department *
+  </label>
+  <select value={form.dept} onChange={e => set('dept', e.target.value)}
+    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+    style={{
+      background: dark ? '#0d1117' : '#f9fafb',
+      border: `1.5px solid ${dark ? '#30363d' : '#e5e7eb'}`,
+      color: form.dept ? (dark ? '#e6edf3' : '#111827') : (dark ? '#6e7681' : '#9ca3af')
+    }}>
+    <option value="">Select department</option>
+    <option>CSE</option>
+    <option>CSD</option>
+    <option>AIML</option>
+    <option>CSBS</option>
+    <option>CYS</option>
+    <option>IT</option>
+    <option>AIDS</option>
+    <option>MCT</option>
+    <option>CIVIL</option>
+    <option>FT</option>
+    <option>ECE</option>
+    <option>EFE</option>
+    <option>EXE</option>
+    <option>MECH</option>
+    <option>EEE</option>
+    <option>EVE</option>
+    <option>SFE</option>
+  </select>
+</div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
