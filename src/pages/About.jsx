@@ -244,7 +244,6 @@ export function AboutContent({ dark }) {
           In association with The Nature's Club
         </p>
       </motion.div>
-      <JoinNaturesClub dark={dark} />
     </div>
   )
 }
@@ -254,6 +253,7 @@ export default function About() {
   return (
     <div className="min-h-screen" style={{ background: dark ? '#0d1117' : '#f9fafb' }}>
       <AboutContent dark={dark} />
+      <JoinNaturesClub dark={dark} />
     </div>
   )
 }
