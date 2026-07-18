@@ -95,8 +95,8 @@ const people = [
 
 function PhotoCard({ person, dark }) {
   return (
-    <div className="relative flex-shrink-0" style={{ width: 165, height: 200 }}>
-      {/* 3D background layers */}
+    <div className="relative flex-shrink-0" style={{ width: 150, height: 185 }}>
+      {/* 3D layers */}
       <div className="absolute" style={{
         inset: 0, borderRadius: 20,
         background: `linear-gradient(135deg, ${person.accent}44, ${person.accent}18)`,
@@ -130,7 +130,7 @@ function PhotoCard({ person, dark }) {
         <div style={{
           display: 'none', width: '100%', height: '100%',
           alignItems: 'center', justifyContent: 'center',
-          fontSize: 40, fontWeight: 700,
+          fontSize: 38, fontWeight: 700,
           color: person.accent, fontFamily: 'Cinzel, serif',
         }}>
           {person.initials}
@@ -140,42 +140,65 @@ function PhotoCard({ person, dark }) {
   )
 }
 
+function TextBlock({ person, dark, align }) {
+  return (
+    <div className={`flex-1 ${align === 'right' ? 'md:text-right' : 'md:text-left'} text-center`}>
+      <span className="inline-block text-xs font-bold tracking-[0.18em] uppercase mb-3 px-3 py-1 rounded-full"
+        style={{
+          background: `${person.accent}15`,
+          color: person.accent,
+          border: `1px solid ${person.accent}30`,
+        }}>
+        {person.tag}
+      </span>
+
+      <h3 className="text-xl md:text-2xl font-bold mb-1"
+        style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
+        {person.name}
+        {person.credential && (
+          <span className="ml-2 text-sm font-normal" style={{ color: person.accent }}>
+            {person.credential}
+          </span>
+        )}
+      </h3>
+
+      <p className="text-sm leading-relaxed" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+        {person.role}
+      </p>
+
+      <div className={`mt-4 h-0.5 w-10 rounded-full ${align === 'right' ? 'md:ml-auto' : ''} mx-auto md:mx-0`}
+        style={{ background: `linear-gradient(90deg, ${person.accent}, transparent)` }} />
+    </div>
+  )
+}
+
 function PersonCard({ person, index, dark }) {
+  const isEven = index % 2 === 0
+
   return (
     <motion.div {...fadeUp(0.07 * index)}
-      className="flex flex-col md:flex-row items-center gap-8 md:gap-10 py-6"
+      className="py-8"
       style={{ borderBottom: `1px solid ${dark ? '#21262d' : '#e5f0e5'}` }}>
 
-      {/* Photo always on LEFT */}
-      <PhotoCard person={person} dark={dark} />
+      {/* Mobile layout — always photo on top, text below */}
+      <div className="flex flex-col items-center gap-5 md:hidden">
+        <PhotoCard person={person} dark={dark} />
+        <TextBlock person={person} dark={dark} align="left" />
+      </div>
 
-      {/* Text */}
-      <div className="flex-1 text-center md:text-left">
-        <span className="inline-block text-xs font-bold tracking-[0.18em] uppercase mb-3 px-3 py-1 rounded-full"
-          style={{
-            background: `${person.accent}15`,
-            color: person.accent,
-            border: `1px solid ${person.accent}30`,
-          }}>
-          {person.tag}
-        </span>
-
-        <h3 className="text-xl md:text-2xl font-bold mb-1"
-          style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
-          {person.name}
-          {person.credential && (
-            <span className="ml-2 text-sm font-normal" style={{ color: person.accent }}>
-              {person.credential}
-            </span>
-          )}
-        </h3>
-
-        <p className="text-sm" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-          {person.role}
-        </p>
-
-        <div className="mt-4 h-0.5 w-10 rounded-full mx-auto md:mx-0"
-          style={{ background: `linear-gradient(90deg, ${person.accent}, transparent)` }} />
+      {/* Desktop layout — alternating left/right */}
+      <div className="hidden md:flex items-center gap-10">
+        {isEven ? (
+          <>
+            <PhotoCard person={person} dark={dark} />
+            <TextBlock person={person} dark={dark} align="left" />
+          </>
+        ) : (
+          <>
+            <TextBlock person={person} dark={dark} align="right" />
+            <PhotoCard person={person} dark={dark} />
+          </>
+        )}
       </div>
     </motion.div>
   )
@@ -209,7 +232,7 @@ export function AboutContent({ dark }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
 
-      {/* Header — centred title and tagline only */}
+      {/* Header */}
       <motion.div {...fadeUp(0)} className="text-center mb-8">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-4"
           style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
@@ -245,7 +268,7 @@ export function AboutContent({ dark }) {
         ))}
       </div>
 
-      {/* Footer card */}
+      {/* Footer */}
       <motion.div {...fadeUp(0.3)}
         className="mt-6 rounded-2xl p-5 text-center"
         style={{
