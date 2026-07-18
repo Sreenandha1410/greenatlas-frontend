@@ -401,20 +401,82 @@ export default function TreeList() {
           </div>
 
           {/* Mobile filters */}
-          <div className="lg:hidden flex gap-2 mb-4 overflow-x-auto pb-1">
-            <select className="input text-sm" value={areaFilter}
-              style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-              onChange={e => setAreaFilter(e.target.value)}>
-              <option value="">All Areas</option>
-              {availableAreas.map(a => <option key={a}>{a}</option>)}
-            </select>
-            <select className="input text-sm" value={familyFilter}
-              style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-              onChange={e => setFamilyFilter(e.target.value)}>
-              <option value="">All Families</option>
-              {availableFamilies.map(f => <option key={f}>{f}</option>)}
-            </select>
-          </div>
+          {/* Mobile filters */}
+<div className="lg:hidden space-y-3 mb-4">
+
+  <div className="flex gap-2 overflow-x-auto pb-1">
+    <select
+      className="input text-sm min-w-[150px]"
+      value={areaFilter}
+      style={{
+        background: dark ? '#1c2128' : '#fff',
+        color: dark ? '#e6edf3' : '#111827'
+      }}
+      onChange={e => setAreaFilter(e.target.value)}
+    >
+      <option value="">All Areas</option>
+      {availableAreas.map(a => (
+        <option key={a}>{a}</option>
+      ))}
+    </select>
+
+    <select
+      className="input text-sm min-w-[150px]"
+      value={familyFilter}
+      style={{
+        background: dark ? '#1c2128' : '#fff',
+        color: dark ? '#e6edf3' : '#111827'
+      }}
+      onChange={e => setFamilyFilter(e.target.value)}
+    >
+      <option value="">All Families</option>
+      {availableFamilies.map(f => (
+        <option key={f}>{f}</option>
+      ))}
+    </select>
+  </div>
+
+  {/* View Mode */}
+  <div
+    className="rounded-xl p-3"
+    style={{
+      background: dark ? '#1c2128' : '#fff',
+      border: `1px solid ${dark ? '#30363d' : '#e5e7eb'}`
+    }}
+  >
+    <p
+      className="text-xs font-semibold mb-2"
+      style={{ color: dark ? '#8b949e' : '#6b7280' }}
+    >
+      View Mode
+    </p>
+
+    <div className="grid grid-cols-2 gap-2">
+      <button
+        onClick={() => setGroupBySpecies(true)}
+        className={`rounded-lg py-2 text-sm font-medium transition ${
+          groupBySpecies
+            ? 'bg-green-700 text-white'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+        }`}
+      >
+        Group by Species
+      </button>
+
+      <button
+        onClick={() => setGroupBySpecies(false)}
+        className={`rounded-lg py-2 text-sm font-medium transition ${
+          !groupBySpecies
+            ? 'bg-green-700 text-white'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+        }`}
+      >
+        Individual
+      </button>
+    </div>
+  </div>
+
+</div>
 
           {loading ? (
             <div className="flex items-center justify-center py-32 text-gray-400">Loading…</div>
