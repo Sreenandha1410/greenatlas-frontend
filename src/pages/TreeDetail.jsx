@@ -454,6 +454,99 @@ function TaxonomyTree({ tree }) {
   )
 }
 */}
+function EcologyTabs({ ecologyItems, tabs, dark }) {
+  const [activeTab, setActiveTab] = useState(tabs[0]?.key || 'ecology')
+
+  const activeItems = ecologyItems.filter(item =>
+    tabs.find(t => t.key === activeTab)?.keys.includes(item.title)
+  )
+
+  const iconMap = {
+    '🌿 Ecological Importance': { emoji: '🌿', color: '#1b5e20', light: '#e8f5e9' },
+    '🌍 Environmental Benefits': { emoji: '🌍', color: '#1565c0', light: '#e3f2fd' },
+    '🦋 Wildlife Supported':     { emoji: '🦋', color: '#6a1b9a', light: '#f3e5f5' },
+    '💊 Medicinal Uses':         { emoji: '💊', color: '#b71c1c', light: '#ffebee' },
+    '💼 Economic Uses':          { emoji: '💼', color: '#e65100', light: '#fff3e0' },
+    '🎭 Cultural Significance':  { emoji: '🎭', color: '#880e4f', light: '#fce4ec' },
+  }
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="px-5 pt-5 pb-0">
+        <h2 className="font-display text-2xl font-bold mb-4"
+          style={{ color: dark ? '#e6edf3' : '#111827' }}>
+          Ecology & Uses
+        </h2>
+
+        {/* Tab bar */}
+        <div className="flex gap-2 border-b"
+          style={{ borderColor: dark ? '#30363d' : '#e5e7eb' }}>
+          {tabs.map(tab => (
+            <button key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 -mb-px"
+              style={{
+                borderColor: activeTab === tab.key ? '#2d5a27' : 'transparent',
+                background: activeTab === tab.key
+                  ? (dark ? 'rgba(45,90,39,0.2)' : '#f0f7ee')
+                  : 'transparent',
+                color: activeTab === tab.key
+                  ? '#2d5a27'
+                  : (dark ? '#8b949e' : '#6b7280'),
+              }}>
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="p-5 space-y-3">
+        <AnimatePresence mode="wait">
+          <motion.div key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}>
+            {activeItems.length > 0 ? activeItems.map(({ title, content }) => {
+              const meta = iconMap[title] || { emoji: '🌱', color: '#2d5a27', light: '#f0f7ee' }
+              return (
+                <div key={title} className="flex gap-4 p-4 rounded-2xl mb-3"
+                  style={{
+                    background: dark ? '#161b22' : '#fff',
+                    border: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
+                  }}>
+                  {/* Icon circle */}
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                    style={{ background: meta.color }}>
+                    {meta.emoji}
+                  </div>
+                  {/* Text */}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-sm mb-1"
+                      style={{ color: dark ? '#e6edf3' : '#111827' }}>
+                      {title.replace(/^[\p{Emoji}\s]+/u, '').trim()}
+                    </h3>
+                    <p className="text-sm leading-relaxed"
+                      style={{ color: dark ? '#c9d1d9' : '#4b5563' }}>
+                      {content}
+                    </p>
+                  </div>
+                </div>
+              )
+            }) : (
+              <p className="text-sm text-center py-6"
+                style={{ color: dark ? '#6e7681' : '#9ca3af' }}>
+                No information available for this category.
+              </p>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  )
+}
 
 export default function TreeDetail() {
   const [dark] = useDarkMode()
@@ -644,58 +737,46 @@ export default function TreeDetail() {
           </RevealSection>
         )}
 
-        {/* Ecology & Uses */}
-        {ecologyItems.length > 0 && (
-  <RevealSection delay={0.05}>
-    <h2 className="font-display text-2xl font-bold mb-6"
-      style={{ color: dark ? '#e6edf3' : '#111827' }}>🌿 Ecology & Uses</h2>
-    <div className="space-y-4">
-      {ecologyItems.map(({ title, content }, i) => {
-        const palettes = [
-          { bg: '#1b5e20', light: '#e8f5e9' },
-          { bg: '#1565c0', light: '#e3f2fd' },
-          { bg: '#6a1b9a', light: '#f3e5f5' },
-          { bg: '#e65100', light: '#fff3e0' },
-          { bg: '#006064', light: '#e0f7fa' },
-          { bg: '#880e4f', light: '#fce4ec' },
-        ]
-        const { bg, light } = palettes[i % palettes.length]
-        return (
-          <motion.div key={title}
-            initial={{ opacity: 0, x: i % 2 === 0 ? -24 : 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.45, delay: i * 0.08 }}
-            className="relative overflow-hidden rounded-2xl p-6"
-            style={{
-              background: dark ? '#161b22' : '#fff',
-              border: `1px solid ${bg}25`,
-              boxShadow: `0 4px 20px ${bg}12`
-            }}>
-            {/* Left accent bar */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl"
-              style={{ background: `linear-gradient(to bottom, ${bg}, ${bg}88)` }} />
-            {/* Watermark emoji */}
-            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-7xl opacity-[0.06] select-none pointer-events-none">
-              {title.split(' ')[0]}
-            </div>
-            {/* Content */}
-            <div className="pl-5">
-              <span className="inline-block text-xs font-bold tracking-widest uppercase px-2.5 py-1 rounded-full mb-3"
-                style={{ background: dark ? `${bg}25` : light, color: bg }}>
-                {title}
-              </span>
-              <p className="text-sm leading-relaxed"
-                style={{ color: dark ? '#c9d1d9' : '#374151' }}>
-                {content}
-              </p>
-            </div>
-          </motion.div>
-        )
-      })}
-    </div>
-  </RevealSection>
-)}
+        {/* Ecology & Uses — Tabbed */}
+{ecologyItems.length > 0 && (() => {
+  const tabs = [
+    {
+      key: 'ecology',
+      label: 'Ecology',
+      icon: '🌿',
+      keys: ['🌿 Ecological Importance', '🌍 Environmental Benefits', '🦋 Wildlife Supported'],
+    },
+    {
+      key: 'uses',
+      label: 'Uses',
+      icon: '💊',
+      keys: ['💊 Medicinal Uses', '💼 Economic Uses'],
+    },
+    {
+      key: 'cultural',
+      label: 'Cultural',
+      icon: '🎭',
+      keys: ['🎭 Cultural Significance'],
+    },
+  ]
+
+  const allKeys = tabs.flatMap(t => t.keys)
+  const extraItems = ecologyItems.filter(item => !allKeys.includes(item.title))
+
+  if (extraItems.length > 0) {
+    tabs.push({ key: 'more', label: 'More', icon: '···', keys: extraItems.map(e => e.title) })
+  }
+
+  const availableTabs = tabs.filter(tab =>
+    tab.keys.some(k => ecologyItems.find(e => e.title === k))
+  )
+
+  return (
+    <RevealSection delay={0.05}>
+      <EcologyTabs ecologyItems={ecologyItems} tabs={availableTabs} dark={dark} />
+    </RevealSection>
+  )
+})()}
 
         {/* Taxonomy */}
         {(tree.kingdom || tree.family || tree.genus) && (
