@@ -501,18 +501,17 @@ function EcologyTabs({ ecologyItems, tabs, dark }) {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}>
             {activeItems.length > 0 ? activeItems.map(({ title, content }) => {
-              const meta = iconMap[title] || { emoji: '🌱', color: '#2d5a27', light: '#f0f7ee' }
+              const meta = {
+  color: '#2d5a27',
+  light: '#f0f7ee'
+}
               return (
                 <div key={title} className="flex gap-4 p-4 rounded-2xl mb-3"
                   style={{
                     background: dark ? '#161b22' : '#fff',
                     border: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
                   }}>
-                  {/* Icon circle */}
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                    style={{ background: meta.color }}>
-                    {meta.emoji}
-                  </div>
+            
                   {/* Text */}
                   <div className="flex-1">
                     <h3 className="font-bold text-sm mb-1"
