@@ -461,15 +461,6 @@ function EcologyTabs({ ecologyItems, tabs, dark }) {
     tabs.find(t => t.key === activeTab)?.keys.includes(item.title)
   )
 
-  const iconMap = {
-    '🌿 Ecological Importance': { emoji: '🌿', color: '#1b5e20', light: '#e8f5e9' },
-    '🌍 Environmental Benefits': { emoji: '🌍', color: '#1565c0', light: '#e3f2fd' },
-    '🦋 Wildlife Supported':     { emoji: '🦋', color: '#6a1b9a', light: '#f3e5f5' },
-    '💊 Medicinal Uses':         { emoji: '💊', color: '#b71c1c', light: '#ffebee' },
-    '💼 Economic Uses':          { emoji: '💼', color: '#e65100', light: '#fff3e0' },
-    '🎭 Cultural Significance':  { emoji: '🎭', color: '#880e4f', light: '#fce4ec' },
-  }
-
   return (
     <div className="card overflow-hidden">
       <div className="px-5 pt-5 pb-0">
@@ -613,12 +604,12 @@ export default function TreeDetail() {
   || null
 
   const ecologyItems = [
-    { title: '🌿 Ecological Importance', content: tree.ecological_importance  },
-    { title: '💊 Medicinal Uses',        content: tree.medicinal_uses         },
-    { title: '💼 Economic Uses',         content: tree.economic_uses          },
-    { title: '🌍 Environmental Benefits',content: tree.environmental_benefits },
-    { title: '🦋 Wildlife Supported',   content: tree.wildlife_supported     },
-    { title: '🎭 Cultural Significance', content: tree.cultural_significance  },
+    { title: ' Ecological Importance', content: tree.ecological_importance  },
+    { title: ' Medicinal Uses',        content: tree.medicinal_uses         },
+    { title: ' Economic Uses',         content: tree.economic_uses          },
+    { title: ' Environmental Benefits',content: tree.environmental_benefits },
+    { title: ' Wildlife Supported',   content: tree.wildlife_supported     },
+    { title: ' Cultural Significance', content: tree.cultural_significance  },
   ].filter(i => i.content)
 
   return (
@@ -659,50 +650,40 @@ export default function TreeDetail() {
             )}
             <p className="italic text-gray-300 text-sm mb-4">{tree.botanical_name}</p>
 
-            {/* Badges below name */}
-            <div className="flex flex-wrap gap-2">
-              <span className="badge text-white"
-                style={{ background: 'rgba(45,90,39,0.7)', backdropFilter: 'blur(8px)', border: '1px solid rgba(82,160,67,0.4)' }}>
-                📍 {tree.area}
-              </span>
-              {tree.native_exotic && (
-                <span className="badge text-white"
-                  style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                  {tree.native_exotic}
-                </span>
-              )}
-              {tree.conservation_status && (
-                <span className="badge text-white"
-                  style={{ background: 'rgba(180,40,40,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,100,100,0.3)' }}>
-                  {tree.conservation_status}
-                </span>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      </div>
+           {/* Badges below name — including Tree ID and Family */}
+<div className="flex flex-wrap gap-2">
+  <span className="badge text-white"
+    style={{ background: 'rgba(45,90,39,0.7)', backdropFilter: 'blur(8px)', border: '1px solid rgba(82,160,67,0.4)' }}>
+     {tree.area}
+  </span>
+  {tree.native_exotic && (
+    <span className="badge text-white"
+      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+      {tree.native_exotic}
+    </span>
+  )}
+  {tree.conservation_status && (
+    <span className="badge text-white"
+      style={{ background: 'rgba(180,40,40,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,100,100,0.3)' }}>
+      {tree.conservation_status}
+    </span>
+  )}
+  <span className="badge text-white"
+    style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+     {tree.tree_id}
+  </span>
+  {tree.family && (
+    <span className="badge text-white"
+      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+       {tree.family}
+    </span>
+  )}
+</div>
 
       {/* ── Body ── */}
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
 
-        {/* Quick stats */}
-        <RevealSection>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Tree ID',  value: tree.tree_id,                        icon: '🔖' },
-              { label: 'Age',      value: tree.age ? `~${tree.age} yrs` : '—', icon: '⏳' },
-              { label: 'Height',   value: tree.avg_height ?? '—',               icon: '📏' },
-              { label: 'Family',   value: tree.family ?? '—',                   icon: '🌿' },
-            ].map(({ label, value, icon }) => (
-              <div key={label} className="card-clay p-4 text-center">
-                <div className="text-2xl mb-1">{icon}</div>
-                <p className="font-bold text-sm" style={{ color: dark ? '#e6edf3' : '#111827' }}>{value}</p>
-                <p className="text-xs mt-0.5" style={{ color: dark ? '#8b949e' : '#6b7280' }}>{label}</p>
-              </div>
-            ))}
-          </div>
-        </RevealSection>
-
+    
         {/* Description */}
         {tree.general_description && (
           <RevealSection delay={0.05}>
@@ -743,20 +724,17 @@ export default function TreeDetail() {
     {
       key: 'ecology',
       label: 'Ecology',
-      icon: '🌿',
-      keys: ['🌿 Ecological Importance', '🌍 Environmental Benefits', '🦋 Wildlife Supported'],
+      keys: ['Ecological Importance', 'Environmental Benefits', 'Wildlife Supported'],
     },
     {
       key: 'uses',
       label: 'Uses',
-      icon: '💊',
-      keys: ['💊 Medicinal Uses', '💼 Economic Uses'],
+      keys: ['Medicinal Uses', 'Economic Uses'],
     },
     {
       key: 'cultural',
       label: 'Cultural',
-      icon: '🎭',
-      keys: ['🎭 Cultural Significance'],
+      keys: ['Cultural Significance'],
     },
   ]
 
