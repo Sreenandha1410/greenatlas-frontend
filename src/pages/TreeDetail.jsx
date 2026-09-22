@@ -680,7 +680,7 @@ export default function TreeDetail() {
           style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
            {tree.tree_id}
         </span>
-        {tree.family && (
+                {tree.family && (
           <span className="badge text-white"
             style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
              {tree.family}
@@ -688,9 +688,11 @@ export default function TreeDetail() {
         )}
       </div>
 
+          </motion.div>
+        </div>
+      </div>
       {/* ── Body ── */}
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
-
     
         {/* Description */}
         {tree.general_description && (
