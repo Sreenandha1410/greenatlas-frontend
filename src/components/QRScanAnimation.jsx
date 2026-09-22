@@ -24,11 +24,9 @@ export default function QRScanAnimation({ tree, onDone }) {
   // phase 0 = welcome flash, 1 = stats animation, 2 = done
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 800)
-    const t2 = setTimeout(() => setPhase(2), 4200)
-    const t3 = setTimeout(() => onDone?.(), 4600)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
-  }, [])
+  const t1 = setTimeout(() => setPhase(1), 800)
+  return () => clearTimeout(t1)
+}, [])
 
   // Approximate O2 and CO2 values from tree data
   const o2 = tree?.avg_height
@@ -210,6 +208,27 @@ export default function QRScanAnimation({ tree, onDone }) {
               <FloatingParticle emoji="🌱" delay={1.0} x={-80} duration={3.0} />
             </>
           )}
+
+          {/* See More button */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 1.8, duration: 0.4 }}
+            onClick={() => onDone?.()}
+            className="relative z-10 mt-2 px-8 py-3 rounded-full text-sm font-bold text-white
+                       flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+            style={{
+              background: 'linear-gradient(135deg, #2d5a27, #4caf50)',
+              boxShadow: '0 4px 20px rgba(76,175,80,0.4)',
+              border: '1px solid rgba(129,199,132,0.4)',
+            }}>
+            <span>Explore this Tree</span>
+            <motion.span
+              animate={{ x: [0, 4, 0] }}
+              transition={{ duration: 1.2, repeat: Infinity }}>
+              →
+            </motion.span>
+          </motion.button>
 
           {/* Powered by Green Atlas */}
           <motion.div
