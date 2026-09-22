@@ -372,6 +372,7 @@ import ImageUpload from '../components/ImageUpload'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import TaxonomyTree from '../components/TaxonomyTree'
 import { useDarkMode } from '../context/DarkModeContext'
+import QRScanAnimation from '../components/QRScanAnimation'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -552,9 +553,13 @@ export default function TreeDetail() {
   const [imgFailed, setImgFailed]     = useState(false)
   const [images, setImages]           = useState([])
   const [lightbox, setLightbox]       = useState(null)
+  const [showQRAnim, setShowQRAnim] = useState(false)
 
   useEffect(() => {
     setLoading(true); setImgFailed(false)
+    // Show animation if user arrived via QR scan (referrer is empty or external)
+    const isQRScan = !document.referrer || !document.referrer.includes(window.location.hostname)
+    if (isQRScan) setShowQRAnim(true)
     getTree(id)
       .then(r => {
         const t = r.data; setTree(t)
@@ -613,8 +618,12 @@ export default function TreeDetail() {
 
   return (
     <div>
+      {/* QR Scan Opening Animation */}
+      {showQRAnim && tree && (
+        <QRScanAnimation tree={tree} onDone={() => setShowQRAnim(false)} />
+      )}
       {/* ── Hero ── */}
-      <div className="relative min-h-[70vh] flex flex-col justify-end overflow-hidden">
+      <div className="relative min-h-[45vh] flex flex-col justify-end overflow-hidden">
         {/* Background image */}
         <div className="absolute inset-0">
           {heroImage && !imgFailed
@@ -650,34 +659,34 @@ export default function TreeDetail() {
             <p className="italic text-gray-300 text-sm mb-4">{tree.botanical_name}</p>
 
            {/* Badges below name — including Tree ID and Family */}
-<div className="flex flex-wrap gap-2">
-  <span className="badge text-white"
-    style={{ background: 'rgba(45,90,39,0.7)', backdropFilter: 'blur(8px)', border: '1px solid rgba(82,160,67,0.4)' }}>
-     {tree.area}
-  </span>
-  {tree.native_exotic && (
-    <span className="badge text-white"
-      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-      {tree.native_exotic}
-    </span>
-  )}
-  {tree.conservation_status && (
-    <span className="badge text-white"
-      style={{ background: 'rgba(180,40,40,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,100,100,0.3)' }}>
-      {tree.conservation_status}
-    </span>
-  )}
-  <span className="badge text-white"
-    style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-     {tree.tree_id}
-  </span>
-  {tree.family && (
-    <span className="badge text-white"
-      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-       {tree.family}
-    </span>
-  )}
-</div>
+      <div className="flex flex-wrap gap-2">
+        <span className="badge text-white"
+          style={{ background: 'rgba(45,90,39,0.7)', backdropFilter: 'blur(8px)', border: '1px solid rgba(82,160,67,0.4)' }}>
+           {tree.area}
+        </span>
+        {tree.native_exotic && (
+          <span className="badge text-white"
+            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            {tree.native_exotic}
+          </span>
+        )}
+        {tree.conservation_status && (
+          <span className="badge text-white"
+            style={{ background: 'rgba(180,40,40,0.6)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,100,100,0.3)' }}>
+            {tree.conservation_status}
+          </span>
+        )}
+        <span className="badge text-white"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+           {tree.tree_id}
+        </span>
+        {tree.family && (
+          <span className="badge text-white"
+            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+             {tree.family}
+          </span>
+        )}
+      </div>
 
       {/* ── Body ── */}
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-8">
@@ -717,55 +726,6 @@ export default function TreeDetail() {
           </RevealSection>
         )}
 
-        {/* Ecology & Uses — Tabbed */}
-{ecologyItems.length > 0 && (() => {
-  const tabs = [
-    {
-      key: 'ecology',
-      label: 'Ecology',
-      keys: ['Ecological Importance', 'Environmental Benefits', 'Wildlife Supported'],
-    },
-    {
-      key: 'uses',
-      label: 'Uses',
-      keys: ['Medicinal Uses', 'Economic Uses'],
-    },
-    {
-      key: 'cultural',
-      label: 'Cultural',
-      keys: ['Cultural Significance'],
-    },
-  ]
-
-  const allKeys = tabs.flatMap(t => t.keys)
-  const extraItems = ecologyItems.filter(item => !allKeys.includes(item.title))
-
-  if (extraItems.length > 0) {
-    tabs.push({ key: 'more', label: 'More', icon: '···', keys: extraItems.map(e => e.title) })
-  }
-
-  const availableTabs = tabs.filter(tab =>
-    tab.keys.some(k => ecologyItems.find(e => e.title === k))
-  )
-
-  return (
-    <RevealSection delay={0.05}>
-      <EcologyTabs ecologyItems={ecologyItems} tabs={availableTabs} dark={dark} />
-    </RevealSection>
-  )
-})()}
-
-        {/* Taxonomy */}
-        {(tree.kingdom || tree.family || tree.genus) && (
-          <RevealSection>
-            <div className="card p-6">
-              <h2 className="font-display text-2xl font-bold mb-6"
-                style={{ color: dark ? '#e6edf3' : '#111827' }}>🔬 Taxonomy</h2>
-              <TaxonomyTree tree={tree} dark={dark} />
-            </div>
-          </RevealSection>
-        )}
-
         {/* Map */}
         {tree.latitude && tree.longitude && (
           <RevealSection>
@@ -778,11 +738,11 @@ export default function TreeDetail() {
                 <MapContainer center={[tree.latitude, tree.longitude]} zoom={19}
                   style={{ height: '100%', width: '100%' }} maxZoom={22}>
                   <LayersControl position="topright">
-                    <LayersControl.BaseLayer checked name="Street">
+                    <LayersControl.BaseLayer name="Street">
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution="© OpenStreetMap contributors" maxNativeZoom={19} maxZoom={22} />
                     </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Satellite">
+                    <LayersControl.BaseLayer checked name="Satellite">
                       <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                         attribution="© Esri" maxNativeZoom={19} maxZoom={22} />
                     </LayersControl.BaseLayer>
@@ -835,6 +795,57 @@ export default function TreeDetail() {
           </RevealSection>
         )}
 
+
+        {/* Ecology & Uses — Tabbed */}
+{ecologyItems.length > 0 && (() => {
+  const tabs = [
+    {
+      key: 'ecology',
+      label: 'Ecology',
+      keys: ['Ecological Importance', 'Environmental Benefits', 'Wildlife Supported'],
+    },
+    {
+      key: 'uses',
+      label: 'Uses',
+      keys: ['Medicinal Uses', 'Economic Uses'],
+    },
+    {
+      key: 'cultural',
+      label: 'Cultural',
+      keys: ['Cultural Significance'],
+    },
+  ]
+
+  const allKeys = tabs.flatMap(t => t.keys)
+  const extraItems = ecologyItems.filter(item => !allKeys.includes(item.title))
+
+  if (extraItems.length > 0) {
+    tabs.push({ key: 'more', label: 'More', icon: '···', keys: extraItems.map(e => e.title) })
+  }
+
+  const availableTabs = tabs.filter(tab =>
+    tab.keys.some(k => ecologyItems.find(e => e.title === k))
+  )
+
+  return (
+    <RevealSection delay={0.05}>
+      <EcologyTabs ecologyItems={ecologyItems} tabs={availableTabs} dark={dark} />
+    </RevealSection>
+  )
+})()}
+
+        {/* Taxonomy */}
+        {(tree.kingdom || tree.family || tree.genus) && (
+          <RevealSection>
+            <div className="card p-6">
+              <h2 className="font-display text-2xl font-bold mb-6"
+                style={{ color: dark ? '#e6edf3' : '#111827' }}>🔬 Taxonomy</h2>
+              <TaxonomyTree tree={tree} dark={dark} />
+            </div>
+          </RevealSection>
+        )}
+
+        
         {/* Gallery */}
         <RevealSection>
           <div className="card p-5">
