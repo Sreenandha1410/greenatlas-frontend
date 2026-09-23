@@ -2,9 +2,21 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // ============================================================
-// O2 MOLECULE — travels from LEFT → CENTER → continues upward
+// REALISTIC O2 MOLECULE — subtle 3D scientific visualization
 // ============================================================
 function O2Molecule({ delay = 0, lane = 0 }) {
+  const atomStyle = {
+    position: 'absolute',
+    width: 23,
+    height: 23,
+    borderRadius: '50%',
+    background:
+      'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98) 0%, rgba(220,255,224,0.92) 10%, rgba(104,180,108,0.98) 34%, rgba(45,105,48,1) 72%, rgba(12,42,15,1) 100%)',
+    border: '1px solid rgba(218,255,221,0.55)',
+    boxShadow:
+      'inset -5px -6px 9px rgba(0,25,4,0.42), inset 3px 3px 5px rgba(255,255,255,0.28), 0 5px 12px rgba(0,0,0,0.28), 0 0 12px rgba(91,190,99,0.22)'
+  }
+
   return (
     <motion.div
       className="absolute pointer-events-none z-20"
@@ -12,92 +24,52 @@ function O2Molecule({ delay = 0, lane = 0 }) {
         left: 0,
         top: '50%',
         marginTop: lane,
-        width: 48,
-        height: 28
+        width: 58,
+        height: 30,
+        filter: 'drop-shadow(0 5px 7px rgba(0,0,0,0.2))'
       }}
-      initial={{
-        opacity: 0,
-        x: -90,
-        scale: 0.45,
-        rotate: -20
-      }}
+      initial={{ opacity: 0, x: -95, scale: 0.58, rotate: -8 }}
       animate={{
-        opacity: [0, 1, 1, 1, 0],
-        x: [-90, -35, 0, 35, 70],
-        y: [0, 0, -8, -35, -75],
-        scale: [0.45, 0.85, 1.15, 1, 0.65],
-        rotate: [-20, 0, 180, 250, 320]
+        opacity: [0, 0.95, 1, 0.95, 0],
+        x: [-95, -42, 0, 34, 72],
+        y: [0, 0, -5, -30, -70],
+        scale: [0.58, 0.88, 1, 0.94, 0.68],
+        rotate: [-8, -2, 3, 10, 18]
       }}
       transition={{
-        duration: 3.2,
+        duration: 3.8,
         delay,
         repeat: Infinity,
-        repeatDelay: 0.8,
+        repeatDelay: 0.55,
         ease: 'easeInOut',
-        times: [0, 0.3, 0.48, 0.7, 1]
+        times: [0, 0.27, 0.48, 0.72, 1]
       }}
     >
-      {/* O2 left atom */}
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1]
-        }}
-        transition={{
-          duration: 0.8,
-          repeat: Infinity
-        }}
-        style={{
-          position: 'absolute',
-          width: 20,
-          height: 20,
-          borderRadius: '50%',
-          left: 1,
-          top: 4,
-          background:
-            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
-          boxShadow:
-            '0 0 8px rgba(76,175,80,0.8), 0 0 18px rgba(76,175,80,0.35)'
-        }}
-      />
-
-      {/* Bond */}
       <div
         style={{
           position: 'absolute',
-          width: 15,
-          height: 4,
-          left: 17,
+          width: 20,
+          height: 6,
+          left: 19,
           top: 12,
-          borderRadius: 10,
+          borderRadius: 8,
           background:
-            'linear-gradient(90deg, #81c784, #c8e6c9, #81c784)',
-          boxShadow:
-            '0 0 5px rgba(129,199,132,0.8)'
+            'linear-gradient(180deg, rgba(229,255,231,0.95), rgba(91,155,95,0.92) 48%, rgba(28,72,31,0.95))',
+          border: '1px solid rgba(207,255,210,0.35)',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.35)'
         }}
       />
 
-      {/* O2 right atom */}
       <motion.div
-        animate={{
-          scale: [1, 1.15, 1]
-        }}
-        transition={{
-          duration: 0.8,
-          delay: 0.15,
-          repeat: Infinity
-        }}
-        style={{
-          position: 'absolute',
-          width: 20,
-          height: 20,
-          borderRadius: '50%',
-          right: 1,
-          top: 4,
-          background:
-            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
-          boxShadow:
-            '0 0 8px rgba(76,175,80,0.8), 0 0 18px rgba(76,175,80,0.35)'
-        }}
+        animate={{ y: [0, -0.6, 0], scale: [1, 1.035, 1] }}
+        transition={{ duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ ...atomStyle, left: 0, top: 3 }}
+      />
+
+      <motion.div
+        animate={{ y: [0, 0.6, 0], scale: [1, 1.035, 1] }}
+        transition={{ duration: 1.7, delay: 0.18, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ ...atomStyle, right: 0, top: 3 }}
       />
     </motion.div>
   )
@@ -105,9 +77,21 @@ function O2Molecule({ delay = 0, lane = 0 }) {
 
 
 // ============================================================
-// CO2 MOLECULE — travels from RIGHT → CENTER
+// REALISTIC CO2 MOLECULE — subtle 3D linear structure
 // ============================================================
 function CO2Molecule({ delay = 0, lane = 0 }) {
+  const oxygenStyle = {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: '50%',
+    background:
+      'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98) 0%, rgba(225,241,255,0.94) 11%, rgba(86,154,218,0.98) 38%, rgba(24,83,145,1) 74%, rgba(8,34,68,1) 100%)',
+    border: '1px solid rgba(213,235,255,0.58)',
+    boxShadow:
+      'inset -5px -6px 8px rgba(0,20,48,0.42), inset 3px 3px 5px rgba(255,255,255,0.3), 0 5px 11px rgba(0,0,0,0.25), 0 0 11px rgba(72,142,215,0.18)'
+  }
+
   return (
     <motion.div
       className="absolute pointer-events-none z-20"
@@ -115,126 +99,82 @@ function CO2Molecule({ delay = 0, lane = 0 }) {
         right: 0,
         top: '50%',
         marginTop: lane,
-        width: 64,
-        height: 28
+        width: 70,
+        height: 30,
+        filter: 'drop-shadow(0 5px 7px rgba(0,0,0,0.2))'
       }}
-      initial={{
-        opacity: 0,
-        x: 90,
-        scale: 0.45,
-        rotate: 20
-      }}
+      initial={{ opacity: 0, x: 95, scale: 0.58, rotate: 8 }}
       animate={{
-        opacity: [0, 1, 1, 1, 0],
-        x: [90, 45, 5, -5, -5],
-        y: [0, 0, 0, -4, -12],
-        scale: [0.45, 0.8, 1.1, 1.15, 0.15],
-        rotate: [20, 0, -180, -260, -360]
+        opacity: [0, 0.95, 1, 0.96, 0],
+        x: [95, 45, 5, -7, -10],
+        y: [0, 0, 1, -5, -13],
+        scale: [0.58, 0.88, 1, 1.02, 0.18],
+        rotate: [8, 3, 0, -5, -10]
       }}
       transition={{
-        duration: 3.2,
+        duration: 3.8,
         delay,
         repeat: Infinity,
-        repeatDelay: 0.8,
+        repeatDelay: 0.55,
         ease: 'easeInOut',
-        times: [0, 0.3, 0.46, 0.55, 1]
+        times: [0, 0.27, 0.47, 0.57, 1]
       }}
     >
-      {/* Oxygen atom */}
-      <motion.div
-        animate={{
-          scale: [1, 1.1, 1]
-        }}
-        transition={{
-          duration: 0.8,
-          repeat: Infinity
-        }}
-        style={{
-          position: 'absolute',
-          width: 18,
-          height: 18,
-          borderRadius: '50%',
-          left: 0,
-          top: 5,
-          background:
-            'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
-          boxShadow:
-            '0 0 8px rgba(66,165,245,0.8), 0 0 16px rgba(66,165,245,0.35)'
-        }}
-      />
-
-      {/* Bond */}
       <div
         style={{
           position: 'absolute',
-          width: 11,
-          height: 3,
+          height: 5,
+          width: 13,
           left: 17,
-          top: 13,
-          borderRadius: 10,
-          background: '#90caf9'
-        }}
-      />
-
-      {/* Carbon atom */}
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1]
-        }}
-        transition={{
-          duration: 0.8,
-          delay: 0.1,
-          repeat: Infinity
-        }}
-        style={{
-          position: 'absolute',
-          width: 23,
-          height: 23,
-          borderRadius: '50%',
-          left: 27,
-          top: 2,
+          top: 12,
+          borderRadius: 5,
           background:
-            'radial-gradient(circle at 30% 25%, #ffc1d5, #ec407a 48%, #ad1457)',
-          boxShadow:
-            '0 0 9px rgba(233,30,99,0.8), 0 0 18px rgba(233,30,99,0.3)'
+            'linear-gradient(180deg, rgba(230,243,255,0.95), rgba(91,139,188,0.92) 48%, rgba(23,56,89,0.95))',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.35)'
         }}
       />
-
-      {/* Bond */}
       <div
         style={{
           position: 'absolute',
-          width: 11,
-          height: 3,
-          left: 50,
-          top: 13,
-          borderRadius: 10,
-          background: '#90caf9'
+          height: 5,
+          width: 13,
+          left: 40,
+          top: 12,
+          borderRadius: 5,
+          background:
+            'linear-gradient(180deg, rgba(230,243,255,0.95), rgba(91,139,188,0.92) 48%, rgba(23,56,89,0.95))',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.35)'
         }}
       />
 
-      {/* Oxygen atom */}
       <motion.div
-        animate={{
-          scale: [1, 1.1, 1]
-        }}
-        transition={{
-          duration: 0.8,
-          delay: 0.2,
-          repeat: Infinity
-        }}
+        animate={{ scale: [1, 1.025, 1] }}
+        transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ ...oxygenStyle, left: 0, top: 5 }}
+      />
+
+      <motion.div
+        animate={{ scale: [1, 1.04, 1], y: [0, 0.5, 0] }}
+        transition={{ duration: 1.9, delay: 0.1, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           position: 'absolute',
-          width: 18,
-          height: 18,
+          width: 25,
+          height: 25,
+          left: 22,
+          top: 2,
           borderRadius: '50%',
-          right: 0,
-          top: 5,
           background:
-            'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
+            'radial-gradient(circle at 28% 20%, rgba(255,255,255,0.98) 0%, rgba(255,220,229,0.95) 10%, rgba(220,88,126,1) 36%, rgba(139,31,68,1) 73%, rgba(55,8,26,1) 100%)',
+          border: '1px solid rgba(255,220,230,0.58)',
           boxShadow:
-            '0 0 8px rgba(66,165,245,0.8), 0 0 16px rgba(66,165,245,0.35)'
+            'inset -6px -7px 10px rgba(45,0,18,0.44), inset 3px 3px 6px rgba(255,255,255,0.3), 0 5px 13px rgba(0,0,0,0.28), 0 0 11px rgba(218,76,120,0.16)'
         }}
+      />
+
+      <motion.div
+        animate={{ scale: [1, 1.025, 1] }}
+        transition={{ duration: 1.9, delay: 0.2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ ...oxygenStyle, right: 0, top: 5 }}
       />
     </motion.div>
   )
@@ -242,7 +182,7 @@ function CO2Molecule({ delay = 0, lane = 0 }) {
 
 
 // ============================================================
-// COLLISION EFFECT
+// REALISTIC COLLISION EFFECT — restrained energy transfer
 // ============================================================
 function CollisionEffect() {
   return (
@@ -251,90 +191,88 @@ function CollisionEffect() {
       style={{
         left: '50%',
         top: '50%',
+        width: 1,
+        height: 1,
         transform: 'translate(-50%, -50%)'
       }}
     >
-      {/* Main collision flash */}
       <motion.div
         animate={{
-          scale: [0, 0.8, 1.8, 2.5, 0],
-          opacity: [0, 1, 0.9, 0.35, 0]
+          scale: [0.2, 0.7, 1.15, 1.45, 0.2],
+          opacity: [0, 0.75, 0.45, 0.12, 0]
         }}
         transition={{
-          duration: 3.2,
+          duration: 3.8,
           repeat: Infinity,
-          repeatDelay: 0.8,
-          times: [0.42, 0.47, 0.51, 0.58, 0.7],
+          repeatDelay: 0.55,
+          times: [0.42, 0.47, 0.52, 0.62, 0.78],
           ease: 'easeOut'
         }}
         style={{
           position: 'absolute',
-          width: 70,
-          height: 70,
+          width: 90,
+          height: 90,
+          left: -45,
+          top: -45,
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(129,199,132,0.7) 20%, rgba(76,175,80,0.25) 50%, transparent 72%)'
+            'radial-gradient(circle, rgba(238,255,240,0.82) 0%, rgba(145,205,150,0.32) 16%, rgba(70,130,74,0.1) 42%, transparent 72%)',
+          filter: 'blur(1px)'
         }}
       />
 
-      {/* Ring */}
       <motion.div
         animate={{
-          scale: [0.2, 1, 2.2],
-          opacity: [0, 0.9, 0]
+          scale: [0.35, 0.8, 1.7],
+          opacity: [0, 0.65, 0]
         }}
         transition={{
-          duration: 3.2,
+          duration: 3.8,
           repeat: Infinity,
-          repeatDelay: 0.8,
-          times: [0.45, 0.52, 0.7]
+          repeatDelay: 0.55,
+          times: [0.45, 0.53, 0.72],
+          ease: 'easeOut'
         }}
         style={{
           position: 'absolute',
-          width: 45,
-          height: 45,
+          width: 48,
+          height: 48,
+          left: -24,
+          top: -24,
           borderRadius: '50%',
-          border: '2px solid rgba(129,199,132,0.9)',
-          boxShadow:
-            '0 0 20px rgba(76,175,80,0.7)'
+          border: '1px solid rgba(173,221,176,0.65)',
+          boxShadow: '0 0 16px rgba(103,166,108,0.25)'
         }}
       />
 
-      {/* Collision sparks */}
       {[0, 1, 2, 3, 4, 5].map((i) => {
-
         const angle = i * 60
+        const distance = 34 + (i % 2) * 12
 
         return (
           <motion.div
             key={i}
             animate={{
-              x: [
-                0,
-                Math.cos((angle * Math.PI) / 180) * 55
-              ],
-              y: [
-                0,
-                Math.sin((angle * Math.PI) / 180) * 55
-              ],
-              opacity: [0, 1, 0],
-              scale: [0.3, 1, 0]
+              x: [0, Math.cos((angle * Math.PI) / 180) * distance],
+              y: [0, Math.sin((angle * Math.PI) / 180) * distance],
+              opacity: [0, 0.72, 0],
+              scale: [0.4, 0.8, 0]
             }}
             transition={{
-              duration: 3.2,
+              duration: 3.8,
               repeat: Infinity,
-              repeatDelay: 0.8,
-              delay: 0.01 * i,
-              times: [0.45, 0.55, 0.72]
+              repeatDelay: 0.55,
+              delay: i * 0.015,
+              times: [0.45, 0.56, 0.72],
+              ease: 'easeOut'
             }}
             style={{
               position: 'absolute',
-              width: 6,
-              height: 6,
+              width: 3,
+              height: 3,
               borderRadius: '50%',
-              background: '#c8e6c9',
-              boxShadow:
-                '0 0 8px #81c784'
+              background: 'rgba(210,239,213,0.9)',
+              boxShadow: '0 0 5px rgba(142,202,147,0.5)'
             }}
           />
         )
@@ -345,7 +283,7 @@ function CollisionEffect() {
 
 
 // ============================================================
-// EXTRA O2 — remains after CO2 absorption
+// EXTRA O2 — realistic oxygen atoms leaving the process
 // ============================================================
 function ExtraOxygen({ delay = 0, x = 0 }) {
   return (
@@ -353,37 +291,35 @@ function ExtraOxygen({ delay = 0, x = 0 }) {
       className="absolute pointer-events-none z-25"
       style={{
         left: `calc(50% + ${x}px)`,
-        top: '50%'
+        top: '50%',
+        width: 17,
+        height: 17
       }}
-      initial={{
-        opacity: 0,
-        x: 0,
-        y: 0,
-        scale: 0.4
-      }}
+      initial={{ opacity: 0, x: 0, y: 0, scale: 0.35 }}
       animate={{
-        opacity: [0, 1, 1, 0],
-        x: [0, x * 0.4, x * 0.8],
-        y: [0, -45, -115],
-        scale: [0.4, 1, 0.65]
+        opacity: [0, 0.9, 0.75, 0],
+        x: [0, x * 0.35, x * 0.75],
+        y: [0, -38, -108],
+        scale: [0.35, 0.82, 0.55]
       }}
       transition={{
-        duration: 2.6,
+        duration: 3,
         delay,
         repeat: Infinity,
-        repeatDelay: 1.2,
+        repeatDelay: 0.95,
         ease: 'easeOut'
       }}
     >
       <div
         style={{
-          width: 15,
-          height: 15,
+          width: 17,
+          height: 17,
           borderRadius: '50%',
           background:
-            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a, #2e7d32)',
+            'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98), rgba(218,252,221,0.9) 12%, rgba(91,169,96,0.96) 40%, rgba(31,82,35,1) 78%, rgba(9,28,11,1))',
+          border: '1px solid rgba(220,255,224,0.45)',
           boxShadow:
-            '0 0 8px rgba(76,175,80,0.9), 0 0 18px rgba(76,175,80,0.45)'
+            'inset -4px -5px 7px rgba(0,20,3,0.42), inset 2px 2px 4px rgba(255,255,255,0.25), 0 4px 10px rgba(0,0,0,0.25)'
         }}
       />
     </motion.div>
