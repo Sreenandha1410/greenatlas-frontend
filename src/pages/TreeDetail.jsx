@@ -540,27 +540,26 @@ export default function TreeDetail() {
 
 
             {tree.tamil_name && (
-
+                <p
+                  className="text-gray-300 mb-1"
+                  style={{
+                    fontFamily: 'Cormorant Garamond, serif',
+                    fontSize: '1.4rem',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  {tree.tamil_name}
+                </p>
+              )}
+              
               <p
-                className="text-gray-300 mb-1"
+                className="italic text-gray-300 mb-4"
                 style={{
-                  fontFamily:
-                    'Cormorant Garamond, serif',
-                  fontSize: '1.2rem',
-                  fontStyle: 'italic'
+                  fontSize: '1.15rem'
                 }}
               >
-                {tree.tamil_name && (
-                    <p className="text-gray-500 dark:text-gray-400 mt-1 text-lg">
-                      {tree.tamil_name}
-                    </p>
-                  )}
-                  
-                <p className="italic text-gray-400 text-base mt-1">
-                  {tree.botanical_name}
-                </p>
-
-
+                {tree.botanical_name}
+              </p>
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
 
