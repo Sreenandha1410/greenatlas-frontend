@@ -550,15 +550,15 @@ export default function TreeDetail() {
                   fontStyle: 'italic'
                 }}
               >
-                {tree.tamil_name}
-              </p>
-
-            )}
-
-
-            <p className="italic text-gray-300 text-sm mb-4">
-              {tree.botanical_name}
-            </p>
+                {tree.tamil_name && (
+                    <p className="text-gray-500 dark:text-gray-400 mt-1 text-lg">
+                      {tree.tamil_name}
+                    </p>
+                  )}
+                  
+                <p className="italic text-gray-400 text-base mt-1">
+                  {tree.botanical_name}
+                </p>
 
 
             {/* Badges */}
