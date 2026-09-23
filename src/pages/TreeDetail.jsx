@@ -534,32 +534,30 @@ export default function TreeDetail() {
             }}
           >
 
-            <h1 className="font-display text-5xl md:text-6xl font-bold text-white mb-2 leading-tight">
-              {tree.common_name}
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
+                  {tree.common_name}
             </h1>
-
-
-            {tree.tamil_name && (
+                
+                {tree.tamil_name && (
+                  <p
+                    className="text-gray-200 mb-1 font-bold"
+                    style={{
+                      fontFamily: 'Cormorant Garamond, serif',
+                      fontSize: '1.4rem'
+                    }}
+                  >
+                    {tree.tamil_name}
+                  </p>
+                )}
+                
                 <p
-                  className="text-gray-300 mb-1"
+                  className="italic text-gray-300 mb-4"
                   style={{
-                    fontFamily: 'Cormorant Garamond, serif',
-                    fontSize: '1.4rem',
-                    fontStyle: 'italic'
+                    fontSize: '1.15rem'
                   }}
                 >
-                  {tree.tamil_name}
+                  {tree.botanical_name}
                 </p>
-              )}
-              
-              <p
-                className="italic text-gray-300 mb-4"
-                style={{
-                  fontSize: '1.15rem'
-                }}
-              >
-                {tree.botanical_name}
-              </p>
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
 
