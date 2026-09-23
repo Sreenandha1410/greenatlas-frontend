@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet'
@@ -13,7 +13,6 @@ import {
   deleteTreeImage
 } from '../api'
 import ImageUpload from '../components/ImageUpload'
-import { useScrollReveal } from '../hooks/useScrollReveal'
 import TaxonomyTree from '../components/TaxonomyTree'
 import { useDarkMode } from '../context/DarkModeContext'
 import QRScanAnimation from '../components/QRScanAnimation'
@@ -59,174 +58,55 @@ function RevealSection({ children, delay = 0 }) {
   )
 }
 
-
-function EcologyTabs({ ecologyItems, tabs, dark }) {
-  const [activeTab, setActiveTab] = useState(
-    tabs[0]?.key || 'ecology'
-  )
-
-  const activeItems = ecologyItems.filter(item =>
-    tabs.find(t => t.key === activeTab)?.keys.includes(item.title)
-  )
-
+function EcologyInfoCard({ number, title, content, dark }) {
   return (
-    <div className="card overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.35 }}
+      whileHover={{ y: -3 }}
+      className="group relative rounded-2xl p-5 transition-all duration-300"
+      style={{
+        background: dark ? '#161b22' : '#f8fbf7',
+        border: `1px solid ${dark ? '#30363d' : '#e1eadf'}`
+      }}
+    >
+      <div
+        className="absolute left-0 top-5 bottom-5 w-1 rounded-r-full"
+        style={{ background: '#3f7d3a' }}
+      />
 
-      <div className="px-5 pt-5 pb-0">
-
-        <h2
-          className="font-display text-2xl font-bold mb-4"
-          style={{
-            color: dark ? '#e6edf3' : '#111827'
-          }}
-        >
-          Ecology & Uses
-        </h2>
-
-        {/* Tab bar */}
+      <div className="flex gap-4">
         <div
-          className="flex gap-2 border-b"
+          className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
           style={{
-            borderColor: dark ? '#30363d' : '#e5e7eb'
+            background: dark ? 'rgba(63,125,58,0.18)' : '#e7f2e4',
+            color: dark ? '#9bd494' : '#356b31'
           }}
         >
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-xl transition-all border-b-2 -mb-px"
-              style={{
-                borderColor:
-                  activeTab === tab.key
-                    ? '#2d5a27'
-                    : 'transparent',
+          <span className="text-xs font-bold tracking-wider">
+            {number}
+          </span>
+        </div>
 
-                background:
-                  activeTab === tab.key
-                    ? (dark
-                        ? 'rgba(45,90,39,0.2)'
-                        : '#f0f7ee')
-                    : 'transparent',
+        <div className="flex-1 min-w-0">
+          <h3
+            className="font-semibold text-base mb-2"
+            style={{ color: dark ? '#f0f6fc' : '#172016' }}
+          >
+            {title}
+          </h3>
 
-                color:
-                  activeTab === tab.key
-                    ? '#2d5a27'
-                    : (dark
-                        ? '#8b949e'
-                        : '#6b7280')
-              }}
-            >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          <p
+            className="text-sm leading-7"
+            style={{ color: dark ? '#b8c2cc' : '#59665a' }}
+          >
+            {content}
+          </p>
         </div>
       </div>
-
-
-      {/* Tab content */}
-      <div className="p-5 space-y-3">
-
-        <AnimatePresence mode="wait">
-
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
-          >
-
-            {activeItems.length > 0
-              ? activeItems.map(({ title, content }) => {
-
-                  const meta = {
-                    emoji: '🌱',
-                    color: '#2d5a27',
-                    light: '#f0f7ee'
-                  }
-
-                  return (
-                    <div
-                      key={title}
-                      className="flex gap-4 p-4 rounded-2xl mb-3"
-                      style={{
-                        background: dark ? '#161b22' : '#fff',
-                        border:
-                          `1px solid ${
-                            dark
-                              ? '#30363d'
-                              : '#f3f4f6'
-                          }`
-                      }}
-                    >
-
-                      {/* Icon */}
-                      <div
-                        className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                        style={{
-                          background: meta.color
-                        }}
-                      >
-                        {meta.emoji}
-                      </div>
-
-
-                      {/* Text */}
-                      <div className="flex-1">
-
-                        <h3
-                          className="font-bold text-sm mb-1"
-                          style={{
-                            color:
-                              dark
-                                ? '#e6edf3'
-                                : '#111827'
-                          }}
-                        >
-                          {title
-                            .replace(/^[\p{Emoji}\s]+/u, '')
-                            .trim()}
-                        </h3>
-
-                        <p
-                          className="text-sm leading-relaxed"
-                          style={{
-                            color:
-                              dark
-                                ? '#c9d1d9'
-                                : '#4b5563'
-                          }}
-                        >
-                          {content}
-                        </p>
-
-                      </div>
-                    </div>
-                  )
-                })
-
-              : (
-                <p
-                  className="text-sm text-center py-6"
-                  style={{
-                    color:
-                      dark
-                        ? '#6e7681'
-                        : '#9ca3af'
-                  }}
-                >
-                  No information available for this category.
-                </p>
-              )
-            }
-
-          </motion.div>
-
-        </AnimatePresence>
-
-      </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -412,38 +292,31 @@ export default function TreeDetail() {
 
 
   const ecologyItems = [
-
     {
-      title: ' Ecological Importance',
+      title: 'Ecological Importance',
       content: tree.ecological_importance
     },
-
     {
-      title: ' Medicinal Uses',
+      title: 'Medicinal Uses',
       content: tree.medicinal_uses
     },
-
     {
-      title: ' Economic Uses',
+      title: 'Economic Uses',
       content: tree.economic_uses
     },
-
     {
-      title: ' Environmental Benefits',
+      title: 'Environmental Benefits',
       content: tree.environmental_benefits
     },
-
     {
-      title: ' Wildlife Supported',
+      title: 'Wildlife Supported',
       content: tree.wildlife_supported
     },
-
     {
-      title: ' Cultural Significance',
+      title: 'Cultural Significance',
       content: tree.cultural_significance
-    },
-
-  ].filter(i => i.content)
+    }
+  ].filter(item => item.content)
 
 
   return (
@@ -649,6 +522,71 @@ export default function TreeDetail() {
         </div>
 
       </div>
+
+
+      {/* ── Sona Campus Presence ── */}
+      <RevealSection delay={0.05}>
+        <div className="max-w-5xl mx-auto px-4 pt-6">
+          <div
+            className="relative overflow-hidden rounded-2xl p-6"
+            style={{
+              background: dark
+                ? 'linear-gradient(135deg, #142015, #1d2b1d)'
+                : 'linear-gradient(135deg, #f1f8ef, #e7f2e4)',
+              border: `1px solid ${dark ? '#304a30' : '#d5e6d0'}`,
+              boxShadow: '0 8px 28px rgba(45,90,39,0.08)'
+            }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+              <div>
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.2em]"
+                  style={{
+                    color: dark ? '#81c784' : '#356b31'
+                  }}
+                >
+                  On Sona Campus
+                </p>
+
+                <p
+                  className="text-4xl font-bold mt-2"
+                  style={{
+                    color: dark ? '#ffffff' : '#172016'
+                  }}
+                >
+                  {sameSpecies.length + 1}
+                </p>
+
+                <p
+                  className="text-sm mt-1"
+                  style={{
+                    color: dark ? '#9da7b0' : '#667064'
+                  }}
+                >
+                  Trees of this species recorded on campus
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById('campus-map')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="self-start sm:self-center text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                style={{
+                  color: dark ? '#b7e3b1' : '#356b31',
+                  background: dark ? 'rgba(129,199,132,0.12)' : '#ffffff',
+                  border: `1px solid ${dark ? '#3c5d3c' : '#cfe1ca'}`
+                }}
+              >
+                View on campus map →
+              </button>
+            </div>
+          </div>
+        </div>
+      </RevealSection>
 
 
       {/* =========================================================
@@ -953,7 +891,7 @@ export default function TreeDetail() {
 
           <RevealSection>
 
-            <div className="card overflow-hidden">
+            <div id="campus-map" className="card overflow-hidden">
 
               <div
                 className="px-5 py-3 border-b border-gray-100"
@@ -1092,7 +1030,7 @@ export default function TreeDetail() {
               >
                 🔴 This tree &nbsp;|&nbsp;
                 🟢 Same species
-                ({sameSpecies.length} on campus)
+                ({sameSpecies.length + 1} of this species on campus)
               </div>
 
             </div>
@@ -1186,90 +1124,96 @@ export default function TreeDetail() {
         )}
 
 
-        {/* Ecology & Uses — Tabbed */}
-        {ecologyItems.length > 0 && (() => {
+        {/* Ecology & Uses */}
+        {ecologyItems.length > 0 && (
+          <RevealSection delay={0.05}>
+            <section className="card overflow-hidden">
+              <div
+                className="px-6 pt-7 pb-6 border-b"
+                style={{
+                  borderColor: dark ? '#30363d' : '#e5e7eb'
+                }}
+              >
+                <h2
+                  className="font-display text-3xl font-bold"
+                  style={{
+                    color: dark ? '#e6edf3' : '#172016'
+                  }}
+                >
+                  Ecology & Uses
+                </h2>
+              </div>
 
-          const tabs = [
+              <div className="grid md:grid-cols-2">
+                <div
+                  className="p-6 space-y-4"
+                  style={{
+                    borderRight:
+                      typeof window !== 'undefined' && window.innerWidth >= 768
+                        ? `1px solid ${dark ? '#30363d' : '#e5e7eb'}`
+                        : 'none'
+                  }}
+                >
+                  <p
+                    className="text-xs font-bold uppercase tracking-widest mb-5"
+                    style={{
+                      color: dark ? '#81c784' : '#2d6a32'
+                    }}
+                  >
+                    Ecology
+                  </p>
 
-            {
-              key: 'ecology',
-              label: 'Ecology',
-              keys: [
-                'Ecological Importance',
-                'Environmental Benefits',
-                'Wildlife Supported'
-              ]
-            },
+                  {ecologyItems
+                    .filter(item =>
+                      [
+                        'Ecological Importance',
+                        'Environmental Benefits',
+                        'Wildlife Supported'
+                      ].includes(item.title)
+                    )
+                    .map((item, index) => (
+                      <EcologyInfoCard
+                        key={item.title}
+                        number={String(index + 1).padStart(2, '0')}
+                        title={item.title}
+                        content={item.content}
+                        dark={dark}
+                      />
+                    ))}
+                </div>
 
-            {
-              key: 'uses',
-              label: 'Uses',
-              keys: [
-                'Medicinal Uses',
-                'Economic Uses'
-              ]
-            },
+                <div className="p-6 space-y-4">
+                  <p
+                    className="text-xs font-bold uppercase tracking-widest mb-5"
+                    style={{
+                      color: dark ? '#81c784' : '#2d6a32'
+                    }}
+                  >
+                    Uses & Heritage
+                  </p>
 
-            {
-              key: 'cultural',
-              label: 'Cultural',
-              keys: [
-                'Cultural Significance'
-              ]
-            }
-
-          ]
-
-
-          const allKeys =
-            tabs.flatMap(t => t.keys)
-
-
-          const extraItems =
-            ecologyItems.filter(
-              item => !allKeys.includes(item.title)
-            )
-
-
-          if (extraItems.length > 0) {
-
-            tabs.push({
-              key: 'more',
-              label: 'More',
-              icon: '···',
-              keys: extraItems.map(
-                e => e.title
-              )
-            })
-
-          }
-
-
-          const availableTabs =
-            tabs.filter(tab =>
-              tab.keys.some(k =>
-                ecologyItems.find(
-                  e => e.title === k
-                )
-              )
-            )
-
-
-          return (
-
-            <RevealSection delay={0.05}>
-
-              <EcologyTabs
-                ecologyItems={ecologyItems}
-                tabs={availableTabs}
-                dark={dark}
-              />
-
-            </RevealSection>
-
-          )
-
-        })()}
+                  {ecologyItems
+                    .filter(item =>
+                      [
+                        'Medicinal Uses',
+                        'Economic Uses',
+                        'Cultural Significance'
+                      ].includes(item.title)
+                    )
+                    .map((item, index) => (
+                      <EcologyInfoCard
+                        key={item.title}
+                        number={String(index + 4).padStart(2, '0')}
+                        title={item.title}
+                        content={item.content}
+                        dark={dark}
+                      />
+                    ))}
+                </div>
+              </div>
+            </section>
+          </RevealSection>
+        )}
 
 
         {/* Taxonomy */}
