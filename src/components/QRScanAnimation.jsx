@@ -53,7 +53,8 @@ function O2Molecule({ delay = 0, lane = 0 }) {
           borderRadius: '50%',
           left: 1,
           top: 4,
-          background: 'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
+          background:
+            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
           boxShadow:
             '0 0 8px rgba(76,175,80,0.8), 0 0 18px rgba(76,175,80,0.35)'
         }}
@@ -68,8 +69,10 @@ function O2Molecule({ delay = 0, lane = 0 }) {
           left: 17,
           top: 12,
           borderRadius: 10,
-          background: 'linear-gradient(90deg, #81c784, #c8e6c9, #81c784)',
-          boxShadow: '0 0 5px rgba(129,199,132,0.8)'
+          background:
+            'linear-gradient(90deg, #81c784, #c8e6c9, #81c784)',
+          boxShadow:
+            '0 0 5px rgba(129,199,132,0.8)'
         }}
       />
 
@@ -90,7 +93,8 @@ function O2Molecule({ delay = 0, lane = 0 }) {
           borderRadius: '50%',
           right: 1,
           top: 4,
-          background: 'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
+          background:
+            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a 45%, #2e7d32)',
           boxShadow:
             '0 0 8px rgba(76,175,80,0.8), 0 0 18px rgba(76,175,80,0.35)'
         }}
@@ -98,6 +102,7 @@ function O2Molecule({ delay = 0, lane = 0 }) {
     </motion.div>
   )
 }
+
 
 // ============================================================
 // CO2 MOLECULE — travels from RIGHT → CENTER
@@ -151,7 +156,8 @@ function CO2Molecule({ delay = 0, lane = 0 }) {
           borderRadius: '50%',
           left: 0,
           top: 5,
-          background: 'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
+          background:
+            'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
           boxShadow:
             '0 0 8px rgba(66,165,245,0.8), 0 0 16px rgba(66,165,245,0.35)'
         }}
@@ -224,7 +230,8 @@ function CO2Molecule({ delay = 0, lane = 0 }) {
           borderRadius: '50%',
           right: 0,
           top: 5,
-          background: 'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
+          background:
+            'radial-gradient(circle at 30% 25%, #d9ecff, #42a5f5 50%, #1565c0)',
           boxShadow:
             '0 0 8px rgba(66,165,245,0.8), 0 0 16px rgba(66,165,245,0.35)'
         }}
@@ -232,6 +239,7 @@ function CO2Molecule({ delay = 0, lane = 0 }) {
     </motion.div>
   )
 }
+
 
 // ============================================================
 // COLLISION EFFECT
@@ -287,20 +295,28 @@ function CollisionEffect() {
           height: 45,
           borderRadius: '50%',
           border: '2px solid rgba(129,199,132,0.9)',
-          boxShadow: '0 0 20px rgba(76,175,80,0.7)'
+          boxShadow:
+            '0 0 20px rgba(76,175,80,0.7)'
         }}
       />
 
       {/* Collision sparks */}
       {[0, 1, 2, 3, 4, 5].map((i) => {
+
         const angle = i * 60
 
         return (
           <motion.div
             key={i}
             animate={{
-              x: [0, Math.cos((angle * Math.PI) / 180) * 55],
-              y: [0, Math.sin((angle * Math.PI) / 180) * 55],
+              x: [
+                0,
+                Math.cos((angle * Math.PI) / 180) * 55
+              ],
+              y: [
+                0,
+                Math.sin((angle * Math.PI) / 180) * 55
+              ],
               opacity: [0, 1, 0],
               scale: [0.3, 1, 0]
             }}
@@ -317,7 +333,8 @@ function CollisionEffect() {
               height: 6,
               borderRadius: '50%',
               background: '#c8e6c9',
-              boxShadow: '0 0 8px #81c784'
+              boxShadow:
+                '0 0 8px #81c784'
             }}
           />
         )
@@ -325,6 +342,7 @@ function CollisionEffect() {
     </motion.div>
   )
 }
+
 
 // ============================================================
 // EXTRA O2 — remains after CO2 absorption
@@ -362,7 +380,8 @@ function ExtraOxygen({ delay = 0, x = 0 }) {
           width: 15,
           height: 15,
           borderRadius: '50%',
-          background: 'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a, #2e7d32)',
+          background:
+            'radial-gradient(circle at 30% 25%, #e8ffe8, #66bb6a, #2e7d32)',
           boxShadow:
             '0 0 8px rgba(76,175,80,0.9), 0 0 18px rgba(76,175,80,0.45)'
         }}
@@ -371,26 +390,42 @@ function ExtraOxygen({ delay = 0, x = 0 }) {
   )
 }
 
+
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
 export default function QRScanAnimation({ tree, onDone }) {
+
   const [phase, setPhase] = useState(0)
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 800)
+
+    const t1 = setTimeout(
+      () => setPhase(1),
+      800
+    )
 
     return () => clearTimeout(t1)
+
   }, [])
 
+
   return (
+
     <AnimatePresence>
+
       {phase < 2 && (
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.4 }}
+          exit={{
+            opacity: 0,
+            scale: 1.05
+          }}
+          transition={{
+            duration: 0.4
+          }}
           className="fixed inset-0 z-[999] flex flex-col items-center justify-between overflow-hidden py-10 px-4"
           style={{
             background:
@@ -401,6 +436,7 @@ export default function QRScanAnimation({ tree, onDone }) {
           {/* =====================================================
               BACKGROUND GLOW
           ====================================================== */}
+
           <motion.div
             animate={{
               scale: [1, 1.3, 1],
@@ -417,51 +453,80 @@ export default function QRScanAnimation({ tree, onDone }) {
               height: 400,
               top: '50%',
               left: '50%',
-              transform: 'translate(-50%, -50%)',
+              transform:
+                'translate(-50%, -50%)',
               background:
                 'radial-gradient(circle, rgba(82,160,67,0.25) 0%, transparent 70%)'
             }}
           />
 
+
           {/* =====================================================
               TOP — TREE NAME
           ====================================================== */}
+
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            initial={{
+              opacity: 0,
+              y: -20
+            }}
+            animate={
+              phase >= 1
+                ? {
+                    opacity: 1,
+                    y: 0
+                  }
+                : {}
+            }
+            transition={{
+              delay: 0.3,
+              duration: 0.5
+            }}
             className="text-center relative z-10 mt-4"
           >
+
             <p
               className="text-xs font-bold tracking-widest uppercase mb-2"
-              style={{ color: '#81c784' }}
+              style={{
+                color: '#81c784'
+              }}
             >
               You are looking at
             </p>
 
+
             <h1
               className="text-3xl font-bold text-white text-center mb-1"
-              style={{ fontFamily: 'Cinzel, serif' }}
+              style={{
+                fontFamily: 'Cinzel, serif'
+              }}
             >
               {tree?.common_name || 'Green Atlas'}
             </h1>
 
+
             <p
               className="italic text-sm"
-              style={{ color: '#81c784' }}
+              style={{
+                color: '#81c784'
+              }}
             >
               {tree?.botanical_name}
             </p>
+
           </motion.div>
+
 
           {/* =====================================================
               MIDDLE — O2 + CO2 PROCESS
           ====================================================== */}
+
           <div className="relative flex gap-4 z-10 w-full max-w-sm mx-auto items-stretch">
 
             {/* =================================================
                 ANIMATION FIELD
             ================================================== */}
+
             <div
               className="absolute pointer-events-none overflow-hidden"
               style={{
@@ -473,33 +538,79 @@ export default function QRScanAnimation({ tree, onDone }) {
             >
 
               {phase >= 1 && (
+
                 <>
+
                   {/* O2 coming from LEFT */}
-                  <O2Molecule delay={0} lane={-35} />
-                  <O2Molecule delay={1.1} lane={20} />
-                  <O2Molecule delay={2.2} lane={-5} />
+                  <O2Molecule
+                    delay={0}
+                    lane={-35}
+                  />
+
+                  <O2Molecule
+                    delay={1.1}
+                    lane={20}
+                  />
+
+                  <O2Molecule
+                    delay={2.2}
+                    lane={-5}
+                  />
+
 
                   {/* CO2 coming from RIGHT */}
-                  <CO2Molecule delay={0.25} lane={35} />
-                  <CO2Molecule delay={1.35} lane={-15} />
-                  <CO2Molecule delay={2.45} lane={5} />
+                  <CO2Molecule
+                    delay={0.25}
+                    lane={35}
+                  />
+
+                  <CO2Molecule
+                    delay={1.35}
+                    lane={-15}
+                  />
+
+                  <CO2Molecule
+                    delay={2.45}
+                    lane={5}
+                  />
+
 
                   {/* Central collision */}
                   <CollisionEffect />
 
+
                   {/* Extra O2 remaining after CO2 absorption */}
-                  <ExtraOxygen delay={0.6} x={-20} />
-                  <ExtraOxygen delay={1.4} x={15} />
-                  <ExtraOxygen delay={2.3} x={-8} />
-                  <ExtraOxygen delay={3.1} x={25} />
+                  <ExtraOxygen
+                    delay={0.6}
+                    x={-20}
+                  />
+
+                  <ExtraOxygen
+                    delay={1.4}
+                    x={15}
+                  />
+
+                  <ExtraOxygen
+                    delay={2.3}
+                    x={-8}
+                  />
+
+                  <ExtraOxygen
+                    delay={3.1}
+                    x={25}
+                  />
+
                 </>
+
               )}
 
             </div>
 
+
             {/* =================================================
                 O2 CARD
             ================================================== */}
+
             <motion.div
               initial={{
                 opacity: 0,
@@ -523,8 +634,10 @@ export default function QRScanAnimation({ tree, onDone }) {
               }}
               className="flex-1 flex flex-col items-center px-4 py-5 rounded-2xl"
               style={{
-                background: 'rgba(82,160,67,0.15)',
-                border: '1.5px solid rgba(82,160,67,0.4)',
+                background:
+                  'rgba(82,160,67,0.15)',
+                border:
+                  '1.5px solid rgba(82,160,67,0.4)',
                 backdropFilter: 'blur(12px)'
               }}
             >
@@ -537,6 +650,7 @@ export default function QRScanAnimation({ tree, onDone }) {
                   height: 40
                 }}
               >
+
                 <motion.div
                   animate={{
                     scale: [1, 1.15, 1],
@@ -560,6 +674,7 @@ export default function QRScanAnimation({ tree, onDone }) {
                   }}
                 />
 
+
                 <motion.div
                   animate={{
                     scaleX: [1, 1.3, 1]
@@ -572,12 +687,14 @@ export default function QRScanAnimation({ tree, onDone }) {
                   style={{
                     position: 'absolute',
                     height: 3,
-                    background: 'rgba(129,199,132,0.9)',
+                    background:
+                      'rgba(129,199,132,0.9)',
                     width: 14,
                     left: 21,
                     top: 18
                   }}
                 />
+
 
                 <motion.div
                   animate={{
@@ -602,7 +719,9 @@ export default function QRScanAnimation({ tree, onDone }) {
                       '0 0 12px rgba(76,175,80,0.7)'
                   }}
                 />
+
               </div>
+
 
               <span
                 className="text-2xl font-black mb-1"
@@ -613,6 +732,7 @@ export default function QRScanAnimation({ tree, onDone }) {
               >
                 O₂
               </span>
+
 
               <motion.span
                 initial={{
@@ -636,8 +756,20 @@ export default function QRScanAnimation({ tree, onDone }) {
                   color: '#c8e6c9'
                 }}
               >
-                {tree?.o2_produced || '~100 kg/yr'}
+                {/* DAILY VALUE FROM NEON */}
+                {tree?.o2_produced_daily || '—'}
               </motion.span>
+
+
+              <span
+                className="text-xs mt-1 text-center"
+                style={{
+                  color: '#81c784aa'
+                }}
+              >
+                kg / day
+              </span>
+
 
               <span
                 className="text-xs mt-1 text-center"
@@ -647,11 +779,14 @@ export default function QRScanAnimation({ tree, onDone }) {
               >
                 Oxygen Produced
               </span>
+
             </motion.div>
+
 
             {/* =================================================
                 CO2 CARD
             ================================================== */}
+
             <motion.div
               initial={{
                 opacity: 0,
@@ -675,8 +810,10 @@ export default function QRScanAnimation({ tree, onDone }) {
               }}
               className="flex-1 flex flex-col items-center px-4 py-5 rounded-2xl"
               style={{
-                background: 'rgba(30,100,180,0.15)',
-                border: '1.5px solid rgba(100,160,255,0.35)',
+                background:
+                  'rgba(30,100,180,0.15)',
+                border:
+                  '1.5px solid rgba(100,160,255,0.35)',
                 backdropFilter: 'blur(12px)'
               }}
             >
@@ -689,6 +826,7 @@ export default function QRScanAnimation({ tree, onDone }) {
                   height: 40
                 }}
               >
+
                 <motion.div
                   animate={{
                     scale: [1, 1.12, 1]
@@ -711,16 +849,19 @@ export default function QRScanAnimation({ tree, onDone }) {
                   }}
                 />
 
+
                 <motion.div
                   style={{
                     position: 'absolute',
                     height: 3,
-                    background: 'rgba(144,202,249,0.8)',
+                    background:
+                      'rgba(144,202,249,0.8)',
                     width: 10,
                     left: 17,
                     top: 19
                   }}
                 />
+
 
                 <motion.div
                   animate={{
@@ -745,16 +886,19 @@ export default function QRScanAnimation({ tree, onDone }) {
                   }}
                 />
 
+
                 <motion.div
                   style={{
                     position: 'absolute',
                     height: 3,
-                    background: 'rgba(144,202,249,0.8)',
+                    background:
+                      'rgba(144,202,249,0.8)',
                     width: 10,
                     left: 46,
                     top: 19
                   }}
                 />
+
 
                 <motion.div
                   animate={{
@@ -778,7 +922,9 @@ export default function QRScanAnimation({ tree, onDone }) {
                       '0 0 10px rgba(66,165,245,0.7)'
                   }}
                 />
+
               </div>
+
 
               <span
                 className="text-2xl font-black mb-1"
@@ -789,6 +935,7 @@ export default function QRScanAnimation({ tree, onDone }) {
               >
                 CO₂
               </span>
+
 
               <motion.span
                 initial={{
@@ -812,8 +959,20 @@ export default function QRScanAnimation({ tree, onDone }) {
                   color: '#bbdefb'
                 }}
               >
-                {tree?.co2_absorbed || '~250 kg/yr'}
+                {/* DAILY VALUE FROM NEON */}
+                {tree?.co2_absorbed_daily || '—'}
               </motion.span>
+
+
+              <span
+                className="text-xs mt-1 text-center"
+                style={{
+                  color: '#90caf9aa'
+                }}
+              >
+                kg / day
+              </span>
+
 
               <span
                 className="text-xs mt-1 text-center"
@@ -823,12 +982,16 @@ export default function QRScanAnimation({ tree, onDone }) {
               >
                 CO₂ Absorbed
               </span>
+
             </motion.div>
+
           </div>
+
 
           {/* =====================================================
               BOTTOM
           ====================================================== */}
+
           <div
             className="relative z-10 flex flex-col items-center gap-4"
           >
@@ -855,8 +1018,7 @@ export default function QRScanAnimation({ tree, onDone }) {
                 setPhase(2)
                 onDone?.()
               }}
-              className="px-8 py-3 rounded-full text-sm font-bold text-white
-                         flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+              className="px-8 py-3 rounded-full text-sm font-bold text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
               style={{
                 background:
                   'linear-gradient(135deg, #2d5a27, #4caf50)',
@@ -866,7 +1028,11 @@ export default function QRScanAnimation({ tree, onDone }) {
                   '1px solid rgba(129,199,132,0.4)'
               }}
             >
-              <span>Explore this Tree</span>
+
+              <span>
+                Explore this Tree
+              </span>
+
 
               <motion.span
                 animate={{
@@ -879,7 +1045,9 @@ export default function QRScanAnimation({ tree, onDone }) {
               >
                 →
               </motion.span>
+
             </motion.button>
+
 
             {/* Branding */}
             <motion.div
@@ -898,24 +1066,32 @@ export default function QRScanAnimation({ tree, onDone }) {
               }}
               className="flex items-center gap-2"
             >
+
               <img
                 src="/favicon.png"
                 alt=""
                 className="w-4 h-4 object-contain opacity-60"
               />
 
+
               <span
                 className="text-xs"
                 style={{
-                  color: 'rgba(255,255,255,0.35)'
+                  color:
+                    'rgba(255,255,255,0.35)'
                 }}
               >
                 Green Atlas · Sona College of Technology
               </span>
+
             </motion.div>
+
           </div>
+
         </motion.div>
+
       )}
+
     </AnimatePresence>
   )
 }
