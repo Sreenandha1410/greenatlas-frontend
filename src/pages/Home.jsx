@@ -290,9 +290,9 @@ export default function Home() {
               see where others of its kind grow on campus, and explore why it matters.
             </p>
             {/* ── About Section ── */}
-            //<section style={{ background: dark ? '#0d1117' : '#f9fafb' }}>
+            /*<section style={{ background: dark ? '#0d1117' : '#f9fafb' }}>*/
               <TeamSection dark={dark} />
-            //</section>
+            /*</section>*/
           </motion.div>
         </div>
       </section>
