@@ -732,7 +732,7 @@ export default function TreeDetail() {
             QR CODE — COMMENTED OUT FOR NOW
             Uncomment this entire block when you want the QR section.
             ========================================================= */}
-        
+        {/*
         {qr && (
           <RevealSection>
             <div className="card p-6 flex flex-col sm:flex-row items-center gap-6">
@@ -765,6 +765,7 @@ export default function TreeDetail() {
             </div>
           </RevealSection>
         )}
+        */}
         
       </div>
 
