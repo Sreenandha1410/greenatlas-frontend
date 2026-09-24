@@ -203,18 +203,12 @@ export default function TreeDetail() {
   return (
     <div>
 
-      {/* =========================================================
-          QR SCAN ANIMATION — COMMENTED OUT FOR NOW
-          Uncomment when you want the QR opening animation.
-          ========================================================= */}
-      {/*
       {showQRAnim && tree && (
         <QRScanAnimation
           tree={tree}
           onDone={() => setShowQRAnim(false)}
         />
       )}
-      */}
 
       {/* Hero */}
       <div className="relative min-h-[45vh] flex flex-col justify-end overflow-hidden">
