@@ -1398,6 +1398,7 @@ export default function TreeDetail() {
 
 
         {/* QR */}
+        {/*
         {qr && (
 
           <RevealSection>
@@ -1458,6 +1459,7 @@ export default function TreeDetail() {
         )}
 
       </div>
+      */}
 
 
       {/* Lightbox */}
