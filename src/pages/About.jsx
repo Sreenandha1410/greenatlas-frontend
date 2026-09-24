@@ -292,6 +292,31 @@ export function AboutContent({ dark }) {
   )
 }
 
+// Add this export alongside the existing AboutContent export
+
+export function TeamSection({ dark }) {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <motion.div {...fadeUp(0)} className="text-center mb-5">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase mb-2"
+          style={{ background: 'rgba(82,160,67,0.12)', border: '1px solid rgba(82,160,67,0.3)', color: '#52a043' }}>
+          The People Behind It
+        </span>
+        <h2 className="text-3xl font-bold"
+          style={{ fontFamily: 'Cinzel, serif', color: dark ? '#e6edf3' : '#111827' }}>
+          Meet the Team
+        </h2>
+      </motion.div>
+
+      <div>
+        {people.map((person, i) => (
+          <PersonCard key={person.name} person={person} index={i} dark={dark} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function About() {
   const [dark] = useDarkMode()
   return (
