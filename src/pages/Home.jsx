@@ -105,7 +105,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getStats, getViewCount } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
-import { AboutContent } from './About'
+import { TeamSection } from './About'
 import JoinNaturesClub from '../components/JoinNaturesClub'
 
 export default function Home() {
@@ -290,9 +290,9 @@ export default function Home() {
               see where others of its kind grow on campus, and explore why it matters.
             </p>
             {/* ── About Section ── */}
-            <section style={{ background: dark ? '#0d1117' : '#f9fafb' }}>
-              <AboutContent dark={dark} />
-            </section>
+            //<section style={{ background: dark ? '#0d1117' : '#f9fafb' }}>
+              <TeamSection dark={dark} />
+            //</section>
           </motion.div>
         </div>
       </section>
