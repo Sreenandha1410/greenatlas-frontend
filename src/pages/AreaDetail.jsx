@@ -114,7 +114,7 @@ export default function AreaDetail() {
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import L from 'leaflet';
 import { getTrees, getAreaInfo, updateAreaInfo } from '../api';
@@ -312,13 +312,23 @@ export default function AreaDetail() {
                 transition={{ delay: 0.1 }}
                 className="card overflow-hidden">
                 <div style={{ height: 340, position: 'relative', zIndex: 0 }}>
-                  <MapContainer center={center} zoom={18}
-                    style={{ height: '100%', width: '100%' }} maxZoom={22}>
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      maxZoom={22} maxNativeZoom={19}
-                      attribution="© OpenStreetMap contributors"
-                    />
+                  <MapContainer center={center} zoom={18} style={{ height: '100%', width: '100%' }} maxZoom={22}>
+                    <LayersControl position="topright">
+                      <LayersControl.BaseLayer checked name="Map">
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          maxZoom={22} maxNativeZoom={19}
+                          attribution="© OpenStreetMap contributors"
+                        />
+                      </LayersControl.BaseLayer>
+                      <LayersControl.BaseLayer name="Satellite">
+                        <TileLayer
+                          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                          maxZoom={22} maxNativeZoom={19}
+                          attribution="© Esri, Maxar, Earthstar Geographics"
+                        />
+                      </LayersControl.BaseLayer>
+                    </LayersControl>
                     {trees.map(t => t.latitude && t.longitude && (
                       <Marker key={t.tree_id} position={[t.latitude, t.longitude]}
                         icon={dotIcon('#2d5a27')}>
@@ -362,8 +372,8 @@ export default function AreaDetail() {
                                hover:bg-forest-50 dark:hover:bg-forest-950 transition-colors group">
                     <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0"
                       style={{ background: '#f0f7ee' }}>
-                      {t.image_url
-                        ? <img src={t.image_url} alt="" className="w-full h-full object-cover" />
+                      {(t.image_link || t.species_image_url)
+                        ? <img src={t.image_link || t.species_image_url} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-sm">🌿</div>}
                     </div>
                     <div className="flex-1 min-w-0">
