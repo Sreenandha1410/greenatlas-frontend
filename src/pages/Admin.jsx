@@ -879,6 +879,719 @@ const TABS = [
   { key: 'stats',       label: 'Statistics' },
   { key: 'password',    label: 'Change Password' },
 ];
+function ComplaintPanel({ dark }) {
+  const [complaints, setComplaints] = useState([])
+  const [loadingComplaints, setLoadingComplaints] = useState(true)
+  const [filter, setFilter] = useState('All')
+  const [updatingId, setUpdatingId] = useState(null)
+
+  const loadComplaints = async () => {
+    try {
+      setLoadingComplaints(true)
+
+      const { data } = await getComplaints()
+
+      setComplaints(data || [])
+    } catch (error) {
+      console.error('Failed to load complaints:', error)
+      alert('Failed to load complaints')
+    } finally {
+      setLoadingComplaints(false)
+    }
+  }
+
+  useEffect(() => {
+    loadComplaints()
+  }, [])
+
+  const handleStatusChange = async (complaint, status) => {
+    try {
+      setUpdatingId(complaint.id)
+
+      const { data } = await updateComplaintStatus(
+        complaint.id,
+        {
+          status,
+          admin_notes: complaint.admin_notes || ''
+        }
+      )
+
+      setComplaints(prev =>
+        prev.map(item =>
+          item.id === complaint.id ? data : item
+        )
+      )
+    } catch (error) {
+      console.error('Failed to update complaint:', error)
+      alert('Failed to update complaint status')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const filteredComplaints =
+    filter === 'All'
+      ? complaints
+      : complaints.filter(c => c.status === filter)
+
+  const total = complaints.length
+
+  const pending = complaints.filter(
+    c => c.status === 'Pending'
+  ).length
+
+  const inProgress = complaints.filter(
+    c => c.status === 'In Progress'
+  ).length
+
+  const resolved = complaints.filter(
+    c => c.status === 'Resolved'
+  ).length
+
+  const statusStyle = status => {
+    if (status === 'Resolved') {
+      return {
+        background: dark ? 'rgba(34,197,94,0.15)' : '#dcfce7',
+        color: dark ? '#86efac' : '#166534'
+      }
+    }
+
+    if (status === 'In Progress') {
+      return {
+        background: dark ? 'rgba(59,130,246,0.15)' : '#dbeafe',
+        color: dark ? '#93c5fd' : '#1d4ed8'
+      }
+    }
+
+    return {
+      background: dark ? 'rgba(234,179,8,0.15)' : '#fef3c7',
+      color: dark ? '#fde68a' : '#92400e'
+    }
+  }
+
+  if (loadingComplaints) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="text-4xl mb-3">🌿</div>
+          <p
+            className="text-sm"
+            style={{
+              color: dark ? '#9da7b0' : '#6b7280'
+            }}
+          >
+            Loading reports...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+
+      {/* Header */}
+      <div>
+        <h2
+          className="text-2xl font-bold"
+          style={{
+            color: dark ? '#e6edf3' : '#172016'
+          }}
+        >
+          🌿 Tree Issue Reports
+        </h2>
+
+        <p
+          className="text-sm mt-1"
+          style={{
+            color: dark ? '#8b949e' : '#6b7280'
+          }}
+        >
+          View and manage issues reported by students.
+        </p>
+      </div>
+
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        {/* Total */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: dark ? '#161b22' : '#f8fbf7',
+            border: `1px solid ${dark ? '#30363d' : '#e1eadf'}`
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{
+              color: dark ? '#8b949e' : '#6b7280'
+            }}
+          >
+            Total Reports
+          </p>
+
+          <p
+            className="text-3xl font-bold mt-2"
+            style={{
+              color: dark ? '#e6edf3' : '#172016'
+            }}
+          >
+            {total}
+          </p>
+        </div>
+
+
+        {/* Pending */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: dark ? '#161b22' : '#fffbeb',
+            border: `1px solid ${dark ? '#3d3520' : '#fde68a'}`
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{
+              color: dark ? '#fde68a' : '#92400e'
+            }}
+          >
+            Pending
+          </p>
+
+          <p
+            className="text-3xl font-bold mt-2"
+            style={{
+              color: dark ? '#fde68a' : '#92400e'
+            }}
+          >
+            {pending}
+          </p>
+        </div>
+
+
+        {/* In Progress */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: dark ? '#161b22' : '#eff6ff',
+            border: `1px solid ${dark ? '#243653' : '#bfdbfe'}`
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{
+              color: dark ? '#93c5fd' : '#1d4ed8'
+            }}
+          >
+            In Progress
+          </p>
+
+          <p
+            className="text-3xl font-bold mt-2"
+            style={{
+              color: dark ? '#93c5fd' : '#1d4ed8'
+            }}
+          >
+            {inProgress}
+          </p>
+        </div>
+
+
+        {/* Resolved */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: dark ? '#161b22' : '#f0fdf4',
+            border: `1px solid ${dark ? '#24402b' : '#bbf7d0'}`
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{
+              color: dark ? '#86efac' : '#166534'
+            }}
+          >
+            Resolved
+          </p>
+
+          <p
+            className="text-3xl font-bold mt-2"
+            style={{
+              color: dark ? '#86efac' : '#166534'
+            }}
+          >
+            {resolved}
+          </p>
+        </div>
+
+      </div>
+
+
+      {/* Filter Buttons */}
+      <div className="flex flex-wrap gap-2">
+
+        {['All', 'Pending', 'In Progress', 'Resolved'].map(
+          status => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background:
+                  filter === status
+                    ? '#2d5a27'
+                    : dark
+                      ? '#161b22'
+                      : '#f3f4f6',
+
+                color:
+                  filter === status
+                    ? '#ffffff'
+                    : dark
+                      ? '#c9d1d9'
+                      : '#374151',
+
+                border:
+                  filter === status
+                    ? '1px solid #2d5a27'
+                    : `1px solid ${
+                        dark ? '#30363d' : '#e5e7eb'
+                      }`
+              }}
+            >
+              {status}
+            </button>
+          )
+        )}
+
+      </div>
+
+
+      {/* No Complaints */}
+      {filteredComplaints.length === 0 && (
+        <div
+          className="rounded-2xl p-10 text-center"
+          style={{
+            background: dark ? '#161b22' : '#f8fbf7',
+            border: `1px solid ${dark ? '#30363d' : '#e1eadf'}`
+          }}
+        >
+          <div className="text-5xl mb-3">
+            🌳
+          </div>
+
+          <h3
+            className="font-semibold text-lg"
+            style={{
+              color: dark ? '#e6edf3' : '#172016'
+            }}
+          >
+            No reports found
+          </h3>
+
+          <p
+            className="text-sm mt-1"
+            style={{
+              color: dark ? '#8b949e' : '#6b7280'
+            }}
+          >
+            There are no complaints under this filter.
+          </p>
+        </div>
+      )}
+
+
+      {/* Complaint Cards */}
+      <div className="space-y-5">
+
+        {filteredComplaints.map(complaint => (
+
+          <div
+            key={complaint.id}
+            className="rounded-2xl overflow-hidden"
+            style={{
+              background: dark ? '#161b22' : '#ffffff',
+              border: `1px solid ${
+                dark ? '#30363d' : '#e1eadf'
+              }`,
+              boxShadow: '0 5px 20px rgba(0,0,0,0.05)'
+            }}
+          >
+
+            {/* Complaint Header */}
+            <div
+              className="p-5 border-b"
+              style={{
+                borderColor: dark
+                  ? '#30363d'
+                  : '#e5e7eb'
+              }}
+            >
+
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+
+                <div>
+
+                  <div className="flex items-center gap-2 mb-2">
+
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-bold"
+                      style={statusStyle(complaint.status)}
+                    >
+                      {complaint.status}
+                    </span>
+
+                    <span
+                      className="text-xs"
+                      style={{
+                        color: dark
+                          ? '#8b949e'
+                          : '#9ca3af'
+                      }}
+                    >
+                      Report #{complaint.id}
+                    </span>
+
+                  </div>
+
+                  <h3
+                    className="text-lg font-bold"
+                    style={{
+                      color: dark
+                        ? '#e6edf3'
+                        : '#172016'
+                    }}
+                  >
+                    {complaint.issue_type}
+                  </h3>
+
+                </div>
+
+
+                {/* Status Dropdown */}
+                <div className="flex items-center gap-2">
+
+                  <label
+                    className="text-xs font-medium"
+                    style={{
+                      color: dark
+                        ? '#8b949e'
+                        : '#6b7280'
+                    }}
+                  >
+                    Update:
+                  </label>
+
+                  <select
+                    value={complaint.status || 'Pending'}
+                    disabled={updatingId === complaint.id}
+                    onChange={e =>
+                      handleStatusChange(
+                        complaint,
+                        e.target.value
+                      )
+                    }
+                    className="px-3 py-2 rounded-lg text-sm outline-none"
+                    style={{
+                      background: dark
+                        ? '#0d1117'
+                        : '#ffffff',
+
+                      color: dark
+                        ? '#e6edf3'
+                        : '#374151',
+
+                      border: `1px solid ${
+                        dark
+                          ? '#30363d'
+                          : '#d1d5db'
+                      }`
+                    }}
+                  >
+                    <option value="Pending">
+                      Pending
+                    </option>
+
+                    <option value="In Progress">
+                      In Progress
+                    </option>
+
+                    <option value="Resolved">
+                      Resolved
+                    </option>
+                  </select>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* Complaint Body */}
+            <div className="p-5">
+
+              <div className="grid md:grid-cols-2 gap-5">
+
+                {/* Student Information */}
+                <div>
+
+                  <h4
+                    className="text-sm font-bold mb-3"
+                    style={{
+                      color: dark
+                        ? '#81c784'
+                        : '#356b31'
+                    }}
+                  >
+                    Student Information
+                  </h4>
+
+                  <div className="space-y-2">
+
+                    <div>
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: dark
+                            ? '#8b949e'
+                            : '#6b7280'
+                        }}
+                      >
+                        Name
+                      </span>
+
+                      <p
+                        className="font-medium"
+                        style={{
+                          color: dark
+                            ? '#e6edf3'
+                            : '#111827'
+                        }}
+                      >
+                        {complaint.student_name || '—'}
+                      </p>
+                    </div>
+
+
+                    <div>
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: dark
+                            ? '#8b949e'
+                            : '#6b7280'
+                        }}
+                      >
+                        Department
+                      </span>
+
+                      <p
+                        className="font-medium"
+                        style={{
+                          color: dark
+                            ? '#e6edf3'
+                            : '#111827'
+                        }}
+                      >
+                        {complaint.department || '—'}
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* Tree Information */}
+                <div>
+
+                  <h4
+                    className="text-sm font-bold mb-3"
+                    style={{
+                      color: dark
+                        ? '#81c784'
+                        : '#356b31'
+                    }}
+                  >
+                    Tree Information
+                  </h4>
+
+                  <div className="space-y-2">
+
+                    <div>
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: dark
+                            ? '#8b949e'
+                            : '#6b7280'
+                        }}
+                      >
+                        Tree
+                      </span>
+
+                      <p
+                        className="font-medium"
+                        style={{
+                          color: dark
+                            ? '#e6edf3'
+                            : '#111827'
+                        }}
+                      >
+                        {complaint.tree_name || '—'}
+                      </p>
+                    </div>
+
+
+                    <div>
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: dark
+                            ? '#8b949e'
+                            : '#6b7280'
+                        }}
+                      >
+                        Tree ID / Location
+                      </span>
+
+                      <p
+                        className="font-medium"
+                        style={{
+                          color: dark
+                            ? '#e6edf3'
+                            : '#111827'
+                        }}
+                      >
+                        {complaint.tree_id || '—'}
+                        {complaint.tree_area
+                          ? ` • ${complaint.tree_area}`
+                          : ''}
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* Description */}
+              {complaint.description && (
+                <div className="mt-5">
+
+                  <h4
+                    className="text-sm font-bold mb-2"
+                    style={{
+                      color: dark
+                        ? '#81c784'
+                        : '#356b31'
+                    }}
+                  >
+                    Description
+                  </h4>
+
+                  <p
+                    className="text-sm leading-6 rounded-xl p-4"
+                    style={{
+                      background: dark
+                        ? '#0d1117'
+                        : '#f8faf8',
+
+                      color: dark
+                        ? '#c9d1d9'
+                        : '#4b5563'
+                    }}
+                  >
+                    {complaint.description}
+                  </p>
+
+                </div>
+              )}
+
+
+              {/* Photo */}
+              {complaint.image_url && (
+                <div className="mt-5">
+
+                  <h4
+                    className="text-sm font-bold mb-2"
+                    style={{
+                      color: dark
+                        ? '#81c784'
+                        : '#356b31'
+                    }}
+                  >
+                    📷 Submitted Photo
+                  </h4>
+
+                  <img
+                    src={complaint.image_url}
+                    alt="Reported tree issue"
+                    className="w-full max-w-md max-h-80 object-cover rounded-xl border"
+                    style={{
+                      borderColor: dark
+                        ? '#30363d'
+                        : '#e5e7eb'
+                    }}
+                  />
+
+                </div>
+              )}
+
+
+              {/* Date */}
+              <div className="mt-5 flex flex-wrap gap-4">
+
+                <p
+                  className="text-xs"
+                  style={{
+                    color: dark
+                      ? '#8b949e'
+                      : '#9ca3af'
+                  }}
+                >
+                  Reported:{' '}
+                  {complaint.created_at
+                    ? new Date(
+                        complaint.created_at
+                      ).toLocaleString()
+                    : '—'}
+                </p>
+
+                {complaint.updated_at && (
+                  <p
+                    className="text-xs"
+                    style={{
+                      color: dark
+                        ? '#8b949e'
+                        : '#9ca3af'
+                    }}
+                  >
+                    Updated:{' '}
+                    {new Date(
+                      complaint.updated_at
+                    ).toLocaleString()}
+                  </p>
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    </div>
+  )
+}
 export default function Admin() {
   const [dark] = useDarkMode()
   const navigate  = useNavigate();
@@ -1083,6 +1796,9 @@ export default function Admin() {
           )}
 
           {!loading && tab === 'stats' && <StatsPanel dark={dark} />}
+          {!loading && tab === 'complaints' && (
+                  <ComplaintPanel dark={dark} />
+           )}
           {!loading && tab === 'password' && (
             <div className="card p-6">
               <h2 className="font-semibold mb-4"
