@@ -485,13 +485,13 @@ function SpeciesPanel({ dark = false }) {
 
 /* ── Admin (main) ── */
 const TABS = [
-  { key: 'list',     label: 'Manage Trees'    },
-  { key: 'add',      label: 'Add New Tree'    },
-  { key: 'species',  label: 'Manage Species'  },
-  { key: 'stats',    label: 'Statistics'      },
-  { key: 'password', label: 'Change Password' },
+  { key: 'list',        label: 'Manage Trees' },
+  { key: 'complaints',  label: '🌿 Reports' },
+  { key: 'add',         label: 'Add New Tree' },
+  { key: 'species',     label: 'Manage Species' },
+  { key: 'stats',       label: 'Statistics' },
+  { key: 'password',    label: 'Change Password' },
 ];
-
 export default function Admin() {
   const [dark] = useDarkMode()
   const navigate  = useNavigate();
