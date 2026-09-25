@@ -107,6 +107,7 @@ import { getStats, getViewCount } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
 import { TeamSection } from './About'
 import JoinNaturesClub from '../components/JoinNaturesClub'
+import ComplaintDashboard from '../components/ComplaintDashboard';
 
 export default function Home() {
   const [stats, setStats] = useState({ trees: 0, species: 0, areas: 0 })
@@ -220,6 +221,51 @@ export default function Home() {
           </span>
           <span style={{ color: 'rgba(165,214,167,0.5)' }}>↓</span>
         </motion.div>
+      </section>
+      {/* ── Report Issue ── */}
+      <section
+        className="px-4 py-20"
+        style={{
+          background: dark ? '#0d1117' : '#f4f9f1'
+        }}
+      >
+        <div className="max-w-4xl mx-auto">
+      
+          <div className="text-center mb-10">
+      
+            <p
+              className="text-xs font-bold tracking-[0.2em] uppercase mb-3"
+              style={{
+                color: dark ? '#81c784' : '#356b31'
+              }}
+            >
+              Campus Care
+            </p>
+      
+            <h2
+              className="font-display text-3xl md:text-4xl font-bold"
+              style={{
+                color: dark ? '#e6edf3' : '#172016'
+              }}
+            >
+              Notice a Tree Problem?
+            </h2>
+      
+            <p
+              className="mt-3 max-w-xl mx-auto"
+              style={{
+                color: dark ? '#8b949e' : '#6b7280'
+              }}
+            >
+              Report diseases, dryness, damage or maintenance issues
+              and help us keep our campus trees healthy.
+            </p>
+      
+          </div>
+      
+          <ComplaintDashboard />
+      
+        </div>
       </section>
 
       {/* ── Stats ── */}
