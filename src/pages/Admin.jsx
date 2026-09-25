@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
          getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
-         addSpecies, updateSpecies, deleteSpecies } from '../api';
+         addSpecies, updateSpecies, deleteSpecies, getComplaints, updateComplaintStatus } from '../api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
          ResponsiveContainer, Legend } from 'recharts';
 import ImageUpload from '../components/ImageUpload';
