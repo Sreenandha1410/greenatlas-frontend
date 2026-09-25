@@ -99,18 +99,3 @@ export const exportPDF = () => {
 export const recordView = (path) => api.post('/trees/views', { path });
 export const getViewCount = () => api.get('/trees/views');
 export default api;
-export const uploadComplaintImage = (formData) =>
-  api.post('/complaints/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-
-export const submitComplaint = (data) =>
-  api.post('/complaints', data);
-
-export const getComplaints = () =>
-  api.get('/complaints');
-
-export const updateComplaintStatus = (id, data) =>
-  api.put(`/complaints/${id}/status`, data);
