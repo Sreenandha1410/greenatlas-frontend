@@ -11,6 +11,7 @@ import ImageUpload from '../components/ImageUpload'
 import TaxonomyTree from '../components/TaxonomyTree'
 import { useDarkMode } from '../context/DarkModeContext'
 import QRScanAnimation from '../components/QRScanAnimation'
+import ComplaintDashboard from '../components/ComplaintDashboard';
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -238,17 +239,37 @@ export default function TreeDetail() {
           />
         </div>
 
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-all"
-          style={{
-            background: 'rgba(255,255,255,0.15)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.25)'
-          }}
-        >
-          ← Back
-        </button>
+        {/* Top Navigation Buttons */}
+        <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
+        
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:bg-white/25"
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.25)'
+            }}
+          >
+            ← Back
+          </button>
+        
+          {/* Report Issue Button */}
+          <button
+            onClick={() => setShowComplaint(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-[1.03]"
+            style={{
+              background: 'rgba(45,90,39,0.9)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(129,199,132,0.5)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
+            }}
+          >
+            🌿 Report an Issue
+          </button>
+        
+        </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 pb-10 w-full">
           <motion.div
