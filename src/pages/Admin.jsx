@@ -482,7 +482,394 @@ function SpeciesPanel({ dark = false }) {
     </div>
   );
 }
+function ComplaintPanel({ dark }) {
 
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('All');
+  const [updating, setUpdating] = useState(null);
+
+  const loadComplaints = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const res = await getComplaints();
+
+      setComplaints(res.data);
+
+    } catch (err) {
+
+      console.error('Failed to load complaints', err);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+  useEffect(() => {
+    loadComplaints();
+  }, []);
+
+  const updateStatus = async (
+    id,
+    status,
+    currentNotes = ''
+  ) => {
+
+    try {
+
+      setUpdating(id);
+
+      const res = await updateComplaintStatus(id, {
+        status,
+        admin_notes: currentNotes
+      });
+
+      setComplaints(prev =>
+        prev.map(item =>
+          item.id === id
+            ? res.data
+            : item
+        )
+      );
+
+    } catch (err) {
+
+      alert('Failed to update complaint');
+
+    } finally {
+
+      setUpdating(null);
+
+    }
+  };
+
+  const filtered =
+    filter === 'All'
+      ? complaints
+      : complaints.filter(
+          c => c.status === filter
+        );
+
+  const pending =
+    complaints.filter(
+      c => c.status === 'Pending'
+    ).length;
+
+  const inProgress =
+    complaints.filter(
+      c => c.status === 'In Progress'
+    ).length;
+
+  const resolved =
+    complaints.filter(
+      c => c.status === 'Resolved'
+    ).length;
+
+  return (
+    <div className="space-y-6">
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <div className="card p-5">
+          <p className="text-xs text-gray-500">
+            Total Reports
+          </p>
+
+          <p className="text-3xl font-bold mt-2">
+            {complaints.length}
+          </p>
+        </div>
+
+        <div className="card p-5">
+          <p className="text-xs text-gray-500">
+            Pending
+          </p>
+
+          <p className="text-3xl font-bold text-amber-600 mt-2">
+            {pending}
+          </p>
+        </div>
+
+        <div className="card p-5">
+          <p className="text-xs text-gray-500">
+            In Progress
+          </p>
+
+          <p className="text-3xl font-bold text-blue-600 mt-2">
+            {inProgress}
+          </p>
+        </div>
+
+        <div className="card p-5">
+          <p className="text-xs text-gray-500">
+            Resolved
+          </p>
+
+          <p className="text-3xl font-bold text-green-600 mt-2">
+            {resolved}
+          </p>
+        </div>
+
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2 flex-wrap">
+
+        {[
+          'All',
+          'Pending',
+          'In Progress',
+          'Resolved'
+        ].map(status => (
+
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className="px-4 py-2 rounded-lg text-sm font-medium"
+            style={{
+              background:
+                filter === status
+                  ? '#2d5a27'
+                  : dark
+                    ? '#21262d'
+                    : '#f0f7ee',
+
+              color:
+                filter === status
+                  ? '#fff'
+                  : dark
+                    ? '#e6edf3'
+                    : '#356b31'
+            }}
+          >
+            {status}
+          </button>
+
+        ))}
+
+      </div>
+
+      {/* Reports */}
+      <div className="space-y-4">
+
+        {loading ? (
+
+          <div className="card p-10 text-center text-gray-400">
+            Loading reports...
+          </div>
+
+        ) : filtered.length === 0 ? (
+
+          <div className="card p-10 text-center">
+
+            <div className="text-5xl mb-3">
+              🌿
+            </div>
+
+            <p className="font-semibold">
+              No reports found
+            </p>
+
+          </div>
+
+        ) : (
+
+          filtered.map(complaint => (
+
+            <div
+              key={complaint.id}
+              className="card overflow-hidden"
+            >
+
+              <div className="p-5">
+
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+
+                  {/* Main information */}
+                  <div className="flex-1">
+
+                    <div className="flex flex-wrap gap-2 items-center">
+
+                      <h3
+                        className="font-semibold text-lg"
+                        style={{
+                          color: dark
+                            ? '#e6edf3'
+                            : '#172016'
+                        }}
+                      >
+                        {complaint.tree_name ||
+                          complaint.tree_id}
+                      </h3>
+
+                      <span
+                        className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          background:
+                            complaint.status === 'Resolved'
+                              ? '#dcfce7'
+                              : complaint.status === 'In Progress'
+                                ? '#dbeafe'
+                                : '#fef3c7',
+
+                          color:
+                            complaint.status === 'Resolved'
+                              ? '#166534'
+                              : complaint.status === 'In Progress'
+                                ? '#1d4ed8'
+                                : '#92400e'
+                        }}
+                      >
+                        {complaint.status}
+                      </span>
+
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tree ID: {complaint.tree_id}
+                      {' · '}
+                      📍 {complaint.tree_area}
+                    </p>
+
+                    <div className="mt-4 grid sm:grid-cols-2 gap-3">
+
+                      <div>
+                        <p className="text-xs text-gray-400">
+                          Reported By
+                        </p>
+
+                        <p className="font-medium text-sm">
+                          {complaint.student_name}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          {complaint.department}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400">
+                          Issue
+                        </p>
+
+                        <p className="font-medium text-sm">
+                          {complaint.issue_type}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {complaint.description && (
+                      <div className="mt-4">
+
+                        <p className="text-xs text-gray-400 mb-1">
+                          Description
+                        </p>
+
+                        <p className="text-sm leading-relaxed">
+                          {complaint.description}
+                        </p>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Image */}
+                  {complaint.image_url && (
+                    <img
+                      src={complaint.image_url}
+                      alt="Reported issue"
+                      className="w-full md:w-40 h-32 object-cover rounded-xl"
+                    />
+                  )}
+
+                </div>
+
+                {/* Admin actions */}
+                <div
+                  className="mt-5 pt-4 border-t flex flex-wrap items-center gap-2"
+                  style={{
+                    borderColor:
+                      dark
+                        ? '#30363d'
+                        : '#e5e7eb'
+                  }}
+                >
+
+                  <span className="text-xs text-gray-400 mr-2">
+                    Update status:
+                  </span>
+
+                  <button
+                    disabled={updating === complaint.id}
+                    onClick={() =>
+                      updateStatus(
+                        complaint.id,
+                        'Pending',
+                        complaint.admin_notes
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-100 text-amber-700"
+                  >
+                    Pending
+                  </button>
+
+                  <button
+                    disabled={updating === complaint.id}
+                    onClick={() =>
+                      updateStatus(
+                        complaint.id,
+                        'In Progress',
+                        complaint.admin_notes
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700"
+                  >
+                    In Progress
+                  </button>
+
+                  <button
+                    disabled={updating === complaint.id}
+                    onClick={() =>
+                      updateStatus(
+                        complaint.id,
+                        'Resolved',
+                        complaint.admin_notes
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700"
+                  >
+                    ✓ Resolved
+                  </button>
+
+                  <span className="text-xs text-gray-400 ml-auto">
+                    {new Date(
+                      complaint.created_at
+                    ).toLocaleString()}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          ))
+
+        )}
+
+      </div>
+
+    </div>
+  );
+}
 /* ── Admin (main) ── */
 const TABS = [
   { key: 'list',        label: 'Manage Trees' },
