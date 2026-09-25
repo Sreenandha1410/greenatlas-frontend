@@ -98,6 +98,7 @@ export default function TreeDetail() {
   const [images, setImages] = useState([])
   const [lightbox, setLightbox] = useState(null)
   const [showQRAnim, setShowQRAnim] = useState(false)
+  const [showComplaint, setShowComplaint] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -203,6 +204,34 @@ export default function TreeDetail() {
 
   return (
     <div>
+
+          {/* Complaint Modal */}
+    {showComplaint && tree && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={() => setShowComplaint(false)}
+      >
+        <div
+          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+          onClick={e => e.stopPropagation()}
+        >
+    
+          {/* Close Button */}
+          <button
+            onClick={() => setShowComplaint(false)}
+            className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white text-gray-700 shadow-lg hover:bg-gray-100"
+          >
+            ✕
+          </button>
+    
+          <ComplaintDashboard
+            selectedTree={tree}
+            onSuccess={() => setShowComplaint(false)}
+          />
+    
+        </div>
+      </div>
+    )}
 
       {showQRAnim && tree && (
         <QRScanAnimation
