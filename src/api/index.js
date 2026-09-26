@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Base API URL (Local or Production)
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Base API URL
+const BASE =
+  import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: BASE,
@@ -10,48 +11,83 @@ const api = axios.create({
 // Attach token if logged in
 api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('token');
+
   if (token) {
     cfg.headers.Authorization = `Bearer ${token}`;
   }
+
   return cfg;
 });
 
-// Trees
-export const getTrees = (params) => api.get('/trees', { params });
-export const getTree = (id) => api.get(`/trees/${id}`);
-export const addTree = (data) => api.post('/trees', data);
-export const updateTree = (id, data) => api.put(`/trees/${id}`, data);
-export const deleteTree = (id) => api.delete(`/trees/${id}`);
+// ==================== TREES ====================
 
-export const getStats = () => api.get('/trees/stats');
-export const getDetailedStats = () => api.get('/trees/stats/detailed');
-export const getTreeQR = (id) => api.get(`/trees/${id}/qr`);
+export const getTrees = (params) =>
+  api.get('/trees', { params });
+
+export const getTree = (id) =>
+  api.get(`/trees/${id}`);
+
+export const addTree = (data) =>
+  api.post('/trees', data);
+
+export const updateTree = (id, data) =>
+  api.put(`/trees/${id}`, data);
+
+export const deleteTree = (id) =>
+  api.delete(`/trees/${id}`);
+
+export const getStats = () =>
+  api.get('/trees/stats');
+
+export const getDetailedStats = () =>
+  api.get('/trees/stats/detailed');
+
+export const getTreeQR = (id) =>
+  api.get(`/trees/${id}/qr`);
 
 export const getNearbyTrees = (id, radius) =>
   api.get(`/trees/${id}/nearby`, {
     params: { radius },
   });
 
-// Species
-export const getSpecies = () => api.get('/species');
-export const getSpeciesOne = (name) => api.get(`/species/${name}`);
-export const addSpecies = (data) => api.post('/species', data);
-export const updateSpecies = (id, data) => api.put(`/species/${id}`, data);
-export const deleteSpecies = (id) => api.delete(`/species/${id}`);
+// ==================== SPECIES ====================
 
-// Areas
-export const getAreas = () => api.get('/areas');
+export const getSpecies = () =>
+  api.get('/species');
+
+export const getSpeciesOne = (name) =>
+  api.get(`/species/${name}`);
+
+export const addSpecies = (data) =>
+  api.post('/species', data);
+
+export const updateSpecies = (id, data) =>
+  api.put(`/species/${id}`, data);
+
+export const deleteSpecies = (id) =>
+  api.delete(`/species/${id}`);
+
+// ==================== AREAS ====================
+
+export const getAreas = () =>
+  api.get('/areas');
+
 export const getAreaInfo = (area) =>
   api.get(`/areas/${encodeURIComponent(area)}/info`);
+
 export const updateAreaInfo = (area, data) =>
   api.put(`/areas/${encodeURIComponent(area)}/info`, data);
 
-// Authentication
-export const login = (creds) => api.post('/auth/login', creds);
+// ==================== AUTHENTICATION ====================
+
+export const login = (creds) =>
+  api.post('/auth/login', creds);
+
 export const changePassword = (data) =>
   api.put('/auth/change-password', data);
 
-// Images
+// ==================== IMAGES ====================
+
 export const getTreeImages = (id) =>
   api.get(`/trees/${id}/images`);
 
@@ -67,38 +103,51 @@ export const uploadImage = (formData) =>
       'Content-Type': 'multipart/form-data',
     },
   });
-  // Complaints
-  
-  export const uploadComplaintImage = (formData) => {
-    return api.post('/complaints/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  };
-  
-  export const submitComplaint = (data) => {
-    return api.post('/complaints', data);
-  };
-  
-  export const getComplaints = () => {
-    return api.get('/complaints');
-  };
-  
-  export const updateComplaintStatus = (id, data) => {
-    return api.put(`/complaints/${id}/status`, data);
-  };
-// Export
+
+// ==================== COMPLAINTS ====================
+
+export const uploadComplaintImage = (formData) =>
+  api.post('/complaints/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+export const submitComplaint = (data) =>
+  api.post('/complaints', data);
+
+export const getComplaints = () =>
+  api.get('/complaints');
+
+export const updateComplaintStatus = (id, data) =>
+  api.put(`/complaints/${id}/status`, data);
+
+// ==================== EXPORT ====================
+
 export const exportCSV = () => {
   const token = localStorage.getItem('token');
-  window.open(`${BASE}/trees/export/csv?token=${token}`, '_blank');
+
+  window.open(
+    `${BASE}/trees/export/csv?token=${token}`,
+    '_blank'
+  );
 };
 
 export const exportPDF = () => {
   const token = localStorage.getItem('token');
-  window.open(`${BASE}/trees/export/pdf?token=${token}`, '_blank');
+
+  window.open(
+    `${BASE}/trees/export/pdf?token=${token}`,
+    '_blank'
+  );
 };
 
-export const recordView = (path) => api.post('/trees/views', { path });
-export const getViewCount = () => api.get('/trees/views');
+// ==================== VIEWS ====================
+
+export const recordView = (path) =>
+  api.post('/trees/views', { path });
+
+export const getViewCount = () =>
+  api.get('/trees/views');
+
 export default api;
