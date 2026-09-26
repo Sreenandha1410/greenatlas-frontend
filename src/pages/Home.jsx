@@ -115,6 +115,7 @@ export default function Home() {
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
   const [dark] = useDarkMode()
+  const [showReport, setShowReport] = useState(false)
 
   useEffect(() => {
   getStats().then(r => setStats(r.data))
@@ -211,6 +212,16 @@ export default function Home() {
             </button>
           </motion.div>
         </div>
+        <button
+            onClick={() => setShowReport(true)}
+            className="btn-secondary px-6 py-3"
+            style={{
+              borderColor: 'rgba(255,255,255,0.3)',
+              color: 'white'
+            }}
+            >
+            🌿 Report an Issue
+      </button>
 
         {/* Scroll cue */}
         <motion.div
@@ -344,7 +355,34 @@ export default function Home() {
       </section>
       {/* Join Nature's Club */}
 <JoinNaturesClub dark={dark} />
+{showReport && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center
+               bg-black/60 p-4"
+    onClick={() => setShowReport(false)}
+  >
+    <div
+      className="relative w-full max-w-2xl max-h-[90vh]
+                 overflow-y-auto rounded-2xl bg-white
+                 dark:bg-gray-900 p-5 shadow-2xl"
+      onClick={e => e.stopPropagation()}
+    >
+      <button
+        onClick={() => setShowReport(false)}
+        className="absolute right-4 top-3 text-2xl
+                   text-gray-500 hover:text-red-500"
+        aria-label="Close report form"
+      >
+        &times;
+      </button>
 
+      <ComplaintDashboard
+        selectedTree={null}
+        onSuccess={() => setShowReport(false)}
+      />
+    </div>
+  </div>
+)}
     </div>
   )
 }
