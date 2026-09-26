@@ -201,28 +201,27 @@ export default function Home() {
             </button>
           </motion.form>
 
-          <motion.div {...fadeUp(0.5)} className="flex flex-wrap gap-3 justify-center">
+         <motion.div {...fadeUp(0.5)} className="flex flex-wrap gap-3 justify-center">
             <button onClick={() => navigate('/map')} className="btn-primary px-6 py-3">
               🗺️ Open Map
             </button>
-            <button onClick={() => navigate('/trees')}
+          
+            <button
+              onClick={() => navigate('/trees')}
               className="btn-secondary px-6 py-3"
-              style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}>
+              style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
+            >
               Browse All Trees
             </button>
-          </motion.div>
-        </div>
-        <button
-            onClick={() => setShowReport(true)}
-            className="btn-secondary px-6 py-3"
-            style={{
-              borderColor: 'rgba(255,255,255,0.3)',
-              color: 'white'
-            }}
+          
+            <button
+              onClick={() => setShowReport(true)}
+              className="btn-secondary px-6 py-3"
+              style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
             >
-            🌿 Report an Issue
-      </button>
-
+              🌿 Report an Issue
+            </button>
+        </motion.div>
         {/* Scroll cue */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1"
@@ -234,7 +233,7 @@ export default function Home() {
         </motion.div>
       </section>
       {/* ── Report Issue ── */}
-      <section
+      { /* <section
         className="px-4 py-20"
         style={{
           background: dark ? '#0d1117' : '#f4f9f1'
@@ -277,7 +276,7 @@ export default function Home() {
           <ComplaintDashboard />
       
         </div>
-      </section>
+      </section>*/}
 
       {/* ── Stats ── */}
       <section style={{ background: dark ? '#0d1117' : 'var(--color-bark-100)' }} className="px-4 py-20">
