@@ -5,6 +5,10 @@ import L from 'leaflet';
 import { getTrees } from '../api';
 import { useDarkMode } from '../context/DarkModeContext'
 
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import 'react-leaflet-cluster/lib/assets/MarkerCluster.css';
+import 'react-leaflet-cluster/lib/assets/MarkerCluster.Default.css';
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -12,11 +16,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+{/*
 const dotIcon = (color = '#2d5a27') => L.divIcon({
   className: '',
   html: `<div style="width:14px;height:14px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35)"></div>`,
   iconSize: [14, 14], iconAnchor: [7, 7],
 })
+*/}
+
+const AREA_COLORS = [
+  '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
+  '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
+  '#ff5722','#607d8b','#795548','#ff9800','#673ab7',
+];
+
+const areaColorMap = {};
+let areaColorIndex = 0;
+
+const colorForArea = (area) => {
+  if (!areaColorMap[area]) {
+    areaColorMap[area] = AREA_COLORS[areaColorIndex % AREA_COLORS.length];
+    areaColorIndex++;
+  }
+  return areaColorMap[area];
+};
 
 // Flies map to first search result
 function FlyTo({ target }) {
@@ -59,6 +82,25 @@ export default function MapPage() {
     setMatchCount(matches.length)
     if (matches.length > 0) setFlyTarget(matches[0])
   }
+
+  const areaIcon = (tree) => {
+    const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
+    const label = (tree.area_code || tree.area || '').substring(0, 3).toUpperCase();
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:32px;height:32px;background:${color};
+        border:2.5px solid white;border-radius:50%;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;
+        color:white;font-size:9px;font-weight:700;font-family:sans-serif;
+        line-height:1;text-align:center;
+      ">${label}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18],
+    });
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)' }}>
@@ -108,6 +150,24 @@ export default function MapPage() {
         </div>
       </div>
 
+      {/* Area legend */}
+      {trees.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
+            <div key={area} className="flex items-center gap-1 text-xs"
+              style={{ color: dark ? '#e6edf3' : '#374151' }}>
+              <div style={{
+                width: 16, height: 16, borderRadius: '50%',
+                background: colorForArea(area),
+                border: '2px solid white',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+              {area}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Map */}
       <div style={{ flex: 1, minHeight: 0 }}>
         {trees.length > 0 && (
@@ -128,29 +188,31 @@ export default function MapPage() {
               </LayersControl.BaseLayer>
             </LayersControl>
 
-            {filtered.map(tree => tree.latitude && tree.longitude && (
-              <Marker key={tree.tree_id}
-                position={[tree.latitude, tree.longitude]}
-                icon={dotIcon(search.trim() ? '#e53e3e' : '#2d5a27')}>
-                <Popup>
-                  <div style={{ minWidth: 160 }}>
-                    {tree.species_image_url && (
-                      <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
-                        <img src={tree.species_image_url} alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    )}
-                    <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
-                    <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
-                    <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
-                    <Link to={`/trees/${tree.tree_id}`}
-                      style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
-                      View details →
-                    </Link>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            <MarkerClusterGroup chunkedLoading>
+              {filtered.map(tree => tree.latitude && tree.longitude && (
+                <Marker key={tree.tree_id}
+                  position={[tree.latitude, tree.longitude]}
+                  icon={dotIcon(search.trim() ? '#e53e3e' : '#2d5a27')}>
+                  <Popup>
+                    <div style={{ minWidth: 160 }}>
+                      {tree.species_image_url && (
+                        <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
+                          <img src={tree.species_image_url} alt=""
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
+                      <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
+                      <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
+                      <Link to={`/trees/${tree.tree_id}`}
+                        style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
+                        View details →
+                      </Link>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MarkerClusterGroup>
           </MapContainer>
         )}
       </div>
