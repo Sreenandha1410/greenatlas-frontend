@@ -128,11 +128,53 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+{/*
 const dotIcon = (color = '#2d5a27') => L.divIcon({
   className: '',
   html: `<div style="width:12px;height:12px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
   iconSize: [12, 12], iconAnchor: [6, 6],
 })
+*/}
+
+const SPECIES_COLORS = [
+  '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
+  '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
+  '#ff5722','#607d8b','#795548','#ff9800','#673ab7',
+  '#009688','#f44336','#2196f3','#4caf50','#ffc107',
+  '#3f51b5','#cddc39','#9c27b0','#03a9f4','#ffeb3b',
+];
+
+const speciesColorMap = {};
+let speciesColorIndex = 0;
+
+const colorForSpecies = (botanicalName) => {
+  if (!speciesColorMap[botanicalName]) {
+    speciesColorMap[botanicalName] = SPECIES_COLORS[speciesColorIndex % SPECIES_COLORS.length];
+    speciesColorIndex++;
+  }
+  return speciesColorMap[botanicalName];
+};
+
+const speciesIcon = (botanicalName) => {
+  const color = colorForSpecies(botanicalName);
+  // First letter of genus + first letter of species as label
+  const parts = (botanicalName || '').split(' ');
+  const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:30px;height:30px;background:${color};
+      border:2.5px solid white;border-radius:50%;
+      box-shadow:0 2px 6px rgba(0,0,0,0.35);
+      display:flex;align-items:center;justify-content:center;
+      color:white;font-size:10px;font-weight:700;font-family:sans-serif;
+      line-height:1;
+    ">${label}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -16],
+  });
+};
 
 export default function AreaDetail() {
   const [dark] = useDarkMode()
@@ -331,7 +373,8 @@ export default function AreaDetail() {
                     </LayersControl>
                     {trees.map(t => t.latitude && t.longitude && (
                       <Marker key={t.tree_id} position={[t.latitude, t.longitude]}
-                        icon={dotIcon('#2d5a27')}>
+                        {/*icon={dotIcon('#2d5a27')}>*/}
+                        icon={speciesIcon(t.botanical_name)}>
                         <Popup>
                           <strong style={{ fontSize: '0.88rem' }}>{t.common_name}</strong><br />
                           <em style={{ fontSize: '0.78rem', color: '#888' }}>{t.botanical_name}</em><br />
@@ -343,6 +386,25 @@ export default function AreaDetail() {
                       </Marker>
                     ))}
                   </MapContainer>
+                  {/* Species color legend */}
+                  <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
+                    {[...new Map(trees.map(t => [t.botanical_name, t])).values()].map(t => (
+                      <div key={t.botanical_name}
+                        className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                        <div style={{
+                          width: 18, height: 18, borderRadius: '50%',
+                          background: colorForSpecies(t.botanical_name),
+                          border: '2px solid white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'white', fontSize: 8, fontWeight: 700,
+                        }}>
+                          {((t.botanical_name?.split(' ')[0]?.[0] || '') + (t.botanical_name?.split(' ')[1]?.[0] || '')).toUpperCase()}
+                        </div>
+                        <span className="italic">{t.botanical_name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}
