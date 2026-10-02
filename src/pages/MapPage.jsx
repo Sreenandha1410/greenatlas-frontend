@@ -5,7 +5,7 @@ import L from 'leaflet';
 import { getTrees } from '../api';
 import { useDarkMode } from '../context/DarkModeContext'
 
-import MarkerClusterGroup from 'react-leaflet-cluster';
+import { MarkerClusterGroup } from 'react-leaflet-cluster';
 import 'react-leaflet-cluster/lib/assets/MarkerCluster.css';
 import 'react-leaflet-cluster/lib/assets/MarkerCluster.Default.css';
 
