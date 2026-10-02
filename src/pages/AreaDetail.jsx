@@ -372,9 +372,11 @@ export default function AreaDetail() {
                       </LayersControl.BaseLayer>
                     </LayersControl>
                     {trees.map(t => t.latitude && t.longitude && (
-                      <Marker key={t.tree_id} position={[t.latitude, t.longitude]}
-                        {/*icon={dotIcon('#2d5a27')}>*/}
-                        icon={speciesIcon(t.botanical_name)}>
+                      <Marker
+                        key={t.tree_id}
+                        position={[t.latitude, t.longitude]}
+                        icon={speciesIcon(t.botanical_name)}
+                      >
                         <Popup>
                           <strong style={{ fontSize: '0.88rem' }}>{t.common_name}</strong><br />
                           <em style={{ fontSize: '0.78rem', color: '#888' }}>{t.botanical_name}</em><br />
