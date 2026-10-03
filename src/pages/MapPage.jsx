@@ -208,8 +208,6 @@ export default function MapPage() {
         </div>
       </div>
 
-      const [legendOpen, setLegendOpen] = useState(false);
-
       {/* Area legend */}
       {trees.length > 0 && (
         <div className="relative shrink-0"
@@ -252,7 +250,57 @@ export default function MapPage() {
       )}
 
       {/* Map */}
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        {/* Legend overlay — place this INSIDE the map div, before MapContainer */}
+        {trees.length > 0 && (
+          <div style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 1000,
+            background: dark ? 'rgba(28,33,40,0.95)' : 'rgba(255,255,255,0.95)',
+            borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+            overflow: 'hidden', minWidth: 160,
+          }}>
+            {/* Toggle button */}
+            <button
+              onClick={() => setLegendOpen(o => !o)}
+              className="flex items-center gap-2 px-3 py-2 text-xs font-semibold w-full"
+              style={{ color: dark ? '#e6edf3' : '#374151' }}>
+              <div className="flex items-center gap-1">
+                {[...new Set(trees.map(t => t.area).filter(Boolean))].slice(0, 5).map(area => (
+                  <div key={area} style={{
+                    width: 10, height: 10, borderRadius: '50%',
+                    background: colorForArea(area), border: '1.5px solid white', flexShrink: 0,
+                  }} />
+                ))}
+                <span className="ml-1">{[...new Set(trees.map(t => t.area).filter(Boolean))].length} areas</span>
+              </div>
+              <span style={{ marginLeft: 'auto' }}>{legendOpen ? '▲' : '▼'}</span>
+            </button>
+      
+            {/* Expandable list with smooth animation */}
+            <div style={{
+              maxHeight: legendOpen ? 300 : 0,
+              opacity: legendOpen ? 1 : 0,
+              overflow: 'hidden auto',
+              transition: 'max-height 0.3s ease, opacity 0.2s ease',
+            }}>
+              <div className="flex flex-col gap-1.5 px-3 pb-3 pt-1">
+                {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
+                  <div key={area} className="flex items-center gap-2 text-xs"
+                    style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                    <div style={{
+                      width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+                      background: colorForArea(area),
+                      border: '1.5px solid white',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    }} />
+                    {area}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {trees.length > 0 && (
           <MapContainer center={center} zoom={17}
             style={{ height: '100%', width: '100%' }} maxZoom={22}>
