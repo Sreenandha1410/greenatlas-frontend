@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { getTrees } from '../api';
 import { useDarkMode } from '../context/DarkModeContext'
-
+{/*
 const MarkerClusterGroup = require('react-leaflet-cluster').default || require('react-leaflet-cluster');
 import 'react-leaflet-cluster/lib/assets/MarkerCluster.css';
 import 'react-leaflet-cluster/lib/assets/MarkerCluster.Default.css';
-
+*/}
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -83,7 +83,7 @@ export default function MapPage() {
     if (matches.length > 0) setFlyTarget(matches[0])
   }
 
-  const areaIcon = (tree) => {
+  {/*const areaIcon = (tree) => {
     const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
     const label = (tree.area_code || tree.area || '').substring(0, 3).toUpperCase();
     return L.divIcon({
@@ -99,6 +99,63 @@ export default function MapPage() {
       iconSize: [32, 32],
       iconAnchor: [16, 16],
       popupAnchor: [0, -18],
+    });
+  };*/}
+
+  {/*const FAMILY_EMOJI = {
+    'Fabaceae': '🫘',    'Leguminosae': '🫘',
+    'Arecaceae': '🌴',   'Palmae': '🌴',
+    'Moraceae': '🌳',
+    'Meliaceae': '🪵',
+    'Myrtaceae': '🍃',
+    'Rutaceae': '🍋',
+    'Anacardiaceae': '🥭',
+    'Apocynaceae': '🌸',
+    'Bignoniaceae': '🌺',
+    'Verbenaceae': '🌻',
+    'Lauraceae': '🍂',
+    'Malvaceae': '🌼',   'Bombacaceae': '🌼',
+    'Euphorbiaceae': '🍀',
+    'Casuarinaceae': '🎋',
+    'Combretaceae': '🌿',
+    'Mimosaceae': '🌾',
+  };
+  
+  const treeIcon = (tree) => {
+    const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
+    const emoji = FAMILY_EMOJI[tree.family] || '🌳';
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:28px;height:28px;background:${color};
+        border:2px solid white;border-radius:50%;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;
+        font-size:14px;line-height:1;
+      ">${emoji}</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -16],
+    });
+  };*/}
+
+  const treeIcon = (tree) => {
+    const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
+    const parts = (tree.botanical_name || '').split(' ');
+    const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:20px;height:20px;background:${color};
+        border:2px solid white;border-radius:50%;
+        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;
+        color:white;font-size:7px;font-weight:700;font-family:sans-serif;
+        line-height:1;
+      ">${label}</div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -12],
     });
   };
 
@@ -188,31 +245,29 @@ export default function MapPage() {
               </LayersControl.BaseLayer>
             </LayersControl>
 
-            <MarkerClusterGroup chunkedLoading>
-              {filtered.map(tree => tree.latitude && tree.longitude && (
-                <Marker key={tree.tree_id}
-                  position={[tree.latitude, tree.longitude]}
-                  icon={areaIcon(tree)}>
-                  <Popup>
-                    <div style={{ minWidth: 160 }}>
-                      {tree.species_image_url && (
-                        <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
-                          <img src={tree.species_image_url} alt=""
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      )}
-                      <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
-                      <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
-                      <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
-                      <Link to={`/trees/${tree.tree_id}`}
-                        style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
-                        View details →
-                      </Link>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MarkerClusterGroup>
+            {filtered.map(tree => tree.latitude && tree.longitude && (
+              <Marker key={tree.tree_id}
+                position={[tree.latitude, tree.longitude]}
+                icon={areaIcon(tree)}>
+                <Popup>
+                  <div style={{ minWidth: 160 }}>
+                    {tree.species_image_url && (
+                      <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
+                        <img src={tree.species_image_url} alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                    <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
+                    <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
+                    <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
+                    <Link to={`/trees/${tree.tree_id}`}
+                      style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
+                      View details →
+                    </Link>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         )}
       </div>
