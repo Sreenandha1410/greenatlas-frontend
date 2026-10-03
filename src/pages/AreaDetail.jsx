@@ -163,16 +163,16 @@ const speciesIcon = (botanicalName) => {
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:30px;height:30px;background:${color};
+      width:20px;height:20px;background:${color};
       border:2.5px solid white;border-radius:50%;
       box-shadow:0 2px 6px rgba(0,0,0,0.35);
       display:flex;align-items:center;justify-content:center;
-      color:white;font-size:10px;font-weight:700;font-family:sans-serif;
+      color:white;font-size:7px;font-weight:700;font-family:sans-serif;
       line-height:1;
     ">${label}</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    popupAnchor: [0, -16],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -12],
   });
 };
 
