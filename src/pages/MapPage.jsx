@@ -208,7 +208,7 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* Area legend */}
+      {/* Area legend */}{/*
       {trees.length > 0 && (
         <div className="relative shrink-0"
           style={{ borderBottom: legendOpen ? `1px solid ${dark ? '#30363d' : '#e5e7eb'}` : 'none' }}>
@@ -247,14 +247,14 @@ export default function MapPage() {
             </div>
           )}
         </div>
-      )}
+      )}*/}
 
       {/* Map */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
         {/* Legend overlay — place this INSIDE the map div, before MapContainer */}
         {trees.length > 0 && (
           <div style={{
-            position: 'absolute', top: 10, left: 10, zIndex: 1000,
+            position: 'absolute', top: 10, left: 50, zIndex: 1000,
             background: dark ? 'rgba(28,33,40,0.95)' : 'rgba(255,255,255,0.95)',
             borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
             overflow: 'hidden', minWidth: 160,
@@ -264,15 +264,7 @@ export default function MapPage() {
               onClick={() => setLegendOpen(o => !o)}
               className="flex items-center gap-2 px-3 py-2 text-xs font-semibold w-full"
               style={{ color: dark ? '#e6edf3' : '#374151' }}>
-              <div className="flex items-center gap-1">
-                {[...new Set(trees.map(t => t.area).filter(Boolean))].slice(0, 5).map(area => (
-                  <div key={area} style={{
-                    width: 10, height: 10, borderRadius: '50%',
-                    background: colorForArea(area), border: '1.5px solid white', flexShrink: 0,
-                  }} />
-                ))}
-                <span className="ml-1">{[...new Set(trees.map(t => t.area).filter(Boolean))].length} areas</span>
-              </div>
+              <span className="font-semibold">Legend</span>
               <span style={{ marginLeft: 'auto' }}>{legendOpen ? '▲' : '▼'}</span>
             </button>
       
