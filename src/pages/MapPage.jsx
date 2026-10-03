@@ -248,7 +248,7 @@ export default function MapPage() {
             {filtered.map(tree => tree.latitude && tree.longitude && (
               <Marker key={tree.tree_id}
                 position={[tree.latitude, tree.longitude]}
-                icon={areaIcon(tree)}>
+                icon={treeIcon(tree)}>
                 <Popup>
                   <div style={{ minWidth: 160 }}>
                     {tree.species_image_url && (
