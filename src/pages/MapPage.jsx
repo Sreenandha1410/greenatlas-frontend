@@ -56,6 +56,7 @@ export default function MapPage() {
   const [search, setSearch]     = useState('')
   const [flyTarget, setFlyTarget] = useState(null)
   const [matchCount, setMatchCount] = useState(null)
+  const [legendOpen, setLegendOpen] = useState(false);
 
   useEffect(() => { getTrees().then(r => setTrees(r.data)) }, [])
 
@@ -207,21 +208,46 @@ export default function MapPage() {
         </div>
       </div>
 
+      const [legendOpen, setLegendOpen] = useState(false);
+
       {/* Area legend */}
       {trees.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
-            <div key={area} className="flex items-center gap-1 text-xs"
-              style={{ color: dark ? '#e6edf3' : '#374151' }}>
-              <div style={{
-                width: 16, height: 16, borderRadius: '50%',
-                background: colorForArea(area),
-                border: '2px solid white',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              }} />
-              {area}
+        <div className="relative shrink-0"
+          style={{ borderBottom: legendOpen ? `1px solid ${dark ? '#30363d' : '#e5e7eb'}` : 'none' }}>
+          <button
+            onClick={() => setLegendOpen(o => !o)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold w-full"
+            style={{ color: dark ? '#e6edf3' : '#374151', background: dark ? '#1c2128' : '#f9fafb' }}>
+            <div className="flex items-center gap-1">
+              {[...new Set(trees.map(t => t.area).filter(Boolean))].slice(0, 5).map(area => (
+                <div key={area} style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: colorForArea(area), border: '1.5px solid white',
+                }} />
+              ))}
+              <span className="ml-1">+{[...new Set(trees.map(t => t.area).filter(Boolean))].length} areas</span>
             </div>
-          ))}
+            <span style={{ marginLeft: 'auto' }}>{legendOpen ? '▲ Hide' : '▼ Legend'}</span>
+          </button>
+      
+          {legendOpen && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-4 py-3"
+              style={{ background: dark ? '#1c2128' : '#f9fafb' }}>
+              {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
+                <div key={area} className="flex items-center gap-1.5 text-xs"
+                  style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: colorForArea(area),
+                    border: '1.5px solid white',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    flexShrink: 0,
+                  }} />
+                  {area}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
