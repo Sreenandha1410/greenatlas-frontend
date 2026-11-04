@@ -152,7 +152,19 @@ export const getViewCount = () =>
 
 // ==================== MAP EDITOR ====================
 
+
+// Add to frontend/src/api/index.js. Reuse your existing Axios instance `api`.
 export const updateTreeLocation = (id, coordinates) =>
-  api.patch(`/trees/${id}/location`, coordinates);
+  api.patch(`/trees/${encodeURIComponent(id)}/location`, coordinates);
+export const getTreeLocationHistory = (id, params = {}) =>
+  api.get(`/trees/${encodeURIComponent(id)}/location-history`, { params });
+export const getRecentLocationUpdates = (limit = 20) =>
+  api.get('/trees/location-history/recent', { params: { limit } });
+export const undoTreeLocation = id =>
+  api.post(`/trees/${encodeURIComponent(id)}/location/undo`);
+export const exportLocationHistory = () =>
+  api.get('/trees/location-history/export/csv', { responseType: 'blob' });
+
+
 
 export default api;
