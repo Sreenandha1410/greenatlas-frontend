@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSpecies } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
-import { getFloraType } from '../lib/floraType';
 
 export default function SpeciesList() {
   const [dark] = useDarkMode();
@@ -109,8 +108,8 @@ export default function SpeciesList() {
                 <td className="px-4 py-3 italic text-gray-400">{sp.genus} {sp.species}</td>
                 <td className="px-4 py-3 text-gray-500">{sp.family}</td>
                 <td className="px-4 py-3">
-                  <span className="text-base" title={getFloraType(sp.common_name) === 'tree' ? 'Tree' : 'Plant/Shrub'}>
-                    {getFloraType(sp.common_name) === 'tree' ? '🌳' : '🌿'}
+                  <span className="text-base" title={sp.flora_type === 'tree' ? 'Tree' : 'Plant/Shrub'}>
+                    {sp.flora_type === 'tree' ? '🌳' : '🌿'}
                   </span>
                 </td>
                 <td className="px-4 py-3">
