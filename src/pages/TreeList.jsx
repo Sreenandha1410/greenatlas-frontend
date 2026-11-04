@@ -394,7 +394,7 @@ export default function TreeList() {
               {(search || areaFilter || familyFilter || floraFilter !== 'all') && (
                 <button className="w-full text-xs text-red-500 hover:text-red-700 pt-2"
                   onClick={() => { setSearch(''); setAreaFilter(''); setFamilyFilter(''); setFloraFilter('all') }}
-                  ✕ Clear all filters
+                  &times; Clear all filters
                 </button>
               )}
             </div>
