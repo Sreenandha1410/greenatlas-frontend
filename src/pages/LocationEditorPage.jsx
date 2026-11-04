@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MarkerClusterGroup from 'react-leaflet-cluster';
 
 import {
   MapContainer,
@@ -702,13 +701,6 @@ export default function LocationEditorPage() {
               {/* Existing tree markers */}
               
               {/* Cluster all normal tree markers */}
-              <MarkerClusterGroup
-                chunkedLoading
-                showCoverageOnHover={false}
-                spiderfyOnMaxZoom={true}
-                removeOutsideVisibleBounds={true}
-                maxClusterRadius={55}
-              >
                 {validTrees
                   .filter(
                     (tree) => tree.tree_id !== selectedTree?.tree_id
@@ -742,7 +734,6 @@ export default function LocationEditorPage() {
                       </Popup>
                     </Marker>
                   ))}
-              </MarkerClusterGroup>
               
               {/* Selected tree - always displayed separately */}
               {selectedTree &&
