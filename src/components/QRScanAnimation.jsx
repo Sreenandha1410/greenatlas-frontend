@@ -164,6 +164,13 @@ function StatCard({ co2, value, delay }) {
         boxShadow:`0 12px 42px ${co2?'rgba(45,139,220,.12)':'rgba(33,180,74,.12)'},inset 0 1px 0 rgba(255,255,255,.08)`,
         backdropFilter:'blur(14px)'
       }}>
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 skew-x-[-18deg]"
+        animate={{ x: ['0%', '520%'] }}
+        transition={{ duration: 5.5, repeat: Infinity, repeatDelay: 2.2, ease: 'easeInOut', delay }}
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent)' }}
+      />
       <Molecule co2={co2}/>
       <p className="mt-1 text-3xl font-black tracking-widest" style={{color:accent}}>{co2?'CO₂':'O₂'}</p>
       <p className="mt-2 text-lg font-bold text-white">{value || '—'}</p>
@@ -184,7 +191,42 @@ export default function QRScanAnimation({ tree, onDone }) {
         className="fixed inset-0 z-[999] flex min-h-[100svh] flex-col items-center justify-between overflow-hidden px-4 py-8 sm:py-10"
         style={{background:'radial-gradient(ellipse at 50% 55%,#082b14 0%,#03150b 48%,#010805 100%)'}}>
         <ParticleTreeBackground/>
-        <div className="pointer-events-none absolute inset-0 z-[1]" style={{background:'linear-gradient(180deg,rgba(0,8,4,.25),transparent 35%,rgba(0,8,4,.38))'}}/>
+
+        {/* Animated atmosphere: scanning beam, orbiting fireflies and breathing rings. */}
+        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
+          <motion.div
+            className="absolute -left-1/3 top-0 h-full w-1/3"
+            animate={{ x: ['0vw', '430vw'] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'linear', repeatDelay: 1.8 }}
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(91,255,130,.045), rgba(135,255,157,.12), rgba(91,255,130,.045), transparent)', filter: 'blur(12px)' }}
+          />
+          <motion.div
+            className="absolute left-1/2 top-[52%] h-[min(72vw,420px)] w-[min(72vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-300/[.09]"
+            animate={{ scale: [0.88, 1.08, 0.88], opacity: [0.22, 0.55, 0.22] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute left-1/2 top-[52%] h-[min(54vw,310px)] w-[min(54vw,310px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-200/[.08]"
+            animate={{ scale: [1.08, 0.9, 1.08], opacity: [0.12, 0.38, 0.12] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+          />
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <motion.span
+              key={i}
+              className="absolute left-1/2 top-[52%] h-1.5 w-1.5 rounded-full bg-green-200"
+              style={{ boxShadow: '0 0 12px 3px rgba(89,255,126,.55)' }}
+              animate={{
+                x: [0, Math.cos(i * Math.PI / 4) * (105 + (i % 3) * 28), 0],
+                y: [0, Math.sin(i * Math.PI / 4) * (105 + (i % 3) * 28), 0],
+                opacity: [0.15, 0.9, 0.15],
+                scale: [0.55, 1.35, 0.55]
+              }}
+              transition={{ duration: 4.5 + (i % 3) * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.22 }}
+            />
+          ))}
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 z-[2]" style={{background:'linear-gradient(180deg,rgba(0,8,4,.25),transparent 35%,rgba(0,8,4,.38))'}}/>
 
         <motion.header initial={{opacity:0,y:-18}} animate={phase>=1?{opacity:1,y:0}:{}} transition={{delay:.2,duration:.7}}
           className="relative z-10 mt-2 w-full max-w-3xl text-center">
