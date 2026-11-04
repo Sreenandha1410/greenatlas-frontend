@@ -11,7 +11,7 @@ function ParticleTreeBackground() {
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
 
-    let w = 0, h = 0, raf = 0
+    let w = 0, h = 0, raf = 0, startedAt = 0
     let network = [], tree = []
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const rand = (a, b) => a + Math.random() * (b - a)
@@ -68,6 +68,7 @@ function ParticleTreeBackground() {
     }
 
     function frame(time) {
+      if (!startedAt) startedAt = time
       ctx.clearRect(0, 0, w, h)
       const bg = ctx.createRadialGradient(w*.5,h*.55,5,w*.5,h*.55,Math.max(w,h)*.65)
       bg.addColorStop(0,'rgba(13,75,29,.28)')
@@ -97,14 +98,23 @@ function ParticleTreeBackground() {
       })
       ctx.shadowBlur=0
 
-      const sway = reduced ? 0 : Math.sin(time*.00055)*2
+      const cx = w / 2, ground = h * .77
+      const growRaw = reduced ? 1 : Math.min(1, Math.max(0, (time-startedAt)/3200))
+      const grow = growRaw * growRaw * (3 - 2 * growRaw)
       tree.forEach((p,i) => {
-        const drift = reduced ? 0 : Math.sin(time*.0008+p.phase)*1.5
-        p.x=p.ox+sway*(p.oy<h*.55?.7:.25)+drift
-        p.y=p.oy+(reduced?0:Math.cos(time*.0007+p.phase)*1.1)
+        // Grow outward and upward from a tiny seed at the base of the tree.
+        const targetX = cx + (p.ox-cx)*grow
+        const targetY = ground + (p.oy-ground)*grow
+        const heightFactor = Math.max(0, Math.min(1, (ground-p.oy)/(h*.34)))
+        const branchFactor = Math.min(1, Math.abs(p.ox-cx)/Math.max(1, w*.22))
+        const wind = reduced ? 0 : Math.sin(time*.00135 - (p.ox-cx)*.012 + p.phase*.12) * (1.2 + heightFactor*5.5 + branchFactor*3.5)
+        const flutter = reduced ? 0 : Math.sin(time*.0022+p.phase)*heightFactor*1.4
+        p.x = targetX + wind
+        p.y = targetY + flutter
+        p.growthAlpha = grow
         // Connect nearby points to give the tree a delicate particle-mesh structure.
         for (let j=i+1;j<tree.length;j++) {
-          const q=tree[j], d=Math.hypot(p.x-q.ox,p.y-q.oy)
+          const q=tree[j], d=Math.hypot(p.x-q.x,p.y-q.y)
           if (d<21) {
             ctx.strokeStyle=`rgba(72,224,100,${(1-d/21)*.11})`
             ctx.lineWidth=.5; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.ox,q.oy); ctx.stroke()
@@ -113,10 +123,17 @@ function ParticleTreeBackground() {
       })
       tree.forEach((p,i) => {
         const shimmer = reduced ? .75 : .55+(Math.sin(time*.0018+p.phase)+1)*.22
-        ctx.beginPath(); ctx.fillStyle=`rgba(115,255,128,${p.alpha*shimmer})`
+        ctx.beginPath(); ctx.fillStyle=`rgba(115,255,128,${p.alpha*shimmer*p.growthAlpha})`
         ctx.shadowColor='#39ff64'; ctx.shadowBlur=i%4===0?12:6
-        ctx.arc(p.x,p.y,p.size*(i%7===0?1.2:1),0,Math.PI*2); ctx.fill()
+        ctx.arc(p.x,p.y,p.size*(i%7===0?1.2:1)*(.35+.65*p.growthAlpha),0,Math.PI*2); ctx.fill()
       })
+
+      // A tiny glowing seed remains visible while the tree grows.
+      if (grow < 1 && !reduced) {
+        const pulse = 1 + Math.sin(time*.008)*.25
+        ctx.beginPath(); ctx.fillStyle='rgba(180,255,145,.95)'; ctx.shadowColor='#7dff72'; ctx.shadowBlur=24
+        ctx.arc(cx,ground,3.5*pulse,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0
+      }
       ctx.shadowBlur=0
 
       const floor=ctx.createRadialGradient(w*.5,h*.78,2,w*.5,h*.78,Math.min(w*.3,250))
@@ -164,13 +181,6 @@ function StatCard({ co2, value, delay }) {
         boxShadow:`0 12px 42px ${co2?'rgba(45,139,220,.12)':'rgba(33,180,74,.12)'},inset 0 1px 0 rgba(255,255,255,.08)`,
         backdropFilter:'blur(14px)'
       }}>
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 skew-x-[-18deg]"
-        animate={{ x: ['0%', '520%'] }}
-        transition={{ duration: 5.5, repeat: Infinity, repeatDelay: 2.2, ease: 'easeInOut', delay }}
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent)' }}
-      />
       <Molecule co2={co2}/>
       <p className="mt-1 text-3xl font-black tracking-widest" style={{color:accent}}>{co2?'CO₂':'O₂'}</p>
       <p className="mt-2 text-lg font-bold text-white">{value || '—'}</p>
@@ -191,42 +201,7 @@ export default function QRScanAnimation({ tree, onDone }) {
         className="fixed inset-0 z-[999] flex min-h-[100svh] flex-col items-center justify-between overflow-hidden px-4 py-8 sm:py-10"
         style={{background:'radial-gradient(ellipse at 50% 55%,#082b14 0%,#03150b 48%,#010805 100%)'}}>
         <ParticleTreeBackground/>
-
-        {/* Animated atmosphere: scanning beam, orbiting fireflies and breathing rings. */}
-        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
-          <motion.div
-            className="absolute -left-1/3 top-0 h-full w-1/3"
-            animate={{ x: ['0vw', '430vw'] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'linear', repeatDelay: 1.8 }}
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(91,255,130,.045), rgba(135,255,157,.12), rgba(91,255,130,.045), transparent)', filter: 'blur(12px)' }}
-          />
-          <motion.div
-            className="absolute left-1/2 top-[52%] h-[min(72vw,420px)] w-[min(72vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-300/[.09]"
-            animate={{ scale: [0.88, 1.08, 0.88], opacity: [0.22, 0.55, 0.22] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute left-1/2 top-[52%] h-[min(54vw,310px)] w-[min(54vw,310px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-200/[.08]"
-            animate={{ scale: [1.08, 0.9, 1.08], opacity: [0.12, 0.38, 0.12] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-          />
-          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <motion.span
-              key={i}
-              className="absolute left-1/2 top-[52%] h-1.5 w-1.5 rounded-full bg-green-200"
-              style={{ boxShadow: '0 0 12px 3px rgba(89,255,126,.55)' }}
-              animate={{
-                x: [0, Math.cos(i * Math.PI / 4) * (105 + (i % 3) * 28), 0],
-                y: [0, Math.sin(i * Math.PI / 4) * (105 + (i % 3) * 28), 0],
-                opacity: [0.15, 0.9, 0.15],
-                scale: [0.55, 1.35, 0.55]
-              }}
-              transition={{ duration: 4.5 + (i % 3) * 0.8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.22 }}
-            />
-          ))}
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 z-[2]" style={{background:'linear-gradient(180deg,rgba(0,8,4,.25),transparent 35%,rgba(0,8,4,.38))'}}/>
+        <div className="pointer-events-none absolute inset-0 z-[1]" style={{background:'linear-gradient(180deg,rgba(0,8,4,.25),transparent 35%,rgba(0,8,4,.38))'}}/>
 
         <motion.header initial={{opacity:0,y:-18}} animate={phase>=1?{opacity:1,y:0}:{}} transition={{delay:.2,duration:.7}}
           className="relative z-10 mt-2 w-full max-w-3xl text-center">
