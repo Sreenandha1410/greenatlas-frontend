@@ -149,7 +149,6 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTrees, getAreas } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
-import { getFloraType } from '../lib/floraType'
 
 function TreeCard({ tree }) {
   return (
@@ -286,7 +285,7 @@ export default function TreeList() {
   const availableAreas = [...new Set(
     trees
       .filter(t => !familyFilter || t.family === familyFilter)
-      .filter(t => floraFilter === 'all' || getFloraType(t.common_name) === floraFilter)
+      .filter(t => floraFilter === 'all' || t.flora_type === floraFilter)
       .map(t => t.area)
       .filter(Boolean)
   )].sort()
@@ -294,7 +293,7 @@ export default function TreeList() {
   const availableFamilies = [...new Set(
     trees
       .filter(t => !areaFilter || t.area === areaFilter)
-      .filter(t => floraFilter === 'all' || getFloraType(t.common_name) === floraFilter)
+      .filter(t => floraFilter === 'all' || t.flora_type === floraFilter)
       .map(t => t.family)
       .filter(Boolean)
   )].sort()
@@ -306,7 +305,7 @@ export default function TreeList() {
       .some(v => v?.toLowerCase().includes(q))
     const matchArea   = !areaFilter   || t.area   === areaFilter
     const matchFamily = !familyFilter || t.family === familyFilter
-    const matchFlora  = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter
+    const matchFlora  = floraFilter === 'all' || t.flora_type === floraFilter
     return matchSearch && matchArea && matchFamily && matchFlora
   })
 
