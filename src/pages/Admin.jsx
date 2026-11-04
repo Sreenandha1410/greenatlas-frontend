@@ -955,13 +955,28 @@ export default function Admin() {
     } catch { flash('❌ Failed to generate QR'); }
   };
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+  
+return (
+  <div className="max-w-6xl mx-auto px-4 py-8">
+
+    {/* Admin Header */}
+    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+
+      <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-gray-100">
         Admin Panel
       </h1>
 
-      <Flash msg={msg} />
+      <button
+        onClick={() => navigate('/admin/map-editor')}
+        className="btn-primary flex items-center gap-2"
+      >
+        📍 Edit Tree Locations
+      </button>
+
+    </div>
+
+    <Flash msg={msg} />
+
 
       {/* Tab bar */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto">
