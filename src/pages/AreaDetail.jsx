@@ -118,7 +118,6 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-lea
 import { motion } from 'framer-motion';
 import L from 'leaflet';
 import { getTrees, getAreaInfo, updateAreaInfo } from '../api';
-import { getFloraType } from '../lib/floraType';
 import ImageUpload from '../components/ImageUpload';
 import { useDarkMode } from '../context/DarkModeContext'
 
@@ -160,7 +159,7 @@ const floraIcon = (tree) => {
   const color = colorForSpecies(tree.botanical_name);
   const parts = (tree.botanical_name || '').split(' ');
   const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-  if (getFloraType(tree.common_name) === 'plant') {
+  if (tree.flora_type === 'plant') {
     return L.divIcon({
       className: '',
       html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
@@ -229,7 +228,7 @@ export default function AreaDetail() {
     const matchSearch = !treeSearch ||
       t.common_name?.toLowerCase().includes(treeSearch.toLowerCase()) ||
       t.botanical_name?.toLowerCase().includes(treeSearch.toLowerCase());
-    const matchFlora = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter;
+    const matchFlora = floraFilter === 'all' || t.flora_type === floraFilter;
     return matchSearch && matchFlora;
   });
 
