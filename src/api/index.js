@@ -150,4 +150,9 @@ export const recordView = (path) =>
 export const getViewCount = () =>
   api.get('/trees/views');
 
+// ==================== MAP EDITOR ====================
+
+export const updateTreeLocation = (id, coordinates) =>
+  api.patch(`/trees/${id}/location`, coordinates);
+
 export default api;
