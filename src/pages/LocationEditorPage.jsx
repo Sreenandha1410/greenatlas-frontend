@@ -327,11 +327,15 @@ export default function LocationEditorPage() {
       );
 
     } catch (err) {
-      console.error('Location update failed:', err);
-
+      console.error(
+        'Location update failed:',
+        err.response?.status,
+        err.response?.data || err.message
+      );
+    
       setError(
         err.response?.data?.error ||
-        'Failed to update tree location. Please try again.'
+        `Update failed (${err.response?.status || 'Network error'}). Check the backend.`
       );
 
     } finally {
