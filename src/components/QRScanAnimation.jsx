@@ -1,1033 +1,228 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// ============================================================
-// REALISTIC O2 MOLECULE — subtle 3D scientific visualization
-// ============================================================
-function O2Molecule({ delay = 0, lane = 0 }) {
-  const atomStyle = {
-    position: 'absolute',
-    width: 23,
-    height: 23,
-    borderRadius: '50%',
-    background:
-      'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98) 0%, rgba(220,255,224,0.92) 10%, rgba(104,180,108,0.98) 34%, rgba(45,105,48,1) 72%, rgba(12,42,15,1) 100%)',
-    border: '1px solid rgba(218,255,221,0.55)',
-    boxShadow:
-      'inset -5px -6px 9px rgba(0,25,4,0.42), inset 3px 3px 5px rgba(255,255,255,0.28), 0 5px 12px rgba(0,0,0,0.28), 0 0 12px rgba(91,190,99,0.22)'
-  }
-
-  return (
-    <motion.div
-      className="absolute pointer-events-none z-20"
-      style={{
-        left: 0,
-        top: '50%',
-        marginTop: lane,
-        width: 58,
-        height: 30,
-        filter: 'drop-shadow(0 5px 7px rgba(0,0,0,0.2))'
-      }}
-      initial={{ opacity: 0, x: -95, scale: 0.58, rotate: -8 }}
-      animate={{
-        opacity: [0, 0.95, 1, 0.95, 0],
-        x: [-95, -42, 0, 34, 72],
-        y: [0, 0, -5, -30, -70],
-        scale: [0.58, 0.88, 1, 0.94, 0.68],
-        rotate: [-8, -2, 3, 10, 18]
-      }}
-      transition={{
-        duration: 3.8,
-        delay,
-        repeat: Infinity,
-        repeatDelay: 0.55,
-        ease: 'easeInOut',
-        times: [0, 0.27, 0.48, 0.72, 1]
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          width: 20,
-          height: 6,
-          left: 19,
-          top: 12,
-          borderRadius: 8,
-          background:
-            'linear-gradient(180deg, rgba(229,255,231,0.95), rgba(91,155,95,0.92) 48%, rgba(28,72,31,0.95))',
-          border: '1px solid rgba(207,255,210,0.35)',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.35)'
-        }}
-      />
-
-      <motion.div
-        animate={{ y: [0, -0.6, 0], scale: [1, 1.035, 1] }}
-        transition={{ duration: 1.7, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ ...atomStyle, left: 0, top: 3 }}
-      />
-
-      <motion.div
-        animate={{ y: [0, 0.6, 0], scale: [1, 1.035, 1] }}
-        transition={{ duration: 1.7, delay: 0.18, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ ...atomStyle, right: 0, top: 3 }}
-      />
-    </motion.div>
-  )
-}
-
-
-// ============================================================
-// REALISTIC CO2 MOLECULE — subtle 3D linear structure
-// ============================================================
-function CO2Molecule({ delay = 0, lane = 0 }) {
-  const oxygenStyle = {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: '50%',
-    background:
-      'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98) 0%, rgba(225,241,255,0.94) 11%, rgba(86,154,218,0.98) 38%, rgba(24,83,145,1) 74%, rgba(8,34,68,1) 100%)',
-    border: '1px solid rgba(213,235,255,0.58)',
-    boxShadow:
-      'inset -5px -6px 8px rgba(0,20,48,0.42), inset 3px 3px 5px rgba(255,255,255,0.3), 0 5px 11px rgba(0,0,0,0.25), 0 0 11px rgba(72,142,215,0.18)'
-  }
-
-  return (
-    <motion.div
-      className="absolute pointer-events-none z-20"
-      style={{
-        right: 0,
-        top: '50%',
-        marginTop: lane,
-        width: 70,
-        height: 30,
-        filter: 'drop-shadow(0 5px 7px rgba(0,0,0,0.2))'
-      }}
-      initial={{ opacity: 0, x: 95, scale: 0.58, rotate: 8 }}
-      animate={{
-        opacity: [0, 0.95, 1, 0.96, 0],
-        x: [95, 45, 5, -7, -10],
-        y: [0, 0, 1, -5, -13],
-        scale: [0.58, 0.88, 1, 1.02, 0.18],
-        rotate: [8, 3, 0, -5, -10]
-      }}
-      transition={{
-        duration: 3.8,
-        delay,
-        repeat: Infinity,
-        repeatDelay: 0.55,
-        ease: 'easeInOut',
-        times: [0, 0.27, 0.47, 0.57, 1]
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          height: 5,
-          width: 13,
-          left: 17,
-          top: 12,
-          borderRadius: 5,
-          background:
-            'linear-gradient(180deg, rgba(230,243,255,0.95), rgba(91,139,188,0.92) 48%, rgba(23,56,89,0.95))',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.35)'
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          height: 5,
-          width: 13,
-          left: 40,
-          top: 12,
-          borderRadius: 5,
-          background:
-            'linear-gradient(180deg, rgba(230,243,255,0.95), rgba(91,139,188,0.92) 48%, rgba(23,56,89,0.95))',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.35)'
-        }}
-      />
-
-      <motion.div
-        animate={{ scale: [1, 1.025, 1] }}
-        transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ ...oxygenStyle, left: 0, top: 5 }}
-      />
-
-      <motion.div
-        animate={{ scale: [1, 1.04, 1], y: [0, 0.5, 0] }}
-        transition={{ duration: 1.9, delay: 0.1, repeat: Infinity, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute',
-          width: 25,
-          height: 25,
-          left: 22,
-          top: 2,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle at 28% 20%, rgba(255,255,255,0.98) 0%, rgba(255,220,229,0.95) 10%, rgba(220,88,126,1) 36%, rgba(139,31,68,1) 73%, rgba(55,8,26,1) 100%)',
-          border: '1px solid rgba(255,220,230,0.58)',
-          boxShadow:
-            'inset -6px -7px 10px rgba(45,0,18,0.44), inset 3px 3px 6px rgba(255,255,255,0.3), 0 5px 13px rgba(0,0,0,0.28), 0 0 11px rgba(218,76,120,0.16)'
-        }}
-      />
-
-      <motion.div
-        animate={{ scale: [1, 1.025, 1] }}
-        transition={{ duration: 1.9, delay: 0.2, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ ...oxygenStyle, right: 0, top: 5 }}
-      />
-    </motion.div>
-  )
-}
-
-
-// ============================================================
-// REALISTIC COLLISION EFFECT — restrained energy transfer
-// ============================================================
-function CollisionEffect() {
-  return (
-    <motion.div
-      className="absolute pointer-events-none z-30"
-      style={{
-        left: '50%',
-        top: '50%',
-        width: 1,
-        height: 1,
-        transform: 'translate(-50%, -50%)'
-      }}
-    >
-      <motion.div
-        animate={{
-          scale: [0.2, 0.7, 1.15, 1.45, 0.2],
-          opacity: [0, 0.75, 0.45, 0.12, 0]
-        }}
-        transition={{
-          duration: 3.8,
-          repeat: Infinity,
-          repeatDelay: 0.55,
-          times: [0.42, 0.47, 0.52, 0.62, 0.78],
-          ease: 'easeOut'
-        }}
-        style={{
-          position: 'absolute',
-          width: 90,
-          height: 90,
-          left: -45,
-          top: -45,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle, rgba(238,255,240,0.82) 0%, rgba(145,205,150,0.32) 16%, rgba(70,130,74,0.1) 42%, transparent 72%)',
-          filter: 'blur(1px)'
-        }}
-      />
-
-      <motion.div
-        animate={{
-          scale: [0.35, 0.8, 1.7],
-          opacity: [0, 0.65, 0]
-        }}
-        transition={{
-          duration: 3.8,
-          repeat: Infinity,
-          repeatDelay: 0.55,
-          times: [0.45, 0.53, 0.72],
-          ease: 'easeOut'
-        }}
-        style={{
-          position: 'absolute',
-          width: 48,
-          height: 48,
-          left: -24,
-          top: -24,
-          borderRadius: '50%',
-          border: '1px solid rgba(173,221,176,0.65)',
-          boxShadow: '0 0 16px rgba(103,166,108,0.25)'
-        }}
-      />
-
-      {[0, 1, 2, 3, 4, 5].map((i) => {
-        const angle = i * 60
-        const distance = 34 + (i % 2) * 12
-
-        return (
-          <motion.div
-            key={i}
-            animate={{
-              x: [0, Math.cos((angle * Math.PI) / 180) * distance],
-              y: [0, Math.sin((angle * Math.PI) / 180) * distance],
-              opacity: [0, 0.72, 0],
-              scale: [0.4, 0.8, 0]
-            }}
-            transition={{
-              duration: 3.8,
-              repeat: Infinity,
-              repeatDelay: 0.55,
-              delay: i * 0.015,
-              times: [0.45, 0.56, 0.72],
-              ease: 'easeOut'
-            }}
-            style={{
-              position: 'absolute',
-              width: 3,
-              height: 3,
-              borderRadius: '50%',
-              background: 'rgba(210,239,213,0.9)',
-              boxShadow: '0 0 5px rgba(142,202,147,0.5)'
-            }}
-          />
-        )
-      })}
-    </motion.div>
-  )
-}
-
-
-// ============================================================
-// EXTRA O2 — realistic oxygen atoms leaving the process
-// ============================================================
-function ExtraOxygen({ delay = 0, x = 0 }) {
-  return (
-    <motion.div
-      className="absolute pointer-events-none z-25"
-      style={{
-        left: `calc(50% + ${x}px)`,
-        top: '50%',
-        width: 17,
-        height: 17
-      }}
-      initial={{ opacity: 0, x: 0, y: 0, scale: 0.35 }}
-      animate={{
-        opacity: [0, 0.9, 0.75, 0],
-        x: [0, x * 0.35, x * 0.75],
-        y: [0, -38, -108],
-        scale: [0.35, 0.82, 0.55]
-      }}
-      transition={{
-        duration: 3,
-        delay,
-        repeat: Infinity,
-        repeatDelay: 0.95,
-        ease: 'easeOut'
-      }}
-    >
-      <div
-        style={{
-          width: 17,
-          height: 17,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle at 28% 22%, rgba(255,255,255,0.98), rgba(218,252,221,0.9) 12%, rgba(91,169,96,0.96) 40%, rgba(31,82,35,1) 78%, rgba(9,28,11,1))',
-          border: '1px solid rgba(220,255,224,0.45)',
-          boxShadow:
-            'inset -4px -5px 7px rgba(0,20,3,0.42), inset 2px 2px 4px rgba(255,255,255,0.25), 0 4px 10px rgba(0,0,0,0.25)'
-        }}
-      />
-    </motion.div>
-  )
-}
-
-
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
-export default function QRScanAnimation({ tree, onDone }) {
-
-  const [phase, setPhase] = useState(0)
+// Lightweight particle-network background and particle-formed tree.
+// Uses Canvas 2D; no new dependency is required.
+function ParticleTreeBackground() {
+  const ref = useRef(null)
 
   useEffect(() => {
+    const canvas = ref.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
 
-    const t1 = setTimeout(
-      () => setPhase(1),
-      800
-    )
+    let w = 0, h = 0, raf = 0
+    let network = [], tree = []
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const rand = (a, b) => a + Math.random() * (b - a)
 
-    return () => clearTimeout(t1)
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      w = window.innerWidth
+      h = window.innerHeight
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
+      network = Array.from({ length: Math.min(115, Math.max(55, Math.floor(w * h / 12500))) }, () => ({
+        x: rand(0, w), y: rand(0, h), vx: rand(-.13, .13), vy: rand(-.1, .1),
+        r: rand(.7, 2), phase: rand(0, 6.28), alpha: rand(.15, .65)
+      }))
+
+      const cx = w / 2
+      const ground = h * .77
+      const rx = Math.min(w * .30, 225)
+      const ry = Math.min(h * .27, 185)
+      tree = []
+
+      // Canopy particles distributed inside an irregular ellipse.
+      const canopyCount = Math.min(360, Math.max(150, Math.floor(w * h / 5200)))
+      for (let i = 0; i < canopyCount; i++) {
+        const a = rand(0, Math.PI * 2), r = Math.sqrt(Math.random())
+        const x = cx + Math.cos(a) * rx * r * rand(.86, 1.08)
+        const y = ground - ry + Math.sin(a) * ry * r * rand(.86, 1.08)
+        tree.push({ x, y, ox: x, oy: y, phase: rand(0, 6.28), size: rand(.7, 2), alpha: rand(.25, .9) })
+      }
+
+      // Trunk, branches and roots.
+      for (let i = 0; i < 115; i++) {
+        const t = i / 114, spread = 4 + t * 19
+        const x = cx + rand(-spread, spread), y = ground - t * h * .29
+        tree.push({ x, y, ox: x, oy: y, phase: rand(0, 6.28), size: rand(.8, 1.8), alpha: rand(.35, .9) })
+      }
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 38; i++) {
+          const t = i / 37, x = cx + side * t * rx * .72
+          const y = ground + t * 9
+          tree.push({ x, y, ox: x, oy: y, phase: rand(0, 6.28), size: rand(.6, 1.5), alpha: rand(.25, .7) })
+        }
+      }
+      ;[[-.72,-.78],[-.48,-.98],[-.18,-1.08],[.18,-1.08],[.48,-.98],[.72,-.78],[-.9,-.48],[.9,-.48]].forEach(([dx,dy]) => {
+        for (let i = 0; i < 25; i++) {
+          const t = i / 24, x = cx + dx * rx * t, y = ground - ry * .1 + dy * ry * t
+          tree.push({ x, y, ox: x, oy: y, phase: rand(0, 6.28), size: rand(.7, 1.5), alpha: rand(.25, .8) })
+        }
+      })
+    }
+
+    function frame(time) {
+      ctx.clearRect(0, 0, w, h)
+      const bg = ctx.createRadialGradient(w*.5,h*.55,5,w*.5,h*.55,Math.max(w,h)*.65)
+      bg.addColorStop(0,'rgba(13,75,29,.28)')
+      bg.addColorStop(.6,'rgba(4,35,15,.16)')
+      bg.addColorStop(1,'rgba(1,8,5,0)')
+      ctx.fillStyle = bg
+      ctx.fillRect(0,0,w,h)
+
+      if (!reduced) network.forEach(p => {
+        p.x += p.vx; p.y += p.vy
+        if (p.x < 0 || p.x > w) p.vx *= -1
+        if (p.y < 0 || p.y > h) p.vy *= -1
+      })
+
+      for (let i=0;i<network.length;i++) for (let j=i+1;j<network.length;j++) {
+        const a=network[i], b=network[j], d=Math.hypot(a.x-b.x,a.y-b.y)
+        if (d<125) {
+          ctx.strokeStyle=`rgba(55,190,82,${(1-d/125)*.13})`
+          ctx.lineWidth=.65; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke()
+        }
+      }
+      network.forEach(p => {
+        const pulse = reduced ? 1 : .65 + Math.sin(time*.0015+p.phase)*.35
+        ctx.beginPath(); ctx.fillStyle=`rgba(68,255,105,${p.alpha*pulse})`
+        ctx.shadowColor='#32ff65'; ctx.shadowBlur=9
+        ctx.arc(p.x,p.y,p.r*pulse,0,Math.PI*2); ctx.fill()
+      })
+      ctx.shadowBlur=0
+
+      const sway = reduced ? 0 : Math.sin(time*.00055)*2
+      tree.forEach((p,i) => {
+        const drift = reduced ? 0 : Math.sin(time*.0008+p.phase)*1.5
+        p.x=p.ox+sway*(p.oy<h*.55?.7:.25)+drift
+        p.y=p.oy+(reduced?0:Math.cos(time*.0007+p.phase)*1.1)
+        // Connect nearby points to give the tree a delicate particle-mesh structure.
+        for (let j=i+1;j<tree.length;j++) {
+          const q=tree[j], d=Math.hypot(p.x-q.ox,p.y-q.oy)
+          if (d<21) {
+            ctx.strokeStyle=`rgba(72,224,100,${(1-d/21)*.11})`
+            ctx.lineWidth=.5; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.ox,q.oy); ctx.stroke()
+          }
+        }
+      })
+      tree.forEach((p,i) => {
+        const shimmer = reduced ? .75 : .55+(Math.sin(time*.0018+p.phase)+1)*.22
+        ctx.beginPath(); ctx.fillStyle=`rgba(115,255,128,${p.alpha*shimmer})`
+        ctx.shadowColor='#39ff64'; ctx.shadowBlur=i%4===0?12:6
+        ctx.arc(p.x,p.y,p.size*(i%7===0?1.2:1),0,Math.PI*2); ctx.fill()
+      })
+      ctx.shadowBlur=0
+
+      const floor=ctx.createRadialGradient(w*.5,h*.78,2,w*.5,h*.78,Math.min(w*.3,250))
+      floor.addColorStop(0,'rgba(55,255,100,.12)'); floor.addColorStop(1,'rgba(55,255,100,0)')
+      ctx.fillStyle=floor; ctx.fillRect(w*.15,h*.58,w*.7,h*.35)
+
+      if (!reduced) raf=requestAnimationFrame(frame)
+    }
+
+    resize()
+    raf=requestAnimationFrame(frame)
+    window.addEventListener('resize',resize)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize',resize) }
   }, [])
 
+  return <canvas ref={ref} aria-hidden="true" className="absolute inset-0 h-full w-full pointer-events-none" />
+}
+
+function Molecule({ co2 = false }) {
+  return co2 ? (
+    <motion.div className="relative h-12 w-20" animate={{ y:[0,3,0] }} transition={{ duration:3.4,repeat:Infinity }}>
+      <i className="absolute left-0 top-4 h-6 w-6 rounded-full border border-blue-100/70 bg-[radial-gradient(circle_at_30%_25%,#eff8ff,#69b7ff_40%,#124c91)] shadow-[0_0_18px_rgba(73,164,255,.5)]"/>
+      <i className="absolute left-[27px] top-[13px] h-8 w-8 rounded-full border border-pink-100/70 bg-[radial-gradient(circle_at_30%_25%,#fff0f5,#ed6b9a_40%,#8b1744)] shadow-[0_0_18px_rgba(236,72,153,.45)]"/>
+      <i className="absolute right-0 top-4 h-6 w-6 rounded-full border border-blue-100/70 bg-[radial-gradient(circle_at_30%_25%,#eff8ff,#69b7ff_40%,#124c91)] shadow-[0_0_18px_rgba(73,164,255,.5)]"/>
+      <i className="absolute left-5 top-[25px] h-1 w-3 bg-blue-200"/><i className="absolute right-5 top-[25px] h-1 w-3 bg-blue-200"/>
+    </motion.div>
+  ) : (
+    <motion.div className="relative h-12 w-16" animate={{ y:[0,-3,0] }} transition={{ duration:3,repeat:Infinity }}>
+      <i className="absolute left-1 top-3 h-7 w-7 rounded-full border border-green-100/70 bg-[radial-gradient(circle_at_30%_25%,#f0fff1,#79d783_35%,#17612a)] shadow-[0_0_22px_rgba(88,230,112,.55)]"/>
+      <i className="absolute right-1 top-3 h-7 w-7 rounded-full border border-green-100/70 bg-[radial-gradient(circle_at_30%_25%,#f0fff1,#79d783_35%,#17612a)] shadow-[0_0_22px_rgba(88,230,112,.55)]"/>
+      <i className="absolute left-7 top-[23px] h-1 w-3 bg-green-200"/>
+    </motion.div>
+  )
+}
+
+function StatCard({ co2, value, delay }) {
+  const accent = co2 ? '#91caff' : '#8df09a'
+  return (
+    <motion.div initial={{opacity:0,y:24,scale:.94}} animate={{opacity:1,y:0,scale:1}}
+      transition={{delay,duration:.65}} whileHover={{y:-5,scale:1.025}}
+      className="relative flex min-w-0 flex-1 flex-col items-center overflow-hidden rounded-[26px] px-3 py-5 text-center"
+      style={{
+        background:co2?'linear-gradient(145deg,rgba(15,65,91,.82),rgba(8,31,49,.82))':'linear-gradient(145deg,rgba(17,75,35,.82),rgba(9,38,23,.82))',
+        border:`1px solid ${co2?'rgba(103,184,255,.34)':'rgba(112,235,133,.36)'}`,
+        boxShadow:`0 12px 42px ${co2?'rgba(45,139,220,.12)':'rgba(33,180,74,.12)'},inset 0 1px 0 rgba(255,255,255,.08)`,
+        backdropFilter:'blur(14px)'
+      }}>
+      <Molecule co2={co2}/>
+      <p className="mt-1 text-3xl font-black tracking-widest" style={{color:accent}}>{co2?'CO₂':'O₂'}</p>
+      <p className="mt-2 text-lg font-bold text-white">{value || '—'}</p>
+      <p className="mt-0.5 text-xs text-white/55">kg / day</p>
+      <p className="mt-2 text-xs font-semibold" style={{color:accent}}>{co2?'CO₂ Absorbed':'Oxygen Produced'}</p>
+    </motion.div>
+  )
+}
+
+export default function QRScanAnimation({ tree, onDone }) {
+  const [phase,setPhase]=useState(0)
+  useEffect(()=>{const timer=setTimeout(()=>setPhase(1),650);return()=>clearTimeout(timer)},[])
 
   return (
-
     <AnimatePresence>
+      {phase<2 && <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:1.02}}
+        transition={{duration:.5}}
+        className="fixed inset-0 z-[999] flex min-h-[100svh] flex-col items-center justify-between overflow-hidden px-4 py-8 sm:py-10"
+        style={{background:'radial-gradient(ellipse at 50% 55%,#082b14 0%,#03150b 48%,#010805 100%)'}}>
+        <ParticleTreeBackground/>
+        <div className="pointer-events-none absolute inset-0 z-[1]" style={{background:'linear-gradient(180deg,rgba(0,8,4,.25),transparent 35%,rgba(0,8,4,.38))'}}/>
 
-      {phase < 2 && (
+        <motion.header initial={{opacity:0,y:-18}} animate={phase>=1?{opacity:1,y:0}:{}} transition={{delay:.2,duration:.7}}
+          className="relative z-10 mt-2 w-full max-w-3xl text-center">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[.32em] text-green-300/90">Green Atlas · Living Intelligence</p>
+          <p className="text-xs font-semibold uppercase tracking-[.24em] text-green-200/75">You are looking at</p>
+          <h1 className="mt-2 text-2xl font-bold leading-tight text-white sm:text-4xl" style={{fontFamily:'Fraunces,Georgia,serif',textShadow:'0 3px 28px rgba(80,255,120,.2)'}}>
+            {tree?.common_name || 'Green Atlas'}
+          </h1>
+          <p className="mt-2 text-sm italic text-green-200/80 sm:text-base">{tree?.botanical_name}</p>
+        </motion.header>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{
-            opacity: 0,
-            scale: 1.05
-          }}
-          transition={{
-            duration: 0.4
-          }}
-          className="fixed inset-0 z-[999] flex flex-col items-center justify-between overflow-hidden py-10 px-4"
-          style={{
-            background:
-              'linear-gradient(160deg, #0a1f0a 0%, #1a3618 40%, #0d2b0d 100%)'
-          }}
-        >
-
-          {/* =====================================================
-              BACKGROUND GLOW
-          ====================================================== */}
-
-          <motion.div
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.3, 0.6, 0.3]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: 400,
-              height: 400,
-              top: '50%',
-              left: '50%',
-              transform:
-                'translate(-50%, -50%)',
-              background:
-                'radial-gradient(circle, rgba(82,160,67,0.25) 0%, transparent 70%)'
-            }}
-          />
-
-
-          {/* =====================================================
-              TOP — TREE NAME
-          ====================================================== */}
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: -20
-            }}
-            animate={
-              phase >= 1
-                ? {
-                    opacity: 1,
-                    y: 0
-                  }
-                : {}
-            }
-            transition={{
-              delay: 0.3,
-              duration: 0.5
-            }}
-            className="text-center relative z-10 mt-4"
-          >
-
-            <p
-              className="text-xs font-bold tracking-widest uppercase mb-2"
-              style={{
-                color: '#81c784'
-              }}
-            >
-              You are looking at
-            </p>
-
-
-            <h1
-              className="text-3xl font-bold text-white text-center mb-1"
-              style={{
-                fontFamily: 'Cinzel, serif'
-              }}
-            >
-              {tree?.common_name || 'Green Atlas'}
-            </h1>
-
-
-            <p
-              className="italic text-sm"
-              style={{
-                color: '#81c784'
-              }}
-            >
-              {tree?.botanical_name}
-            </p>
-
+        <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-5 sm:gap-7">
+          <motion.div initial={{opacity:0,scale:.92}} animate={phase>=1?{opacity:1,scale:1}:{}} transition={{delay:.35,duration:.8}}
+            className="rounded-full border border-green-300/15 bg-green-300/[.04] px-5 py-2 text-[10px] font-semibold uppercase tracking-[.24em] text-green-100/65 backdrop-blur-md">
+            A living ecosystem in motion
           </motion.div>
-
-
-          {/* =====================================================
-              MIDDLE — O2 + CO2 PROCESS
-          ====================================================== */}
-
-          <div className="relative flex gap-4 z-10 w-full max-w-sm mx-auto items-stretch">
-
-            {/* =================================================
-                ANIMATION FIELD
-            ================================================== */}
-
-            <div
-              className="absolute pointer-events-none overflow-hidden"
-              style={{
-                left: -20,
-                right: -20,
-                top: -100,
-                bottom: -100
-              }}
-            >
-
-              {phase >= 1 && (
-
-                <>
-
-                  {/* O2 coming from LEFT */}
-                  <O2Molecule
-                    delay={0}
-                    lane={-35}
-                  />
-
-                  <O2Molecule
-                    delay={1.1}
-                    lane={20}
-                  />
-
-                  <O2Molecule
-                    delay={2.2}
-                    lane={-5}
-                  />
-
-
-                  {/* CO2 coming from RIGHT */}
-                  <CO2Molecule
-                    delay={0.25}
-                    lane={35}
-                  />
-
-                  <CO2Molecule
-                    delay={1.35}
-                    lane={-15}
-                  />
-
-                  <CO2Molecule
-                    delay={2.45}
-                    lane={5}
-                  />
-
-
-                  {/* Central collision */}
-                  <CollisionEffect />
-
-
-                  {/* Extra O2 remaining after CO2 absorption */}
-                  <ExtraOxygen
-                    delay={0.6}
-                    x={-20}
-                  />
-
-                  <ExtraOxygen
-                    delay={1.4}
-                    x={15}
-                  />
-
-                  <ExtraOxygen
-                    delay={2.3}
-                    x={-8}
-                  />
-
-                  <ExtraOxygen
-                    delay={3.1}
-                    x={25}
-                  />
-
-                </>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                O2 CARD
-            ================================================== */}
-
-            <motion.div
-              initial={{
-                opacity: 0,
-                x: -50,
-                scale: 0.8
-              }}
-              animate={
-                phase >= 1
-                  ? {
-                      opacity: 1,
-                      x: 0,
-                      scale: 1
-                    }
-                  : {}
-              }
-              transition={{
-                delay: 0.7,
-                type: 'spring',
-                stiffness: 200,
-                damping: 18
-              }}
-              className="flex-1 flex flex-col items-center px-4 py-5 rounded-2xl"
-              style={{
-                background:
-                  'rgba(82,160,67,0.15)',
-                border:
-                  '1.5px solid rgba(82,160,67,0.4)',
-                backdropFilter: 'blur(12px)'
-              }}
-            >
-
-              {/* O2 molecule icon */}
-              <div
-                className="relative mb-3"
-                style={{
-                  width: 56,
-                  height: 40
-                }}
-              >
-
-                <motion.div
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity
-                  }}
-                  style={{
-                    position: 'absolute',
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background:
-                      'linear-gradient(135deg, #81c784, #4caf50)',
-                    left: 0,
-                    top: 9,
-                    boxShadow:
-                      '0 0 12px rgba(76,175,80,0.7)'
-                  }}
-                />
-
-
-                <motion.div
-                  animate={{
-                    scaleX: [1, 1.3, 1]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: 0.3
-                  }}
-                  style={{
-                    position: 'absolute',
-                    height: 3,
-                    background:
-                      'rgba(129,199,132,0.9)',
-                    width: 14,
-                    left: 21,
-                    top: 18
-                  }}
-                />
-
-
-                <motion.div
-                  animate={{
-                    scale: [1, 1.15, 1],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: 0.15
-                  }}
-                  style={{
-                    position: 'absolute',
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background:
-                      'linear-gradient(135deg, #81c784, #4caf50)',
-                    right: 0,
-                    top: 9,
-                    boxShadow:
-                      '0 0 12px rgba(76,175,80,0.7)'
-                  }}
-                />
-
-              </div>
-
-
-              <span
-                className="text-2xl font-black mb-1"
-                style={{
-                  color: '#81c784',
-                  letterSpacing: 2
-                }}
-              >
-                O₂
-              </span>
-
-
-              <motion.span
-                initial={{
-                  opacity: 0,
-                  y: 8
-                }}
-                animate={
-                  phase >= 1
-                    ? {
-                        opacity: 1,
-                        y: 0
-                      }
-                    : {}
-                }
-                transition={{
-                  delay: 1.1,
-                  duration: 0.4
-                }}
-                className="text-base font-bold"
-                style={{
-                  color: '#c8e6c9'
-                }}
-              >
-                {/* DAILY VALUE FROM NEON */}
-                {tree?.o2_produced_daily || '—'}
-              </motion.span>
-
-
-              <span
-                className="text-xs mt-1 text-center"
-                style={{
-                  color: '#81c784aa'
-                }}
-              >
-                kg / day
-              </span>
-
-
-              <span
-                className="text-xs mt-1 text-center"
-                style={{
-                  color: '#81c784aa'
-                }}
-              >
-                Oxygen Produced
-              </span>
-
-            </motion.div>
-
-
-            {/* =================================================
-                CO2 CARD
-            ================================================== */}
-
-            <motion.div
-              initial={{
-                opacity: 0,
-                x: 50,
-                scale: 0.8
-              }}
-              animate={
-                phase >= 1
-                  ? {
-                      opacity: 1,
-                      x: 0,
-                      scale: 1
-                    }
-                  : {}
-              }
-              transition={{
-                delay: 0.9,
-                type: 'spring',
-                stiffness: 200,
-                damping: 18
-              }}
-              className="flex-1 flex flex-col items-center px-4 py-5 rounded-2xl"
-              style={{
-                background:
-                  'rgba(30,100,180,0.15)',
-                border:
-                  '1.5px solid rgba(100,160,255,0.35)',
-                backdropFilter: 'blur(12px)'
-              }}
-            >
-
-              {/* CO2 molecule icon */}
-              <div
-                className="relative mb-3"
-                style={{
-                  width: 72,
-                  height: 40
-                }}
-              >
-
-                <motion.div
-                  animate={{
-                    scale: [1, 1.12, 1]
-                  }}
-                  transition={{
-                    duration: 2.2,
-                    repeat: Infinity
-                  }}
-                  style={{
-                    position: 'absolute',
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    background:
-                      'linear-gradient(135deg, #90caf9, #42a5f5)',
-                    left: 0,
-                    top: 11,
-                    boxShadow:
-                      '0 0 10px rgba(66,165,245,0.7)'
-                  }}
-                />
-
-
-                <motion.div
-                  style={{
-                    position: 'absolute',
-                    height: 3,
-                    background:
-                      'rgba(144,202,249,0.8)',
-                    width: 10,
-                    left: 17,
-                    top: 19
-                  }}
-                />
-
-
-                <motion.div
-                  animate={{
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    duration: 2.2,
-                    repeat: Infinity,
-                    delay: 0.2
-                  }}
-                  style={{
-                    position: 'absolute',
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background:
-                      'linear-gradient(135deg, #f48fb1, #e91e63)',
-                    left: 25,
-                    top: 9,
-                    boxShadow:
-                      '0 0 10px rgba(233,30,99,0.6)'
-                  }}
-                />
-
-
-                <motion.div
-                  style={{
-                    position: 'absolute',
-                    height: 3,
-                    background:
-                      'rgba(144,202,249,0.8)',
-                    width: 10,
-                    left: 46,
-                    top: 19
-                  }}
-                />
-
-
-                <motion.div
-                  animate={{
-                    scale: [1, 1.12, 1]
-                  }}
-                  transition={{
-                    duration: 2.2,
-                    repeat: Infinity,
-                    delay: 0.1
-                  }}
-                  style={{
-                    position: 'absolute',
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    background:
-                      'linear-gradient(135deg, #90caf9, #42a5f5)',
-                    right: 0,
-                    top: 11,
-                    boxShadow:
-                      '0 0 10px rgba(66,165,245,0.7)'
-                  }}
-                />
-
-              </div>
-
-
-              <span
-                className="text-2xl font-black mb-1"
-                style={{
-                  color: '#90caf9',
-                  letterSpacing: 2
-                }}
-              >
-                CO₂
-              </span>
-
-
-              <motion.span
-                initial={{
-                  opacity: 0,
-                  y: 8
-                }}
-                animate={
-                  phase >= 1
-                    ? {
-                        opacity: 1,
-                        y: 0
-                      }
-                    : {}
-                }
-                transition={{
-                  delay: 1.3,
-                  duration: 0.4
-                }}
-                className="text-base font-bold"
-                style={{
-                  color: '#bbdefb'
-                }}
-              >
-                {/* DAILY VALUE FROM NEON */}
-                {tree?.co2_absorbed_daily || '—'}
-              </motion.span>
-
-
-              <span
-                className="text-xs mt-1 text-center"
-                style={{
-                  color: '#90caf9aa'
-                }}
-              >
-                kg / day
-              </span>
-
-
-              <span
-                className="text-xs mt-1 text-center"
-                style={{
-                  color: '#90caf9aa'
-                }}
-              >
-                CO₂ Absorbed
-              </span>
-
-            </motion.div>
-
+          <div className="grid w-full grid-cols-2 gap-3 sm:gap-4">
+            <StatCard value={tree?.o2_produced_daily} delay={.65}/>
+            <StatCard co2 value={tree?.co2_absorbed_daily} delay={.85}/>
           </div>
+          <motion.p initial={{opacity:0}} animate={phase>=1?{opacity:1}:{}} transition={{delay:1.2}}
+            className="max-w-sm text-center text-xs leading-6 text-green-100/55 sm:text-sm">
+            Every tree plays a part in sustaining the balance of our environment.
+          </motion.p>
+        </div>
 
-
-          {/* =====================================================
-              BOTTOM
-          ====================================================== */}
-
-          <div
-            className="relative z-10 flex flex-col items-center gap-4"
-          >
-
-            {/* Explore button */}
-            <motion.button
-              initial={{
-                opacity: 0,
-                y: 10
-              }}
-              animate={
-                phase >= 1
-                  ? {
-                      opacity: 1,
-                      y: 0
-                    }
-                  : {}
-              }
-              transition={{
-                delay: 1.8,
-                duration: 0.4
-              }}
-              onClick={() => {
-                setPhase(2)
-                onDone?.()
-              }}
-              className="px-8 py-3 rounded-full text-sm font-bold text-white flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
-              style={{
-                background:
-                  'linear-gradient(135deg, #2d5a27, #4caf50)',
-                boxShadow:
-                  '0 4px 20px rgba(76,175,80,0.4)',
-                border:
-                  '1px solid rgba(129,199,132,0.4)'
-              }}
-            >
-
-              <span>
-                Explore this Tree
-              </span>
-
-
-              <motion.span
-                animate={{
-                  x: [0, 4, 0]
-                }}
-                transition={{
-                  duration: 1.2,
-                  repeat: Infinity
-                }}
-              >
-                →
-              </motion.span>
-
-            </motion.button>
-
-
-            {/* Branding */}
-            <motion.div
-              initial={{
-                opacity: 0
-              }}
-              animate={
-                phase >= 1
-                  ? {
-                      opacity: 1
-                    }
-                  : {}
-              }
-              transition={{
-                delay: 2.0
-              }}
-              className="flex items-center gap-2"
-            >
-
-              <img
-                src="/favicon.png"
-                alt=""
-                className="w-4 h-4 object-contain opacity-60"
-              />
-
-
-              <span
-                className="text-xs"
-                style={{
-                  color:
-                    'rgba(255,255,255,0.35)'
-                }}
-              >
-                Green Atlas · Sona College of Technology
-              </span>
-
-            </motion.div>
-
-          </div>
-
-        </motion.div>
-
-      )}
-
+        <motion.footer initial={{opacity:0,y:12}} animate={phase>=1?{opacity:1,y:0}:{}} transition={{delay:1.25}}
+          className="relative z-10 flex flex-col items-center gap-4 pb-1">
+          <motion.button type="button" onClick={()=>{setPhase(2);onDone?.()}}
+            whileHover={{scale:1.045}} whileTap={{scale:.97}}
+            className="flex items-center gap-3 rounded-full border border-green-200/30 px-8 py-3.5 text-sm font-bold text-white shadow-[0_8px_35px_rgba(34,197,94,.2)]"
+            style={{background:'linear-gradient(135deg,#176b32,#269447)'}}>
+            Explore this Tree
+            <motion.span animate={{x:[0,4,0]}} transition={{duration:1.5,repeat:Infinity}}>→</motion.span>
+          </motion.button>
+          <p className="text-[10px] tracking-wide text-white/35">🌿 Green Atlas · Sona College of Technology</p>
+        </motion.footer>
+      </motion.div>}
     </AnimatePresence>
   )
 }
