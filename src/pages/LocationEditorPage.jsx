@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 
 import {
   MapContainer,
@@ -44,6 +45,56 @@ L.Icon.Default.mergeOptions({
 
 const DEFAULT_CENTER = [11.678, 78.125];
 const DEFAULT_ZOOM = 18;
+
+// Normal tree marker
+const treeIcon = L.divIcon({
+  className: '',
+  html: `
+    <div style="
+      width: 30px;
+      height: 30px;
+      background: #16a34a;
+      border: 3px solid white;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <div style="
+        transform: rotate(45deg);
+        color: white;
+        font-size: 15px;
+      ">🌳</div>
+    </div>
+  `,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
+// Selected tree marker
+const selectedTreeIcon = L.divIcon({
+  className: '',
+  html: `
+    <div style="
+      width: 40px;
+      height: 40px;
+      background: #dc2626;
+      border: 4px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 0 5px rgba(220,38,38,0.25),
+                  0 3px 8px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    ">📍</div>
+  `,
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+});
 
 const isValidCoordinate = (value, min, max) => {
   return (
@@ -579,8 +630,13 @@ export default function LocationEditorPage() {
               key="greenatlas-location-editor"
               center={DEFAULT_CENTER}
               zoom={DEFAULT_ZOOM}
+              minZoom={16}
+              maxZoom={22}
               className="h-full w-full"
-              style={{ height: '100%', width: '100%' }}
+              style={{
+                height: '100%',
+                width: '100%'
+              }}
             >
 
               <LayersControl position="topright">
@@ -592,7 +648,11 @@ export default function LocationEditorPage() {
                   <TileLayer
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     attribution="Tiles © Esri"
-                    maxZoom={19}
+                    maxNativeZoom={19}
+                    maxZoom={22}
+                    updateWhenIdle={true}
+                    updateWhenZooming={false}
+                    keepBuffer={2}
                   />
                 </LayersControl.BaseLayer>
 
@@ -636,66 +696,85 @@ export default function LocationEditorPage() {
 
 
               {/* Existing tree markers */}
-              {validTrees.map((tree) => {
-
-                const isSelected =
-                  selectedTree?.tree_id === tree.tree_id;
-
-                // Selected tree uses its proposed position
-                const position =
-                  isSelected && newPosition
-                    ? [newPosition.lat, newPosition.lng]
-                    : [
+              
+              {/* Cluster all normal tree markers */}
+              <MarkerClusterGroup
+                chunkedLoading
+                showCoverageOnHover={false}
+                spiderfyOnMaxZoom={true}
+                removeOutsideVisibleBounds={true}
+                maxClusterRadius={55}
+              >
+                {validTrees
+                  .filter(
+                    (tree) => tree.tree_id !== selectedTree?.tree_id
+                  )
+                  .map((tree) => (
+                    <Marker
+                      key={tree.tree_id}
+                      position={[
                         Number(tree.latitude),
                         Number(tree.longitude)
-                      ];
-
-                return (
+                      ]}
+                      icon={treeIcon}
+                      eventHandlers={{
+                        click: () => handleSelectTree(tree)
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm">
+                          <strong>{tree.tree_id}</strong>
+                          <br />
+                          {tree.common_name}
+                          <br />
+                          {tree.botanical_name}
+                          <br />
+                          {tree.area}
+                          <br />
+                          <span className="text-green-700">
+                            Click the marker to select this tree.
+                          </span>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+              </MarkerClusterGroup>
+              
+              {/* Selected tree - always displayed separately */}
+              {selectedTree &&
+                displayedPosition &&
+                Number.isFinite(displayedPosition.lat) &&
+                Number.isFinite(displayedPosition.lng) && (
                   <Marker
-                    key={tree.tree_id}
-                    position={position}
-                    draggable={Boolean(
-                      isSelected && mode === 'drag'
-                    )}
-                    ref={isSelected ? markerRef : null}
+                    position={[
+                      displayedPosition.lat,
+                      displayedPosition.lng
+                    ]}
+                    icon={selectedTreeIcon}
+                    draggable={mode === 'drag'}
                     eventHandlers={{
-                      click: () => {
-                        handleSelectTree(tree);
-                      },
-
                       dragend: (e) => {
-                        const point =
-                          e.target.getLatLng();
-
+                        const point = e.target.getLatLng();
+              
                         handlePositionChange({
                           lat: point.lat,
-                          lng: point.lng,
+                          lng: point.lng
                         });
-                      },
+                      }
                     }}
                   >
-
                     <Popup>
-                      <div className="text-sm">
-                        <strong>{tree.tree_id}</strong>
-                        <br />
-                        {tree.common_name}
-                        <br />
-                        {tree.area}
-                        <br />
-
-                        <button
-                          onClick={() => handleSelectTree(tree)}
-                          className="text-green-700 font-semibold mt-2"
-                        >
-                          Select this tree
-                        </button>
-                      </div>
+                      <strong>{selectedTree.tree_id}</strong>
+                      <br />
+                      {selectedTree.common_name}
+                      <br />
+                      <span className="text-red-600 font-semibold">
+                        Selected tree
+                      </span>
                     </Popup>
-
                   </Marker>
-                );
-              })}
+                )}
+
 
 
               {/* Temporary marker for trees without coordinates */}
