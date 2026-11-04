@@ -149,6 +149,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTrees, getAreas } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
+import { getFloraType } from '../lib/floraType';
 
 function TreeCard({ tree }) {
   return (
@@ -261,6 +262,7 @@ export default function TreeList() {
   const [areaFilter, setAreaFilter] = useState('')
   const [familyFilter, setFamilyFilter] = useState('')
   const [groupBySpecies, setGroupBySpecies] = useState(true)
+  const [floraFilter, setFloraFilter] = useState('all'); // 'all' | 'tree' | 'plant'
   const [page, setPage]             = useState(1)
   const [loading, setLoading]       = useState(true)
   const [searchParams]              = useSearchParams()
@@ -279,15 +281,15 @@ export default function TreeList() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { setPage(1) }, [search, areaFilter, familyFilter, groupBySpecies])
+  useEffect(() => { setPage(1) }, [search, areaFilter, familyFilter, groupBySpecies, floraFilter])
 
-  // Areas available for current family filter
-  const availableAreas = [...new Set(
-    trees
-      .filter(t => !familyFilter || t.family === familyFilter)
-      .map(t => t.area)
-      .filter(Boolean)
-  )].sort()
+  const filtered = trees.filter(t => {
+    const q = search.toLowerCase()
+    const matchSearch = !q || [t.common_name, t.botanical_name, t.area, t.family, t.tree_id, t.tamil_name]
+      .some(v => v?.toLowerCase().includes(q))
+    const matchFlora = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter
+    return matchSearch && (!areaFilter || t.area === areaFilter) && (!familyFilter || t.family === familyFilter) && matchFlora
+  })
 
   // Families available for current area filter  
   const availableFamilies = [...new Set(
@@ -355,6 +357,22 @@ export default function TreeList() {
                   {availableFamilies.map(f => <option key={f}>{f}</option>)}
                 </select>
               </div>
+
+              <div>
+                <label className="text-xs font-medium block mb-1.5"
+                  style={{ color: dark ? '#8b949e' : '#6b7280' }}>Type</label>
+                <div className="flex flex-col gap-2">
+                  {[['all','🌿🌳 All Flora'],['tree','🌳 Trees only'],['plant','🌿 Plants only']].map(([v, l]) => (
+                    <label key={v} className="flex items-center gap-2 cursor-pointer text-sm"
+                      style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                      <input type="radio" checked={floraFilter === v}
+                        onChange={() => setFloraFilter(v)} className="accent-green-700" />
+                      {l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
               <div className="pt-2" style={{ borderTop: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}>
                 <label className="text-xs font-medium block mb-2"
                   style={{ color: dark ? '#8b949e' : '#6b7280' }}>View mode</label>
@@ -373,9 +391,9 @@ export default function TreeList() {
                   </label>
                 </div>
               </div>
-              {(search || areaFilter || familyFilter) && (
+              {(search || areaFilter || familyFilter || floraFilter !== 'all') && (
                 <button className="w-full text-xs text-red-500 hover:text-red-700 pt-2"
-                  onClick={() => { setSearch(''); setAreaFilter(''); setFamilyFilter('') }}>
+                  onClick={() => { setSearch(''); setAreaFilter(''); setFamilyFilter(''); setFloraFilter('all') }}
                   ✕ Clear all filters
                 </button>
               )}
@@ -434,6 +452,19 @@ export default function TreeList() {
         <option key={f}>{f}</option>
       ))}
     </select>
+
+    <div className="flex gap-1">
+      {[['all','All'],['tree','🌳 Trees'],['plant','🌿 Plants']].map(([v, l]) => (
+        <button key={v} onClick={() => setFloraFilter(v)}
+          className="text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+          style={{
+            background: floraFilter === v ? '#2d5a27' : (dark ? '#21262d' : '#f3f4f6'),
+            color: floraFilter === v ? 'white' : (dark ? '#e6edf3' : '#374151'),
+          }}>
+          {l}
+        </button>
+      ))}
+    </div>
   </div>
 
   {/* View Mode */}
