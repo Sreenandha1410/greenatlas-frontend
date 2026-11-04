@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl, useMap } from 'r
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { getTrees } from '../api';
+import { getFloraType } from '../lib/floraType';
 import { useDarkMode } from '../context/DarkModeContext'
 {/*
 const MarkerClusterGroup = require('react-leaflet-cluster').default || require('react-leaflet-cluster');
@@ -57,6 +58,7 @@ export default function MapPage() {
   const [flyTarget, setFlyTarget] = useState(null)
   const [matchCount, setMatchCount] = useState(null)
   const [legendOpen, setLegendOpen] = useState(false);
+  const [floraFilter, setFloraFilter] = useState('all'); // 'all' | 'tree' | 'plant'
 
   useEffect(() => { getTrees().then(r => setTrees(r.data)) }, [])
 
@@ -64,13 +66,13 @@ export default function MapPage() {
     ? [trees[0].latitude, trees[0].longitude]
     : [11.678, 78.125]
 
-  const filtered = search.trim()
-    ? trees.filter(t => {
-        const q = search.toLowerCase()
-        return [t.common_name, t.botanical_name, t.area, t.family, t.tree_id, t.tamil_name]
-          .some(v => v?.toLowerCase().includes(q))
-      })
-    : trees
+  const filtered = trees.filter(t => {
+    const q = search.toLowerCase()
+    const matchSearch = !search.trim() || [t.common_name, t.botanical_name, t.area, t.family, t.tree_id, t.tamil_name]
+      .some(v => v?.toLowerCase().includes(q))
+    const matchFlora = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter
+    return matchSearch && matchFlora
+  })
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -140,24 +142,33 @@ export default function MapPage() {
     });
   };*/}
 
+  const treeShapeIcon = (color, label) => L.divIcon({
+    className: '',
+    html: `<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,1 0,20 24,20" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      <rect x="10" y="19" width="4" height="10" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
+      <text x="12" y="14" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
+    </svg>`,
+    iconSize: [24, 30], iconAnchor: [12, 30], popupAnchor: [0, -32],
+  });
+  
+  const plantShapeIcon = (color, label) => L.divIcon({
+    className: '',
+    html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="14" cy="12" rx="12" ry="9" fill="${color}" stroke="white" stroke-width="1.5"/>
+      <rect x="12" y="20" width="4" height="7" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
+      <text x="14" y="15" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
+    </svg>`,
+    iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30],
+  });
+  
   const treeIcon = (tree) => {
     const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
     const parts = (tree.botanical_name || '').split(' ');
     const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-    return L.divIcon({
-      className: '',
-      html: `<div style="
-        width:20px;height:20px;background:${color};
-        border:2px solid white;border-radius:50%;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-        display:flex;align-items:center;justify-content:center;
-        color:white;font-size:7px;font-weight:700;font-family:sans-serif;
-        line-height:1;
-      ">${label}</div>`,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-      popupAnchor: [0, -12],
-    });
+    return getFloraType(tree.common_name) === 'plant'
+      ? plantShapeIcon(color, label)
+      : treeShapeIcon(color, label);
   };
 
   return (
@@ -177,7 +188,8 @@ export default function MapPage() {
             </h1>
             <span className="badge"
               style={{ background: dark ? '#21262d' : '#d9edcf', color: '#3d7a32' }}>
-              {search.trim() ? `${filtered.length} matches` : `${trees.length} trees`}
+              {filtered.length} {floraFilter === 'tree' ? 'trees' : floraFilter === 'plant' ? 'plants' : 'entries'}
+              {floraFilter !== 'all' && ` of ${trees.filter(t => getFloraType(t.common_name) === floraFilter).length}`}
             </span>
             {matchCount !== null && (
               <span className="text-xs" style={{ color: '#8b949e' }}>
@@ -257,32 +269,68 @@ export default function MapPage() {
             position: 'absolute', top: 10, left: 50, zIndex: 1000,
             background: dark ? 'rgba(28,33,40,0.95)' : 'rgba(255,255,255,0.95)',
             borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-            overflow: 'hidden', minWidth: 160,
+            overflow: 'hidden', minWidth: 180,
           }}>
             {/* Toggle button */}
-            <button
-              onClick={() => setLegendOpen(o => !o)}
+            <button onClick={() => setLegendOpen(o => !o)}
               className="flex items-center gap-2 px-3 py-2 text-xs font-semibold w-full"
               style={{ color: dark ? '#e6edf3' : '#374151' }}>
               <span className="font-semibold">Legend</span>
               <span style={{ marginLeft: 'auto' }}>{legendOpen ? '▲' : '▼'}</span>
             </button>
-      
-            {/* Expandable list with smooth animation */}
+        
             <div style={{
-              maxHeight: legendOpen ? 300 : 0,
+              maxHeight: legendOpen ? 400 : 0,
               opacity: legendOpen ? 1 : 0,
               overflow: 'hidden auto',
               transition: 'max-height 0.3s ease, opacity 0.2s ease',
             }}>
-              <div className="flex flex-col gap-1.5 px-3 pb-3 pt-1">
+              {/* Flora type filter */}
+              <div className="px-3 pb-2 pt-1">
+                <p className="text-xs font-semibold mb-1.5" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                  Show
+                </p>
+                <div className="flex gap-1">
+                  {[['all','All'],['tree','🌳 Trees'],['plant','🌿 Plants']].map(([v, l]) => (
+                    <button key={v} onClick={() => setFloraFilter(v)}
+                      className="text-xs px-2 py-1 rounded-md font-medium transition-colors"
+                      style={{
+                        background: floraFilter === v
+                          ? 'var(--color-forest-500)'
+                          : (dark ? '#21262d' : '#f3f4f6'),
+                        color: floraFilter === v ? 'white' : (dark ? '#e6edf3' : '#374151'),
+                      }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+        
+              <div style={{ height: 1, background: dark ? '#30363d' : '#f3f4f6', margin: '0 12px 8px' }} />
+        
+              {/* Shape guide */}
+              <div className="px-3 pb-2 flex gap-3">
+                <div className="flex items-center gap-1.5 text-xs" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                  <svg width="12" height="15" viewBox="0 0 24 30"><polygon points="12,1 0,20 24,20" fill={dark ? '#8b949e' : '#6b7280'}/><rect x="10" y="19" width="4" height="10" rx="1" fill={dark ? '#8b949e' : '#6b7280'}/></svg>
+                  Tree
+                </div>
+                <div className="flex items-center gap-1.5 text-xs" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                  <svg width="13" height="13" viewBox="0 0 28 28"><ellipse cx="14" cy="11" rx="12" ry="9" fill={dark ? '#8b949e' : '#6b7280'}/><rect x="12" y="19" width="4" height="7" rx="1" fill={dark ? '#8b949e' : '#6b7280'}/></svg>
+                  Plant
+                </div>
+              </div>
+        
+              <div style={{ height: 1, background: dark ? '#30363d' : '#f3f4f6', margin: '0 12px 8px' }} />
+        
+              {/* Area colours */}
+              <div className="flex flex-col gap-1.5 px-3 pb-3">
+                <p className="text-xs font-semibold" style={{ color: dark ? '#8b949e' : '#6b7280' }}>Areas</p>
                 {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
                   <div key={area} className="flex items-center gap-2 text-xs"
                     style={{ color: dark ? '#e6edf3' : '#374151' }}>
                     <div style={{
                       width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
-                      background: colorForArea(area),
-                      border: '1.5px solid white',
+                      background: colorForArea(area), border: '1.5px solid white',
                       boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                     }} />
                     {area}
