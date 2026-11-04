@@ -118,6 +118,7 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-lea
 import { motion } from 'framer-motion';
 import L from 'leaflet';
 import { getTrees, getAreaInfo, updateAreaInfo } from '../api';
+import { getFloraType } from '../lib/floraType';
 import ImageUpload from '../components/ImageUpload';
 import { useDarkMode } from '../context/DarkModeContext'
 
@@ -155,24 +156,29 @@ const colorForSpecies = (botanicalName) => {
   return speciesColorMap[botanicalName];
 };
 
-const speciesIcon = (botanicalName) => {
-  const color = colorForSpecies(botanicalName);
-  // First letter of genus + first letter of species as label
-  const parts = (botanicalName || '').split(' ');
+const floraIcon = (tree) => {
+  const color = colorForSpecies(tree.botanical_name);
+  const parts = (tree.botanical_name || '').split(' ');
   const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+  if (getFloraType(tree.common_name) === 'plant') {
+    return L.divIcon({
+      className: '',
+      html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="14" cy="12" rx="12" ry="9" fill="${color}" stroke="white" stroke-width="1.5"/>
+        <rect x="12" y="20" width="4" height="7" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
+        <text x="14" y="15" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
+      </svg>`,
+      iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30],
+    });
+  }
   return L.divIcon({
     className: '',
-    html: `<div style="
-      width:20px;height:20px;background:${color};
-      border:2.5px solid white;border-radius:50%;
-      box-shadow:0 2px 6px rgba(0,0,0,0.35);
-      display:flex;align-items:center;justify-content:center;
-      color:white;font-size:7px;font-weight:700;font-family:sans-serif;
-      line-height:1;
-    ">${label}</div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -12],
+    html: `<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="12,1 0,20 24,20" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      <rect x="10" y="19" width="4" height="10" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
+      <text x="12" y="14" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
+    </svg>`,
+    iconSize: [24, 30], iconAnchor: [12, 30], popupAnchor: [0, -32],
   });
 };
 
@@ -190,6 +196,7 @@ export default function AreaDetail() {
   const [editForm, setEditForm] = useState({ image_url: '', description: '', navigation_notes: '' });
   const [saving, setSaving]     = useState(false);
   const [treeSearch, setTreeSearch] = useState('');
+  const [floraFilter, setFloraFilter] = useState('all');
 
   useEffect(() => {
     Promise.all([
@@ -218,10 +225,13 @@ export default function AreaDetail() {
 
   const center   = trees.length > 0 ? [trees[0].latitude, trees[0].longitude] : [11.678, 78.125];
   const families = [...new Set(trees.map(t => t.family).filter(Boolean))];
-  const filteredTrees = trees.filter(t =>
-    !treeSearch || t.common_name?.toLowerCase().includes(treeSearch.toLowerCase())
-      || t.botanical_name?.toLowerCase().includes(treeSearch.toLowerCase())
-  );
+  const filteredTrees = trees.filter(t => {
+    const matchSearch = !treeSearch ||
+      t.common_name?.toLowerCase().includes(treeSearch.toLowerCase()) ||
+      t.botanical_name?.toLowerCase().includes(treeSearch.toLowerCase());
+    const matchFlora = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter;
+    return matchSearch && matchFlora;
+  });
 
   return (
     <div>
@@ -375,7 +385,7 @@ export default function AreaDetail() {
                       <Marker
                         key={t.tree_id}
                         position={[t.latitude, t.longitude]}
-                        icon={speciesIcon(t.botanical_name)}
+                        icon={floraIcon(t)}
                       >
                         <Popup>
                           <strong style={{ fontSize: '0.88rem' }}>{t.common_name}</strong><br />
@@ -416,13 +426,26 @@ export default function AreaDetail() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
               className="card overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800
-                              flex items-center justify-between gap-3">
-                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2">
+                <h2 className="font-semibold text-sm flex-shrink-0"
+                  style={{ color: dark ? '#e6edf3' : '#111827' }}>
                   Trees in this area
                 </h2>
-                <input className="input text-sm w-48"
-                  placeholder="Search trees…"
+                <div className="flex gap-1 ml-auto">
+                  {[['all','All'],['tree','🌳'],['plant','🌿']].map(([v, l]) => (
+                    <button key={v} onClick={() => setFloraFilter(v)}
+                      className="text-xs px-2.5 py-1 rounded-md font-medium transition-colors"
+                      title={v === 'all' ? 'All' : v === 'tree' ? 'Trees only' : 'Plants only'}
+                      style={{
+                        background: floraFilter === v ? 'var(--color-forest-500)' : (dark ? '#21262d' : '#f3f4f6'),
+                        color: floraFilter === v ? 'white' : (dark ? '#8b949e' : '#6b7280'),
+                      }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                <input className="input text-sm w-40"
+                  placeholder="Search…"
                   value={treeSearch}
                   onChange={e => setTreeSearch(e.target.value)}
                   style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
