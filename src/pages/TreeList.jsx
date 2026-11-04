@@ -242,7 +242,7 @@ function SpeciesGroupCard({ species, trees, dark }) {
           <button onClick={() => setExpanded(true)}
             className="text-xs font-medium w-full text-center"
             style={{ color: 'var(--color-forest-400)' }}>
-            Show all {trees.length} trees ↓
+            Show all {trees.length} locations ↓
           </button>
         </div>
       )}
@@ -367,7 +367,7 @@ export default function TreeList() {
                 <label className="text-xs font-medium block mb-1.5"
                   style={{ color: dark ? '#8b949e' : '#6b7280' }}>Type</label>
                 <div className="flex flex-col gap-2">
-                  {[['all','All Flora'],['tree','Trees only'],['plant','Plants only']].map(([v, l]) => (
+                  {[['tree','Trees'],['plant','Plants'],['all','Both']].map(([v, l]) => (
                     <label key={v} className="flex items-center gap-2 cursor-pointer text-sm"
                       style={{ color: dark ? '#e6edf3' : '#374151' }}>
                       <input type="radio" checked={floraFilter === v}
