@@ -23,7 +23,7 @@ export default function SpeciesList() {
       s.species_id?.toLowerCase().includes(q) ||
       s.family?.toLowerCase().includes(q) ||
       s.genus?.toLowerCase().includes(q);
-    const matchFlora  = floraFilter === 'all' || getFloraType(s.common_name) === floraFilter;
+    const matchFlora  = floraFilter === 'all' || s.flora_type === floraFilter;
     const matchOrigin = !originFilter || s.native_exotic === originFilter;
     return matchSearch && matchFlora && matchOrigin;
   });
