@@ -785,7 +785,7 @@ export default function LocationEditorPage() {
                 !newPosition && null
               }
 
-              {/* New proposed location marker */}
+              {/* New proposed location marker
               {selectedTree && newPosition && (
                 <Marker
                   position={[
@@ -810,7 +810,7 @@ export default function LocationEditorPage() {
                     {selectedTree.tree_id}
                   </Popup>
                 </Marker>
-              )}
+              )} */}
 
             </MapContainer>
 
