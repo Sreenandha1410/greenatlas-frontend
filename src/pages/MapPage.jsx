@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, LayersControl, useMap } from 'r
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { getTrees } from '../api';
-import { getFloraType } from '../lib/floraType';
 import { useDarkMode } from '../context/DarkModeContext'
 {/*
 const MarkerClusterGroup = require('react-leaflet-cluster').default || require('react-leaflet-cluster');
@@ -70,7 +69,7 @@ export default function MapPage() {
     const q = search.toLowerCase()
     const matchSearch = !search.trim() || [t.common_name, t.botanical_name, t.area, t.family, t.tree_id, t.tamil_name]
       .some(v => v?.toLowerCase().includes(q))
-    const matchFlora = floraFilter === 'all' || getFloraType(t.common_name) === floraFilter
+    const matchFlora = floraFilter === 'all' || t.flora_type === floraFilter
     return matchSearch && matchFlora
   })
 
@@ -166,7 +165,7 @@ export default function MapPage() {
     const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
     const parts = (tree.botanical_name || '').split(' ');
     const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-    return getFloraType(tree.common_name) === 'plant'
+    return tree.flora_type === 'plant'
       ? plantShapeIcon(color, label)
       : treeShapeIcon(color, label);
   };
@@ -189,7 +188,7 @@ export default function MapPage() {
             <span className="badge"
               style={{ background: dark ? '#21262d' : '#d9edcf', color: '#3d7a32' }}>
               {filtered.length} {floraFilter === 'tree' ? 'trees' : floraFilter === 'plant' ? 'plants' : 'entries'}
-              {floraFilter !== 'all' && ` of ${trees.filter(t => getFloraType(t.common_name) === floraFilter).length}`}
+              {floraFilter !== 'all' && ` of ${trees.filter(t => t.flora_type === floraFilter).length}`}
             </span>
             {matchCount !== null && (
               <span className="text-xs" style={{ color: '#8b949e' }}>
