@@ -347,15 +347,25 @@ export default function MapPage() {
             <FlyTo target={flyTarget} />
 
             <LayersControl position="topright">
-              <LayersControl.BaseLayer checked name="Street">
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+              <LayersControl.BaseLayer name="Street">
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="© OpenStreetMap contributors"
-                  maxNativeZoom={19} maxZoom={22} />
+                  maxNativeZoom={19}
+                  maxZoom={22}
+                />
               </LayersControl.BaseLayer>
-              <LayersControl.BaseLayer name="Satellite">
-                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  attribution="© Esri" maxNativeZoom={19} maxZoom={22} />
+            
+              <LayersControl.BaseLayer checked name="Satellite">
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  attribution="© Esri"
+                  maxNativeZoom={19}
+                  maxZoom={22}
+                />
               </LayersControl.BaseLayer>
+            
             </LayersControl>
 
             {filtered.map(tree => tree.latitude && tree.longitude && (
