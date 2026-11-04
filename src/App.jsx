@@ -18,6 +18,7 @@ import { useEffect, useCallback } from 'react'
 import { recordView } from './api'
 import About from './pages/About';
 import GoToTop from './components/GoToTop'
+import LocationEditorPage from './pages/LocationEditorPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -48,6 +49,8 @@ export default function App() {
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
           <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+          <Route path="/admin/map-editor" element={<LocationEditorPage />}
+/>
         </Routes>
       </AnimatePresence>
       <GoToTop /> 
