@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getTrees, uploadComplaintImage, submitComplaint } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
-import TreeSearchSelect from './TreeSearchSelect';
+import Treesearchselect from './Treesearchselect';
 
 export default function ComplaintDashboard({ selectedTree = null }) {
 
@@ -275,7 +275,7 @@ export default function ComplaintDashboard({ selectedTree = null }) {
 
           ) : (
 
-            <TreeSearchSelect
+            <Treesearchselect
                label=""
                trees={trees}
                value={chosenTree || null}
