@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getTrees, uploadComplaintImage, submitComplaint } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
+import TreeSearchSelect from './TreeSearchSelect';
 
 export default function ComplaintDashboard({ selectedTree = null }) {
 
@@ -274,28 +275,17 @@ export default function ComplaintDashboard({ selectedTree = null }) {
 
           ) : (
 
-            <select
-              name="tree_id"
-              value={form.tree_id}
-              onChange={handleChange}
-              className="input w-full"
-              required
-            >
-              <option value="">
-                Select tree location
-              </option>
-
-              {trees.map(tree => (
-                <option
-                  key={tree.tree_id}
-                  value={tree.tree_id}
-                >
-                  {tree.common_name} — {tree.tree_id} — {tree.area}
-                </option>
-              ))}
-
-            </select>
-
+            <TreeSearchSelect
+              <TreeSearchSelect
+               label=""
+               trees={trees}
+               value={chosenTree || null}
+               onChange={(t) =>
+               setForm(prev => ({ ...prev, tree_id: t ? t.tree_id : '' }))
+               }
+             required
+            />
+        
           )}
 
         </div>
