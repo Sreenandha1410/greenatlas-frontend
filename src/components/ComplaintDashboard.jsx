@@ -276,7 +276,6 @@ export default function ComplaintDashboard({ selectedTree = null }) {
           ) : (
 
             <TreeSearchSelect
-              <TreeSearchSelect
                label=""
                trees={trees}
                value={chosenTree || null}
