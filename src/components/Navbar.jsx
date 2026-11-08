@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDarkMode } from '../context/DarkModeContext'
-import { useState } from 'react'
 import { useState, useEffect, useRef } from 'react'
 
 const links = [
