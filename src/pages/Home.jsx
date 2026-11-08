@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -22,7 +21,10 @@ export default function Home() {
   const [dark] = useDarkMode()
 
   useEffect(() => {
-    getStats().then(r => setStats(r.data))
+    getStats()
+      .then(r => setStats(r.data))
+      .catch(err => console.error('Failed to load stats:', err))
+
     getViewCount()
       .then(r => setViews(r.data.count))
       .catch(() => {})
