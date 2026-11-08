@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
          getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
@@ -427,7 +426,7 @@ function SpeciesPanel({ dark = false }) {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {filtered.map(s => (
-              <React.Fragment key={s.species_id}>
+              <Fragment key={s.species_id}>
                 <tr key={s.species_id}
                   className="transition-colors"
                   style={{ background: dark ? '#1c2128' : '#fff', borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}
@@ -463,7 +462,7 @@ function SpeciesPanel({ dark = false }) {
                     </td>
                   </tr>
                 )}
-              </React.Fragment>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -1038,7 +1037,7 @@ return (
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {filteredTrees.map(tree => (
-                      <React.Fragment key={tree.tree_id}>
+                      <Fragment key={tree.tree_id}>
                         <tr key={tree.tree_id}
                           className="transition-colors"
                           style={{ borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
@@ -1079,7 +1078,7 @@ return (
                             </td>
                           </tr>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
