@@ -19,13 +19,32 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [showThemeModal, setShowThemeModal] = useState(false)  // ← NEW
 
-  const isLoggedIn = !!localStorage.getItem('token')
-  const role       = localStorage.getItem('role')
+  const [auth, setAuth] = useState({
+    token: localStorage.getItem('token'),
+    role: localStorage.getItem('role')
+  })
+
+  // Sync auth state whenever navigating or when localStorage changes
+  useEffect(() => {
+    const syncAuth = () => {
+      setAuth({
+        token: localStorage.getItem('token'),
+        role: localStorage.getItem('role')
+      })
+    }
+    syncAuth()
+    window.addEventListener('storage', syncAuth)
+    return () => window.removeEventListener('storage', syncAuth)
+  }, [pathname])
+
+  const isLoggedIn = !!auth.token
+  const role       = auth.role
 
   const handleAuth = () => {
     if (isLoggedIn) {
       localStorage.removeItem('token')
       localStorage.removeItem('role')
+      setAuth({ token: null, role: null })
       navigate('/')
     } else {
       navigate('/login')
