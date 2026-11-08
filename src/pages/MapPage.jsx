@@ -4,25 +4,48 @@ import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { getTrees } from '../api';
 import { useDarkMode } from '../context/DarkModeContext'
-{/*
-const MarkerClusterGroup = require('react-leaflet-cluster').default || require('react-leaflet-cluster');
-import 'react-leaflet-cluster/lib/assets/MarkerCluster.css';
-import 'react-leaflet-cluster/lib/assets/MarkerCluster.Default.css';
-*/}
+import React, { Component } from 'react';
+
+class MapErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Map failed to load:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+            Unable to display map
+          </p>
+          <p className="text-sm text-gray-500 mt-1 mb-4">
+            A map rendering error occurred. Please check your network connection.
+          </p>
+          <button 
+            className="btn-primary text-sm px-4 py-2"
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
-
-{/*
-const dotIcon = (color = '#2d5a27') => L.divIcon({
-  className: '',
-  html: `<div style="width:14px;height:14px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35)"></div>`,
-  iconSize: [14, 14], iconAnchor: [7, 7],
-})
-*/}
 
 const AREA_COLORS = [
   '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
@@ -84,62 +107,6 @@ export default function MapPage() {
     setMatchCount(matches.length)
     if (matches.length > 0) setFlyTarget(matches[0])
   }
-
-  {/*const areaIcon = (tree) => {
-    const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
-    const label = (tree.area_code || tree.area || '').substring(0, 3).toUpperCase();
-    return L.divIcon({
-      className: '',
-      html: `<div style="
-        width:32px;height:32px;background:${color};
-        border:2.5px solid white;border-radius:50%;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-        display:flex;align-items:center;justify-content:center;
-        color:white;font-size:9px;font-weight:700;font-family:sans-serif;
-        line-height:1;text-align:center;
-      ">${label}</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -18],
-    });
-  };*/}
-
-  {/*const FAMILY_EMOJI = {
-    'Fabaceae': '🫘',    'Leguminosae': '🫘',
-    'Arecaceae': '🌴',   'Palmae': '🌴',
-    'Moraceae': '🌳',
-    'Meliaceae': '🪵',
-    'Myrtaceae': '🍃',
-    'Rutaceae': '🍋',
-    'Anacardiaceae': '🥭',
-    'Apocynaceae': '🌸',
-    'Bignoniaceae': '🌺',
-    'Verbenaceae': '🌻',
-    'Lauraceae': '🍂',
-    'Malvaceae': '🌼',   'Bombacaceae': '🌼',
-    'Euphorbiaceae': '🍀',
-    'Casuarinaceae': '🎋',
-    'Combretaceae': '🌿',
-    'Mimosaceae': '🌾',
-  };
-  
-  const treeIcon = (tree) => {
-    const color = search.trim() ? '#e53e3e' : colorForArea(tree.area);
-    const emoji = FAMILY_EMOJI[tree.family] || '🌳';
-    return L.divIcon({
-      className: '',
-      html: `<div style="
-        width:28px;height:28px;background:${color};
-        border:2px solid white;border-radius:50%;
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-        display:flex;align-items:center;justify-content:center;
-        font-size:14px;line-height:1;
-      ">${emoji}</div>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14],
-      popupAnchor: [0, -16],
-    });
-  };*/}
 
   const treeShapeIcon = (color, label) => L.divIcon({
     className: '',
@@ -218,47 +185,6 @@ export default function MapPage() {
           </form>
         </div>
       </div>
-
-      {/* Area legend */}{/*
-      {trees.length > 0 && (
-        <div className="relative shrink-0"
-          style={{ borderBottom: legendOpen ? `1px solid ${dark ? '#30363d' : '#e5e7eb'}` : 'none' }}>
-          <button
-            onClick={() => setLegendOpen(o => !o)}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold w-full"
-            style={{ color: dark ? '#e6edf3' : '#374151', background: dark ? '#1c2128' : '#f9fafb' }}>
-            <div className="flex items-center gap-1">
-              {[...new Set(trees.map(t => t.area).filter(Boolean))].slice(0, 5).map(area => (
-                <div key={area} style={{
-                  width: 10, height: 10, borderRadius: '50%',
-                  background: colorForArea(area), border: '1.5px solid white',
-                }} />
-              ))}
-              <span className="ml-1">+{[...new Set(trees.map(t => t.area).filter(Boolean))].length} areas</span>
-            </div>
-            <span style={{ marginLeft: 'auto' }}>{legendOpen ? '▲ Hide' : '▼ Legend'}</span>
-          </button>
-      
-          {legendOpen && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-4 py-3"
-              style={{ background: dark ? '#1c2128' : '#f9fafb' }}>
-              {[...new Set(trees.map(t => t.area).filter(Boolean))].map(area => (
-                <div key={area} className="flex items-center gap-1.5 text-xs"
-                  style={{ color: dark ? '#e6edf3' : '#374151' }}>
-                  <div style={{
-                    width: 12, height: 12, borderRadius: '50%',
-                    background: colorForArea(area),
-                    border: '1.5px solid white',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    flexShrink: 0,
-                  }} />
-                  {area}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}*/}
 
       {/* Map */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
@@ -340,59 +266,61 @@ export default function MapPage() {
           </div>
         )}
 
-        {trees.length > 0 && (
-          <MapContainer center={center} zoom={17}
-            style={{ height: '100%', width: '100%' }} maxZoom={22}>
-
-            <FlyTo target={flyTarget} />
-
-            <LayersControl position="topright">
-
-              <LayersControl.BaseLayer name="Street">
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="© OpenStreetMap contributors"
-                  maxNativeZoom={19}
-                  maxZoom={22}
-                />
-              </LayersControl.BaseLayer>
-            
-              <LayersControl.BaseLayer checked name="Satellite">
-                <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  attribution="© Esri"
-                  maxNativeZoom={19}
-                  maxZoom={22}
-                />
-              </LayersControl.BaseLayer>
-            
-            </LayersControl>
-
-            {filtered.map(tree => tree.latitude && tree.longitude && (
-              <Marker key={tree.tree_id}
-                position={[tree.latitude, tree.longitude]}
-                icon={treeIcon(tree)}>
-                <Popup>
-                  <div style={{ minWidth: 160 }}>
-                    {tree.species_image_url && (
-                      <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
-                        <img src={tree.species_image_url} alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    )}
-                    <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
-                    <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
-                    <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
-                    <Link to={`/trees/${tree.tree_id}`}
-                      style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
-                      View details →
-                    </Link>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        )}
+        <MapErrorBoundary>
+          {trees.length > 0 && (
+            <MapContainer center={center} zoom={17}
+              style={{ height: '100%', width: '100%' }} maxZoom={22}>
+  
+              <FlyTo target={flyTarget} />
+  
+              <LayersControl position="topright">
+  
+                <LayersControl.BaseLayer name="Street">
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="© OpenStreetMap contributors"
+                    maxNativeZoom={19}
+                    maxZoom={22}
+                  />
+                </LayersControl.BaseLayer>
+              
+                <LayersControl.BaseLayer checked name="Satellite">
+                  <TileLayer
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    attribution="© Esri"
+                    maxNativeZoom={19}
+                    maxZoom={22}
+                  />
+                </LayersControl.BaseLayer>
+              
+              </LayersControl>
+  
+              {filtered.map(tree => tree.latitude && tree.longitude && (
+                <Marker key={tree.tree_id}
+                  position={[tree.latitude, tree.longitude]}
+                  icon={treeIcon(tree)}>
+                  <Popup>
+                    <div style={{ minWidth: 160 }}>
+                      {tree.species_image_url && (
+                        <div style={{ margin: '-8px -12px 8px', height: 80, overflow: 'hidden', borderRadius: '4px 4px 0 0' }}>
+                          <img src={tree.species_image_url} alt=""
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <p style={{ fontWeight: 700, marginBottom: 2, fontSize: '0.9rem' }}>{tree.common_name}</p>
+                      <p style={{ fontSize: '0.75rem', color: '#888', fontStyle: 'italic', marginBottom: 4 }}>{tree.botanical_name}</p>
+                      <p style={{ fontSize: '0.78rem', color: '#555', marginBottom: 6 }}>📍 {tree.area}</p>
+                      <Link to={`/trees/${tree.tree_id}`}
+                        style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
+                        View details →
+                      </Link>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          )}
+        </MapErrorBoundary>
       </div>
     </div>
   )
