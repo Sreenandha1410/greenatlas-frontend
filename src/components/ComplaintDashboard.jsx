@@ -46,6 +46,16 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
     }
   }, [selectedTree]);
 
+  const inputStyle = {
+    background: dark ? '#21262d' : '#ffffff',
+    borderColor: dark ? '#30363d' : '#dcebd7',
+    color: dark ? '#e6edf3' : '#111827'
+  };
+
+  const labelStyle = {
+    color: dark ? '#c9d1d9' : '#374151'
+  };
+
   const chosenTree =
     trees.find(t => t.tree_id === form.tree_id) ||
     selectedTree;
@@ -215,7 +225,7 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
 
         {/* Student Name */}
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Student Name *
           </label>
 
@@ -225,13 +235,14 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
             onChange={handleChange}
             placeholder="Enter your name"
             className="input w-full"
+            style={inputStyle}
             required
           />
         </div>
 
         {/* Department */}
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Department *
           </label>
 
@@ -239,25 +250,26 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
             name="department"
             value={form.department}
             onChange={handleChange}
-            className="input w-full"
+            className="input w-full cursor-pointer"
+            style={inputStyle}
             required
           >
-            <option value="">Select department</option>
-            <option>Computer Science and Design</option>
-            <option>Computer Science and Engineering</option>
-            <option>Information Technology</option>
-            <option>Electronics and Communication Engineering</option>
-            <option>Electrical and Electronics Engineering</option>
-            <option>Mechanical Engineering</option>
-            <option>Civil Engineering</option>
-            <option>Other</option>
+            <option value="" style={{ background: dark ? '#21262d' : '#ffffff' }}>Select department</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Computer Science and Design</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Computer Science and Engineering</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Information Technology</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Electronics and Communication Engineering</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Electrical and Electronics Engineering</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Mechanical Engineering</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Civil Engineering</option>
+            <option style={{ background: dark ? '#21262d' : '#ffffff' }}>Other</option>
           </select>
         </div>
 
         {/* Tree Location */}
         <div className="md:col-span-2">
 
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Tree Location *
           </label>
 
@@ -304,7 +316,7 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
 
         {/* Issue Type */}
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Issue Type *
           </label>
 
@@ -312,21 +324,22 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
             name="issue_type"
             value={form.issue_type}
             onChange={handleChange}
-            className="input w-full"
+            className="input w-full cursor-pointer"
+            style={inputStyle}
             required
           >
-            <option value="">Select issue</option>
-            <option value="Disease">🌱 Disease</option>
-            <option value="Dryness">💧 Dryness</option>
-            <option value="Maintenance">🛠️ Maintenance</option>
-            <option value="Damage">⚠️ Damage</option>
-            <option value="Other">📌 Other</option>
+            <option value="" style={{ background: dark ? '#21262d' : '#ffffff' }}>Select issue</option>
+            <option value="Disease" style={{ background: dark ? '#21262d' : '#ffffff' }}>🌱 Disease</option>
+            <option value="Dryness" style={{ background: dark ? '#21262d' : '#ffffff' }}>💧 Dryness</option>
+            <option value="Maintenance" style={{ background: dark ? '#21262d' : '#ffffff' }}>🛠️ Maintenance</option>
+            <option value="Damage" style={{ background: dark ? '#21262d' : '#ffffff' }}>⚠️ Damage</option>
+            <option value="Other" style={{ background: dark ? '#21262d' : '#ffffff' }}>📌 Other</option>
           </select>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Description
           </label>
 
@@ -336,33 +349,47 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
             onChange={handleChange}
             placeholder="Describe the issue..."
             className="input w-full resize-none"
+            style={inputStyle}
             rows={3}
           />
         </div>
 
-        {/* Photo */}
+        {/* Photo Upload with Custom Button */}
         <div className="md:col-span-2">
 
-          <label className="block text-sm font-semibold mb-2">
+          <label className="block text-sm font-semibold mb-2" style={labelStyle}>
             Photo
           </label>
 
           <div
-            className="border-2 border-dashed rounded-xl p-5 text-center"
+            className="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
             style={{
-              borderColor: dark ? '#30363d' : '#cfe1ca'
+              borderColor: dark ? '#30363d' : '#cfe1ca',
+              background: dark ? 'rgba(33, 38, 45, 0.5)' : 'rgba(240, 247, 238, 0.4)'
             }}
           >
-
             <input
+              id="complaint-photo-input"
               type="file"
               accept="image/*"
               onChange={handleImage}
-              className="w-full text-sm"
+              className="hidden"
             />
 
+            <label
+              htmlFor="complaint-photo-input"
+              className="btn-secondary cursor-pointer inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm"
+              style={{
+                background: dark ? '#21262d' : '#ffffff',
+                color: dark ? '#81c784' : '#2e5e25',
+                borderColor: dark ? '#30363d' : '#c8e6c9'
+              }}
+            >
+              📷 Choose Image File
+            </label>
+
             {uploading && (
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 animate-pulse">
                 ⏳ Uploading photo...
               </p>
             )}
@@ -372,11 +399,11 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
                 <img
                   src={form.image_url}
                   alt="Issue"
-                  className="w-40 h-28 object-cover rounded-xl mx-auto"
+                  className="w-40 h-28 object-cover rounded-xl mx-auto shadow-md"
                 />
 
-                <p className="text-xs text-green-600 mt-2">
-                  ✓ Photo uploaded
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2 font-medium">
+                  ✓ Photo uploaded successfully
                 </p>
               </div>
             )}
