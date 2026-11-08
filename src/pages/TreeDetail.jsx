@@ -619,7 +619,7 @@ export default function TreeDetail() {
                     className="flex items-center justify-between p-3 rounded-xl transition-colors"
                     style={{ color: dark ? '#e6edf3' : 'inherit' }}
                   >
-                    <div>
+                  <div>
                       <p className="font-medium text-sm" style={{ color: dark ? '#e6edf3' : '#111827' }}>
                         {t.common_name}
                       </p>
@@ -627,7 +627,12 @@ export default function TreeDetail() {
                         {t.botanical_name}
                       </p>
                     </div>
-                    <span className="text-xs" style={{ color: '#8b949e' }}>{t.tree_id}</span>
+                    <div className="text-right">
+                      <span className="text-xs font-medium block" style={{ color: dark ? '#81c784' : '#2d5a27' }}>
+                        {t.distance_m ? `${t.distance_m}m away` : ''}
+                      </span>
+                      <span className="text-[11px]" style={{ color: '#8b949e' }}>{t.tree_id}</span>
+                    </div>
                   </Link>
                 ))}
               </div>
