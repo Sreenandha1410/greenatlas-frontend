@@ -1,155 +1,10 @@
-{/*
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { getTrees, getAreas } from '../api'
-import TreeCard from '../components/TreeCard'
-
-export default function TreeList() {
-  const [trees, setTrees]           = useState([])
-  const [areas, setAreas]           = useState([])
-  const [search, setSearch]         = useState('')
-  const [areaFilter, setAreaFilter] = useState('')
-  const [familyFilter, setFamilyFilter] = useState('')
-  const [page, setPage]             = useState(1)
-  const [loading, setLoading]       = useState(true)
-  // Add after existing useSearchParams:
-  const [searchParams] = useSearchParams()
-  useEffect(() => {
-    const q = searchParams.get('search')
-    if (q) setSearch(q)
-  }, [])
-  const PER_PAGE = 24
-
-  useEffect(() => {
-    const areaFromUrl = searchParams.get('area')
-    if (areaFromUrl) setAreaFilter(areaFromUrl)
-  }, [])
-
-  useEffect(() => {
-    Promise.all([getTrees(), getAreas()])
-      .then(([t, a]) => {
-        setTrees(t.data)
-        setAreas(a.data.map(a => a.area))
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  // Reset page on filter change
-  useEffect(() => { setPage(1) }, [search, areaFilter, familyFilter])
-
-  const families = [...new Set(trees.map(t => t.family).filter(Boolean))].sort()
-
-  const filteredTrees = trees.filter(t => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || [
-      t.common_name, t.botanical_name, t.area,
-      t.family, t.tree_id, t.tamil_name
-    ].some(v => v?.toLowerCase().includes(q))
-    const matchArea   = !areaFilter   || t.area   === areaFilter
-    const matchFamily = !familyFilter || t.family === familyFilter
-    return matchSearch && matchArea && matchFamily
-  })
-
-  const totalPages = Math.ceil(filteredTrees.length / PER_PAGE)
-  const paginated  = filteredTrees.slice((page - 1) * PER_PAGE, page * PER_PAGE)
-
-  const pageNumbers = []
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2))
-      pageNumbers.push(i)
-    else if (pageNumbers[pageNumbers.length - 1] !== '...')
-      pageNumbers.push('...')
-  }
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <p className="text-gray-400">Loading trees…</p>
-    </div>
-  )
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="font-display text-4xl font-bold text-gray-900 dark:text-gray-100">
-          All Trees
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          {filteredTrees.length} trees found
-        </p>
-      </div>
-
-      {/* Filters *}
-      <div className="card p-4 mb-6 flex flex-wrap gap-3">
-        <input
-          className="input flex-1 min-w-48"
-          placeholder="Search by name, ID, area, family…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select className="input w-44" value={areaFilter}
-          onChange={e => setAreaFilter(e.target.value)}>
-          <option value="">All Areas</option>
-          {areas.map(a => <option key={a}>{a}</option>)}
-        </select>
-        <select className="input w-44" value={familyFilter}
-          onChange={e => setFamilyFilter(e.target.value)}>
-          <option value="">All Families</option>
-          {families.map(f => <option key={f}>{f}</option>)}
-        </select>
-        {(search || areaFilter || familyFilter) && (
-          <button className="btn-secondary text-sm"
-            onClick={() => { setSearch(''); setAreaFilter(''); setFamilyFilter('') }}>
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* Grid *}
-      {paginated.length === 0 ? (
-        <div className="text-center py-24 text-gray-400">No trees match your search.</div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {paginated.map(tree => <TreeCard key={tree.tree_id} tree={tree} />)}
-        </div>
-      )}
-
-      {/* Pagination *}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-10">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1} className="btn-secondary px-3 py-1.5 text-sm">
-            ←
-          </button>
-          {pageNumbers.map((p, i) =>
-            p === '...' ? (
-              <span key={i} className="px-2 text-gray-400">…</span>
-            ) : (
-              <button key={p} onClick={() => setPage(p)}
-                className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors
-                  ${page === p
-                    ? 'bg-forest-500 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300'}`}>
-                {p}
-              </button>
-            )
-          )}
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages} className="btn-secondary px-3 py-1.5 text-sm">
-            →
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-*/}
-
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTrees, getAreas } from '../api'
 import { useDarkMode } from '../context/DarkModeContext'
-
+import TreeCard from '../components/TreeCard'
+{/*
 function TreeCard({ tree }) {
   return (
     <Link to={`/trees/${tree.tree_id}`}>
@@ -181,7 +36,7 @@ function TreeCard({ tree }) {
     </Link>
   )
 }
-
+*/}
 function SpeciesGroupCard({ species, trees, dark }) {
   const [expanded, setExpanded] = useState(false)
   const representative = trees[0]
