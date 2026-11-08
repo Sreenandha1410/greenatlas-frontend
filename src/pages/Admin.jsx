@@ -14,13 +14,13 @@ const COLORS = ['#1b5e20','#2e7d32','#388e3c','#43a047','#4caf50',
 const EMPTY  = { tree_id:'', botanical_name:'', common_name:'', family:'',
                  area:'', latitude:'', longitude:'', age:'', notes:'', image_link:'' };
 const SPECIES_EMPTY = {
-  species_id:'', common_name:'', tamil_name:'', kingdom:'', division:'',
-  class:'', order:'', family:'', genus:'', species:'', origin:'', native_exotic:'',
+  species_id:'', common_name:'', tamil_name:'', kingdom:'Plantae', division:'',
+  class:'', order:'', family:'', genus:'', species:'', origin:'', native_exotic:'Native',
   avg_height:'', lifespan:'', growth_rate:'', flowering_season:'', fruiting_season:'',
   pollination_method:'', wildlife_supported:'', ecological_importance:'',
   medicinal_uses:'', economic_uses:'', environmental_benefits:'', cultural_significance:'',
-  interesting_facts:'', conservation_status:'', general_description:'',
-  flora_type: 'tree' // <-- ADD HERE
+  interesting_facts:'', conservation_status:'Least Concern', general_description:'',
+  flora_type: 'tree'
 };
 
 const Btn = ({ color = 'primary', children, ...props }) => (
@@ -179,31 +179,67 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
         {field('genus',         'Genus')}
         {field('species',       'Species Epithet')}
         {field('family',        'Family')}
-        {field('kingdom',       'Kingdom')}
+
+        {/* Kingdom — Locked to Plantae */}
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Kingdom</label>
+          <input
+            className="input mb-3"
+            style={{ ...iStyle, opacity: 0.7 }}
+            value={form.kingdom || 'Plantae'}
+            readOnly
+            disabled
+          />
+        </div>
+
         {field('division',      'Division')}
         {field('class',         'Class')}
         {field('order',         'Order')}
         {field('origin',        'Origin')}
-        {field('native_exotic', 'Native/Exotic')}
+
+        {/* Native / Exotic Dropdown */}
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Native / Exotic</label>
+          <select
+            className="input mb-3"
+            style={iStyle}
+            value={form.native_exotic || 'Native'}
+            onChange={e => set('native_exotic', e.target.value)}
+          >
+            <option value="Native">Native</option>
+            <option value="Exotic">Exotic</option>
+          </select>
+        </div>
+
         {field('avg_height',    'Avg Height')}
         {field('lifespan',      'Lifespan')}
         {field('growth_rate',   'Growth Rate')}
         {field('flowering_season',    'Flowering Season')}
         {field('fruiting_season',     'Fruiting Season')}
         {field('pollination_method',  'Pollination Method')}
-        {field('conservation_status', 'Conservation Status')}
-        <div className="col-span-2">
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Species Image</label>
-          <ImageUpload label="Upload general species image" onUploaded={v => set('image_url', v)} />
-          {form.image_url && (
-            <img src={form.image_url} className="w-28 h-20 object-cover rounded-lg mt-2 mb-2" alt="" />
-          )}
-          <input className="input mb-3" style={iStyle}
-            placeholder="...or paste image URL"
-            value={form.image_url || ''} onChange={e => set('image_url', e.target.value)} />
+
+        {/* Conservation Status Dropdown */}
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Conservation Status</label>
+          <select
+            className="input mb-3"
+            style={iStyle}
+            value={form.conservation_status || 'Least Concern'}
+            onChange={e => set('conservation_status', e.target.value)}
+          >
+            <option value="Least Concern">Least Concern (LC)</option>
+            <option value="Near Threatened">Near Threatened (NT)</option>
+            <option value="Vulnerable">Vulnerable (VU)</option>
+            <option value="Endangered">Endangered (EN)</option>
+            <option value="Critically Endangered">Critically Endangered (CR)</option>
+            <option value="Extinct in the Wild">Extinct in the Wild (EW)</option>
+            <option value="Data Deficient">Data Deficient (DD)</option>
+            <option value="Not Evaluated">Not Evaluated (NE)</option>
+          </select>
         </div>
 
-         <div>
+        {/* Flora Type Dropdown */}
+        <div>
           <label className="block text-xs font-medium mb-1" style={lStyle}>Flora Type</label>
           <select 
             className="input mb-3" 
@@ -214,6 +250,18 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
             <option value="tree">🌳 Tree</option>
             <option value="plant">🌿 Plant / Shrub</option>
           </select>
+        </div>
+
+        {/* Species Image */}
+        <div className="col-span-2">
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Species Image</label>
+          <ImageUpload label="Upload general species image" onUploaded={v => set('image_url', v)} />
+          {form.image_url && (
+            <img src={form.image_url} className="w-28 h-20 object-cover rounded-lg mt-2 mb-2" alt="" />
+          )}
+          <input className="input mb-3" style={iStyle}
+            placeholder="...or paste image URL"
+            value={form.image_url || ''} onChange={e => set('image_url', e.target.value)} />
         </div>
       </div>
       {field('general_description',    'General Description',    true)}
