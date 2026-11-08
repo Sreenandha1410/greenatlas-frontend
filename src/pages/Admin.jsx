@@ -19,7 +19,8 @@ const SPECIES_EMPTY = {
   avg_height:'', lifespan:'', growth_rate:'', flowering_season:'', fruiting_season:'',
   pollination_method:'', wildlife_supported:'', ecological_importance:'',
   medicinal_uses:'', economic_uses:'', environmental_benefits:'', cultural_significance:'',
-  interesting_facts:'', conservation_status:'', general_description:''
+  interesting_facts:'', conservation_status:'', general_description:'',
+  flora_type: 'tree' // <-- ADD HERE
 };
 
 const Btn = ({ color = 'primary', children, ...props }) => (
@@ -200,6 +201,19 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
           <input className="input mb-3" style={iStyle}
             placeholder="...or paste image URL"
             value={form.image_url || ''} onChange={e => set('image_url', e.target.value)} />
+        </div>
+
+         <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Flora Type</label>
+          <select 
+            className="input mb-3" 
+            style={iStyle}
+            value={form.flora_type || 'tree'}
+            onChange={e => set('flora_type', e.target.value)}
+          >
+            <option value="tree">🌳 Tree</option>
+            <option value="plant">🌿 Plant / Shrub</option>
+          </select>
         </div>
       </div>
       {field('general_description',    'General Description',    true)}
