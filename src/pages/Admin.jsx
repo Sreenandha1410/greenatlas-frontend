@@ -23,25 +23,6 @@ const SPECIES_EMPTY = {
   interesting_facts:'', conservation_status:'', general_description:''
 };
 
-/* ── Shared UI primitives ── */
-{/*
-const Label = ({ children }) => (
-  <label className="block text-xs font-medium mb-1"
-    style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-    {children}
-  </label>
-);
-
-const Input = ({ dark: _dark, ...props }) => (
-  <input className="input mb-3" {...props}
-    style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
-);
-
-const Textarea = ({ dark: _dark, ...props }) => (
-  <textarea className="input mb-3 resize-y" style={{ height: 72, background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} {...props} />
-);
-*/}
-
 const Btn = ({ color = 'primary', children, ...props }) => (
   <button
     className={color === 'primary' ? 'btn-primary text-sm'
