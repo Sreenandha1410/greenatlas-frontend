@@ -158,14 +158,14 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
   const iStyle = { background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }
   const lStyle = { color: dark ? '#8b949e' : '#6b7280' }
 
-  const field = (key, label, multiline = false) => (
+  const field = (key, label, multiline = false, disabled = false) => (
     <div key={key}>
       <label className="block text-xs font-medium mb-1" style={lStyle}>{label}</label>
       {multiline
         ? <textarea className="input mb-3 resize-y" style={{ ...iStyle, height: 70 }}
-            value={form[key] || ''} onChange={e => set(key, e.target.value)} />
-        : <input className="input mb-3" style={iStyle}
-            value={form[key] || ''} onChange={e => set(key, e.target.value)} />
+            value={form[key] || ''} onChange={e => set(key, e.target.value)} disabled={disabled} />
+        : <input className="input mb-3" style={{ ...iStyle, opacity: disabled ? 0.6 : 1 }}
+            value={form[key] || ''} onChange={e => set(key, e.target.value)} disabled={disabled} />
       }
     </div>
   );
@@ -173,7 +173,7 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
   return (
     <div>
       <div className="grid grid-cols-2 gap-x-4">
-        {field('species_id',    'Species ID')}
+        {field('species_id',    'Species ID', false, Boolean(initial.species_id))}
         {field('common_name',   'Common Name')}
         {field('tamil_name',    'Tamil Name')}
         {field('genus',         'Genus')}
@@ -263,7 +263,11 @@ function ChangePassword({ dark = false }) {
 /* ── StatsPanel ── */
 function StatsPanel({ dark = false }) {
   const [stats, setStats] = useState(null);
-  useEffect(() => { getDetailedStats().then(r => setStats(r.data)); }, []);
+  useEffect(() => {
+           getDetailedStats()
+             .then(r => setStats(r.data))
+             .catch(() => setStats({ error: true }));
+         }, []);
 
   if (!stats) return <p style={{ color: '#8b949e' }}>Loading statistics…</p>;
 
@@ -358,14 +362,18 @@ function SpeciesPanel({ dark = false }) {
     } catch { flash('❌ Failed to add species'); }
   };
 
-  const handleEdit = async (form) => {
-    try {
-      const res = await updateSpecies(form.species_id, form);
-      setSpecies(prev => prev.map(s => s.species_id === form.species_id ? res.data : s));
-      setEditId(null);
-      flash('✅ Species updated');
-    } catch { flash('❌ Failed to update species'); }
-  };
+    const handleEdit = async (form) => {
+             try {
+               // Use editId to target the exact existing record
+               const res = await updateSpecies(editId, form);
+               // Update by matching the original editId in the state list
+               setSpecies(prev => prev.map(s => s.species_id === editId ? res.data : s));
+               setEditId(null);
+               flash('✅ Species updated');
+             } catch { 
+               flash('❌ Failed to update species'); 
+             }
+           };
 
   const handleDelete = async (id) => {
     if (!window.confirm(`Delete species ${id}?`)) return;
