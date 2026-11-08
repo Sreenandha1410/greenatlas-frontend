@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDarkMode } from '../context/DarkModeContext'
 import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const links = [
   { to: '/',        label: 'Home'    },
@@ -37,6 +38,23 @@ export default function Navbar() {
     return () => window.removeEventListener('storage', syncAuth)
   }, [pathname])
 
+  const navRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [open])
+
   const isLoggedIn = !!auth.token
   const role       = auth.role
 
@@ -52,7 +70,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 shadow-md"
+        <nav ref={navRef} className="sticky top-0 z-50 shadow-md"
       style={{ background: 'linear-gradient(90deg, #1a3618, #2e5e25)' }}>
       <div className="max-w-screen-2xl mx-auto px-6 flex items-center justify-between h-16">
 
