@@ -658,13 +658,12 @@ export default function TreeDetail() {
                 ].map(([heading, titles, start], column) => (
                   <div
                     key={heading}
-                    className="p-6 space-y-4"
-                    style={{
-                      borderRight:
-                        column === 0 && typeof window !== 'undefined' && window.innerWidth >= 768
-                          ? `1px solid ${dark ? '#30363d' : '#e5e7eb'}`
-                          : 'none'
-                    }}
+                    className={`p-6 space-y-4 ${
+                      column === 0 
+                        ? 'md:border-r border-gray-200 dark:border-gray-800' 
+                        : ''
+                    }`}
+                  >
                   >
                     <p
                       className="text-xs font-bold uppercase tracking-widest mb-5"
