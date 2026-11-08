@@ -206,9 +206,20 @@ export default function AreaDetail() {
             {areaInfo.description && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                className="card p-6">
-                <p className="text-gray-600 leading-relaxed"
-                  style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem' }}>
+                className="card p-6"
+                style={{
+                  background: dark ? '#1c2128' : '#ffffff',
+                  borderColor: dark ? '#30363d' : '#e5e7eb'
+                }}
+              >
+                <p
+                  className="leading-relaxed"
+                  style={{
+                    fontFamily: 'Cormorant Garamond, serif',
+                    fontSize: '1.15rem',
+                    color: dark ? '#e6edf3' : '#374151'
+                  }}
+                >
                   {areaInfo.description}
                 </p>
               </motion.div>
@@ -220,20 +231,32 @@ export default function AreaDetail() {
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
                 className="rounded-2xl p-5 flex gap-4"
-                style={{ background: 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
-                         border: '1px solid rgba(45,90,39,0.15)' }}>
+                style={{
+                  background: dark
+                    ? 'linear-gradient(135deg, #161b22, #1c2128)'
+                    : 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
+                  border: `1px solid ${dark ? '#30363d' : 'rgba(45,90,39,0.15)'}`,
+                  boxShadow: dark ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
+                }}
+              >
                 <span className="text-2xl flex-shrink-0">🧭</span>
                 <div>
-                  <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-forest-600)' }}>
+                  <p
+                    className="font-semibold text-sm mb-1"
+                    style={{ color: dark ? '#81c784' : 'var(--color-forest-600)' }}
+                  >
                     How to reach
                   </p>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p
+                    className="text-sm leading-relaxed"
+                    style={{ color: dark ? '#8b949e' : '#4b5563' }}
+                  >
                     {areaInfo.navigation_notes}
                   </p>
                 </div>
               </motion.div>
             )}
-
+            
             {/* Map */}
             {trees.length > 0 && (
               <motion.div
