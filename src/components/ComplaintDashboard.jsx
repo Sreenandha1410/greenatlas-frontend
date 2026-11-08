@@ -3,7 +3,7 @@ import { getTrees, uploadComplaintImage, submitComplaint } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
 import Treesearchselect from './Treesearchselect';
 
-export default function ComplaintDashboard({ selectedTree = null }) {
+export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
 
   const [dark] = useDarkMode();
 
@@ -117,6 +117,10 @@ export default function ComplaintDashboard({ selectedTree = null }) {
         description: '',
         image_url: ''
       });
+
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1500);
 
     } catch (err) {
 
