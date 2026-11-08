@@ -669,7 +669,6 @@ export default function TreeDetail() {
                         : ''
                     }`}
                   >
-                  >
                     <p
                       className="text-xs font-bold uppercase tracking-widest mb-5"
                       style={{ color: dark ? '#81c784' : '#2d6a32' }}
