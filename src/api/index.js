@@ -124,22 +124,34 @@ export const updateComplaintStatus = (id, data) =>
 
 // ==================== EXPORT ====================
 
-export const exportCSV = () => {
-  const token = localStorage.getItem('token');
-
-  window.open(
-    `${BASE}/trees/export/csv?token=${token}`,
-    '_blank'
-  );
+export const exportCSV = async (params = {}) => {
+  const response = await api.get('/trees/export/csv', {
+    params,
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'campus_trees.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
 
-export const exportPDF = () => {
-  const token = localStorage.getItem('token');
-
-  window.open(
-    `${BASE}/trees/export/pdf?token=${token}`,
-    '_blank'
-  );
+export const exportPDF = async (params = {}) => {
+  const response = await api.get('/trees/export/pdf', {
+    params,
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'campus_trees.pdf');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
 
 // ==================== VIEWS ====================
