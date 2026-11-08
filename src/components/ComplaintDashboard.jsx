@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getTrees, uploadComplaintImage, submitComplaint } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
 import Treesearchselect from './Treesearchselect';
+let cachedTrees = null;
 
 export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
 
@@ -23,8 +24,16 @@ export default function ComplaintDashboard({ selectedTree = null, onSuccess }) {
   });
 
   useEffect(() => {
+    if (cachedTrees) {
+      setTrees(cachedTrees);
+      return;
+    }
+
     getTrees()
-      .then(res => setTrees(res.data))
+      .then(res => {
+        cachedTrees = res.data;
+        setTrees(res.data);
+      })
       .catch(() => setError('Unable to load tree locations'));
   }, []);
 
