@@ -41,7 +41,7 @@ export default function Home() {
   const statCards = [
     { label: 'Trees Mapped', value: stats.trees, icon: '🌳', suffix: '+' },
     { label: 'Species', value: stats.species, icon: '🍃', suffix: '' },
-    { label: 'Campus Areas', value: stats.areas, icon: '📍', suffix: '' }
+    { label: 'Campus Locations', value: stats.areas, icon: '📍', suffix: '' }
   ]
 
   const fadeUp = (delay = 0) => ({
