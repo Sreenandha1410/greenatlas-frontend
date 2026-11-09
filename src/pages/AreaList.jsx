@@ -1,350 +1,212 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import L from 'leaflet';
-import { getTrees, getAreaInfo, updateAreaInfo } from '../api';
-import ImageUpload from '../components/ImageUpload';
+import { getAreas, getTrees } from '../api';
 import { useDarkMode } from '../context/DarkModeContext';
-import { createStylizedPin, getSpeciesColor, getBotanicalMonogram } from '../utils/mapPins';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-export default function AreaDetail() {
-  const [dark] = useDarkMode()
-  const { area } = useParams();
-  const navigate = useNavigate();
-  const areaName = decodeURIComponent(area);
-  const isAdmin  = localStorage.getItem('role') === 'admin';
-
-  const [trees, setTrees]       = useState([]);
-  const [areaInfo, setAreaInfo] = useState({});
-  const [loading, setLoading]   = useState(true);
-  const [editing, setEditing]   = useState(false);
-  const [editForm, setEditForm] = useState({ image_url: '', description: '', navigation_notes: '' });
-  const [saving, setSaving]     = useState(false);
-  const [treeSearch, setTreeSearch] = useState('');
-  const [floraFilter, setFloraFilter] = useState('all');
+export default function AreaList() {
+  const [dark] = useDarkMode();
+  const [areas, setAreas] = useState([]);
+  const [counts, setCounts] = useState({});
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState('area');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [viewMode, setViewMode] = useState('tiles');
 
   useEffect(() => {
-    Promise.all([
-      getTrees({ area: areaName }),
-      getAreaInfo(areaName).catch(() => ({ data: {} })),
-    ]).then(([t, a]) => {
-      setTrees(t.data);
-      setAreaInfo(a.data || {});
-      setEditForm({
-        image_url:        a.data?.image_url        || '',
-        description:      a.data?.description      || '',
-        navigation_notes: a.data?.navigation_notes || '',
+    getAreas().then(r => setAreas(r.data));
+    getTrees().then(r => {
+      const c = {};
+      r.data.forEach(t => {
+        c[t.area] = (c[t.area] || 0) + 1;
       });
-    }).finally(() => setLoading(false));
-  }, [areaName]);
+      setCounts(c);
+    });
+  }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await updateAreaInfo(areaName, editForm);
-      setAreaInfo(editForm);
-      setEditing(false);
-    } catch { alert('Failed to save'); }
-    finally { setSaving(false); }
-  };
+  let filtered = areas.filter(a =>
+    !search ||
+    a.area?.toLowerCase().includes(search.toLowerCase()) ||
+    a.description?.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const center   = trees.length > 0 ? [trees[0].latitude, trees[0].longitude] : [11.678, 78.125];
-  const families = [...new Set(trees.map(t => t.family).filter(Boolean))];
-
-  // filteredTrees is shared by both map and list
-  const filteredTrees = trees.filter(t => {
-    const matchSearch = !treeSearch ||
-      t.common_name?.toLowerCase().includes(treeSearch.toLowerCase()) ||
-      t.botanical_name?.toLowerCase().includes(treeSearch.toLowerCase());
-    const matchFlora = floraFilter === 'all' || t.flora_type === floraFilter;
-    return matchSearch && matchFlora;
+  filtered.sort((a, b) => {
+    if (sortField === 'count') {
+      const countA = counts[a.area] || 0;
+      const countB = counts[b.area] || 0;
+      return sortOrder === 'asc' ? countA - countB : countB - countA;
+    }
+    const valA = (a.area || '').toLowerCase();
+    const valB = (b.area || '').toLowerCase();
+    const cmp = valA.localeCompare(valB);
+    return sortOrder === 'asc' ? cmp : -cmp;
   });
 
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+
   return (
-    <div>
-      {/* ── Hero ── */}
-      <div className="relative h-64 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1a3618, #2d5a27)' }}>
-        {areaInfo.image_url && (
-          <img src={areaInfo.image_url} alt={areaName}
-            className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.2))' }} />
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <h1 className="font-display text-4xl font-bold text-gray-900 dark:text-gray-100">
+          Campus Areas
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 mb-6">
+          Browse trees by mapped campus location
+        </p>
+      </motion.div>
 
-        <button onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5
-                     rounded-lg text-sm font-medium text-white transition-all"
-          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                   border: '1px solid rgba(255,255,255,0.25)' }}>
-          ← Back
-        </button>
+      {/* Explorer Filter Bar */}
+      <div className="card p-4 mb-8 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <input
+          className="input flex-1 min-w-48 text-sm"
+          placeholder="Filter campus areas..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={iStyle}
+        />
 
-        {isAdmin && (
-          <button onClick={() => setEditing(!editing)}
-            className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-lg text-sm font-medium text-white"
-            style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                     border: '1px solid rgba(255,255,255,0.25)' }}>
-            {editing ? '✕ Cancel' : '✏️ Edit Area'}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-gray-500">Sort by:</span>
+            <select
+              className="input text-xs py-1 px-2 rounded-lg"
+              style={iStyle}
+              value={sortField}
+              onChange={e => setSortField(e.target.value)}
+            >
+              <option value="area">Area Name</option>
+              <option value="count">Tree Count</option>
+            </select>
 
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 z-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            className="font-display text-4xl font-bold text-white mb-1">
-            {areaName}
-          </motion.h1>
-          <p className="text-gray-300 text-sm">
-            {trees.length} trees · {families.length} families
-          </p>
+            <button
+              onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
+              className="px-2 py-1 rounded-lg border border-gray-300 dark:border-[#30363d] font-semibold"
+            >
+              {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
+            </button>
+          </div>
+
+          <div className="flex items-center border border-gray-300 dark:border-[#30363d] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('tiles')}
+              className={`px-2.5 py-1 font-medium ${
+                viewMode === 'tiles' ? 'bg-forest-600 text-white' : 'bg-transparent text-gray-500'
+              }`}
+            >
+              🔲 Tiles
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2.5 py-1 font-medium ${
+                viewMode === 'list' ? 'bg-forest-600 text-white' : 'bg-transparent text-gray-500'
+              }`}
+            >
+              📋 List
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-
-        {/* ── Admin edit panel ── */}
-        {isAdmin && editing && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-            className="card p-6 space-y-4"
-            style={{ borderLeft: '4px solid var(--color-forest-500)' }}>
-            <h3 className="font-semibold text-gray-800">Edit Area Info</h3>
-
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Area Image</label>
-              <ImageUpload label="Upload area photo" onUploaded={url => setEditForm(f => ({ ...f, image_url: url }))} />
-              {editForm.image_url && (
-                <img src={editForm.image_url} alt=""
-                  className="w-40 h-24 object-cover rounded-lg mt-2" />
-              )}
-              <input className="input mt-2 text-sm" placeholder="…or paste image URL"
-                value={editForm.image_url}
-                onChange={e => setEditForm(f => ({ ...f, image_url: e.target.value }))}
-                style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Description</label>
-              <textarea className="input resize-y text-sm" style={{ height: 80, background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-                placeholder="Brief description of this campus area…"
-                value={editForm.description}
-                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Navigation / How to reach</label>
-              <textarea className="input resize-y text-sm" style={{ height: 72, background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-                placeholder="e.g. Located near the main gate, turn left at the library…"
-                value={editForm.navigation_notes}
-                onChange={e => setEditForm(f => ({ ...f, navigation_notes: e.target.value }))} />
-            </div>
-
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-              {saving ? 'Saving…' : '✓ Save Changes'}
-            </button>
-          </motion.div>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-24 text-gray-400">Loading…</div>
-        )}
-
-        {!loading && (
-          <>
-            {/* Description */}
-            {areaInfo.description && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                className="card p-6"
-                style={{
-                  background: dark ? '#1c2128' : '#ffffff',
-                  borderColor: dark ? '#30363d' : '#e5e7eb'
-                }}
-              >
-                <p
-                  className="leading-relaxed"
-                  style={{
-                    fontFamily: 'Cormorant Garamond, serif',
-                    fontSize: '1.15rem',
-                    color: dark ? '#e6edf3' : '#374151'
-                  }}
-                >
-                  {areaInfo.description}
-                </p>
-              </motion.div>
-            )}
-
-            {/* Navigation notes */}
-            {areaInfo.navigation_notes && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="rounded-2xl p-5 flex gap-4"
-                style={{
-                  background: dark
-                    ? 'linear-gradient(135deg, #161b22, #1c2128)'
-                    : 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
-                  border: `1px solid ${dark ? '#30363d' : 'rgba(45,90,39,0.15)'}`,
-                  boxShadow: dark ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
-                }}
-              >
-                <span className="text-2xl flex-shrink-0">🧭</span>
-                <div>
-                  <p
-                    className="font-semibold text-sm mb-1"
-                    style={{ color: dark ? '#81c784' : 'var(--color-forest-600)' }}
-                  >
-                    How to reach
-                  </p>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: dark ? '#8b949e' : '#4b5563' }}
-                  >
-                    {areaInfo.navigation_notes}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Map — now uses filteredTrees so it syncs with list filter */}
-            {trees.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="card overflow-hidden">
-                <div style={{ height: 340, position: 'relative', zIndex: 0 }}>
-                  <MapContainer center={center} zoom={18} style={{ height: '100%', width: '100%' }} maxZoom={22}>
-                    <LayersControl position="topright">
-                      <LayersControl.BaseLayer checked name="Map">
-                        <TileLayer
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          maxZoom={22} maxNativeZoom={19}
-                          attribution="© OpenStreetMap contributors"
-                        />
-                      </LayersControl.BaseLayer>
-                      <LayersControl.BaseLayer name="Satellite">
-                        <TileLayer
-                          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                          maxZoom={22} maxNativeZoom={19}
-                          attribution="© Esri, Maxar, Earthstar Geographics"
-                        />
-                      </LayersControl.BaseLayer>
-                    </LayersControl>
-                    {filteredTrees.map(t => t.latitude && t.longitude && (
-                      <Marker
-                        key={t.tree_id}
-                        position={[t.latitude, t.longitude]}
-                        icon={createStylizedPin({
-                          color: getSpeciesColor(t.botanical_name || t.common_name),
-                          label: getBotanicalMonogram(t.botanical_name, t.common_name),
-                          isPlant: t.flora_type === 'plant',
-                        })}
-                      >
-                        <Popup>
-                          <strong style={{ fontSize: '0.88rem' }}>{t.common_name}</strong><br />
-                          <em style={{ fontSize: '0.78rem', color: '#888' }}>{t.botanical_name}</em><br />
-                          <Link to={`/trees/${t.tree_id}`}
-                            style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
-                            View →
-                          </Link>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  </MapContainer>
-                  {/* Species color legend */}
-                  <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
-                    {[...new Map(filteredTrees.map(t => [t.botanical_name, t])).values()].map(t => (
-                      <div key={t.botanical_name}
-                        className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                        <div style={{
-                          width: 18, height: 18, borderRadius: '50%',
-                          background: getSpeciesColor(t.botanical_name),
-                          border: '2px solid white',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'white', fontSize: 8, fontWeight: 700,
-                        }}>
-                          {getBotanicalMonogram(t.botanical_name, t.common_name)}
-                        </div>
-                        <span className="italic">{t.botanical_name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Tree list */}
+      {/* Results View */}
+      {viewMode === 'tiles' ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+          {filtered.map((a, i) => (
             <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="card overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2">
-                <h2 className="font-semibold text-sm flex-shrink-0"
-                  style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                  Trees in this area
-                </h2>
-                <div className="flex gap-1 ml-auto">
-                  {[['all','All'],['tree','🌳'],['plant','🌿']].map(([v, l]) => (
-                    <button key={v} onClick={() => setFloraFilter(v)}
-                      className="text-xs px-2.5 py-1 rounded-md font-medium transition-colors"
-                      title={v === 'all' ? 'All' : v === 'tree' ? 'Trees only' : 'Plants only'}
-                      style={{
-                        background: floraFilter === v ? 'var(--color-forest-500)' : (dark ? '#21262d' : '#f3f4f6'),
-                        color: floraFilter === v ? 'white' : (dark ? '#8b949e' : '#6b7280'),
-                      }}>
-                      {l}
-                    </button>
-                  ))}
+              key={a.area}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.04 }}
+            >
+              <Link
+                to={`/areas/${encodeURIComponent(a.area)}`}
+                className="group block rounded-2xl overflow-hidden cursor-pointer"
+                style={{
+                  boxShadow: dark
+                    ? '6px 6px 16px rgba(0,0,0,0.4), -3px -3px 10px rgba(255,255,255,0.03)'
+                    : '6px 6px 16px rgba(45,90,39,0.1), -3px -3px 10px rgba(255,255,255,0.9)',
+                  border: `1.5px solid ${dark ? '#30363d' : 'rgba(255,255,255,0.8)'}`,
+                  background: dark ? '#1c2128' : 'linear-gradient(145deg, #ffffff, #f2faf0)',
+                  transition: 'all 0.25s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+              >
+                <div
+                  className="h-32 overflow-hidden relative"
+                  style={{ background: 'linear-gradient(135deg, #1a3618, #2d5a27)' }}
+                >
+                  {a.image_url ? (
+                    <img
+                      src={a.image_url}
+                      alt={a.area}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-5xl opacity-40">🌳</div>
+                  )}
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)' }}
+                  />
+                  <span
+                    className="absolute bottom-2 right-2 text-xs text-white font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(45,90,39,0.75)', backdropFilter: 'blur(6px)' }}
+                  >
+                    {counts[a.area] || 0} trees
+                  </span>
                 </div>
-                <input className="input text-sm w-40"
-                  placeholder="Search…"
-                  value={treeSearch}
-                  onChange={e => setTreeSearch(e.target.value)}
-                  style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
-              </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-96 overflow-y-auto">
-                {filteredTrees.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-gray-400 text-sm">No trees match.</p>
-                ) : filteredTrees.map(t => (
-                  <Link key={t.tree_id} to={`/trees/${t.tree_id}`}
-                    className="flex items-center gap-3 px-5 py-3
-                               hover:bg-forest-50 dark:hover:bg-forest-950 transition-colors group">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0"
-                      style={{ background: '#f0f7ee' }}>
-                      {(t.image_link || t.species_image_url)
-                        ? <img src={t.image_link || t.species_image_url} alt="" className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-sm">🌿</div>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                        {t.common_name}
-                      </p>
-                      <p className="text-xs italic text-gray-400 truncate">{t.botanical_name}</p>
-                    </div>
-                    <span className="text-xs text-gray-300 group-hover:text-forest-500 transition-colors">
-                      {t.tree_id} →
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
 
-            {trees.length === 0 && (
-              <div className="text-center py-24 text-gray-400">No trees found in this area.</div>
-            )}
-          </>
-        )}
-      </div>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm truncate" style={{ color: dark ? '#e6edf3' : '#1f2937' }}>
+                    {a.area}
+                  </h3>
+                  {a.description ? (
+                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#8b949e' }}>{a.description}</p>
+                  ) : (
+                    <p className="text-xs mt-0.5 text-forest-500">Explore area →</p>
+                  )}
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="card overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: 'var(--color-forest-500)' }}>
+                {['Area Name', 'Tree Count', 'Description', 'Link'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {filtered.map(a => (
+                <tr
+                  key={a.area}
+                  className="transition-colors hover:bg-forest-50/50 dark:hover:bg-[#21262d]"
+                  style={{ background: dark ? '#1c2128' : '#fff' }}
+                >
+                  <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">{a.area}</td>
+                  <td className="px-4 py-3 font-mono font-bold text-forest-600 dark:text-forest-400">
+                    {counts[a.area] || 0} trees
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500 max-w-sm truncate">{a.description || '—'}</td>
+                  <td className="px-4 py-3">
+                    <Link to={`/areas/${encodeURIComponent(a.area)}`} className="text-xs font-semibold text-forest-600 hover:underline">
+                      View Area →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
