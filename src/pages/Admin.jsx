@@ -279,7 +279,7 @@ function TreeForm({
               set('tree_id', e.target.value);
             }}
             readOnly={!manualIdEdit && !isEditing}
-            placeholder="e.g. CAIA9001"
+            placeholder=" "
           />
         </div>
 
@@ -623,7 +623,7 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs font-medium mb-1" style={lStyle}>
-                Area Name (e.g. Canteen) <span className="text-red-500">*</span>
+                Area Name <span className="text-red-500">*</span>
               </label>
               <input
                 className="input"
@@ -635,15 +635,15 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={lStyle}>
-                Area Code (e.g. CAI) <span className="text-red-500">*</span>
+                Area Code <span className="text-red-500">*</span>
               </label>
               <input
                 className="input font-mono uppercase"
                 style={iStyle}
                 value={form.area_code}
                 onChange={e => setForm(f => ({ ...f, area_code: e.target.value.toUpperCase() }))}
-                placeholder="e.g. CAI"
-                maxLength={6}
+                placeholder="eg. CAI"
+                maxLength={3}
               />
             </div>
           </div>
