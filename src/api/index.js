@@ -160,6 +160,23 @@ export const exportPDF = async (params = {}) => {
   window.URL.revokeObjectURL(url);
 };
 
+export const exportTable = async (tableName, format = 'csv') => {
+  const response = await api.get(`/trees/export/table/${encodeURIComponent(tableName)}`, {
+    params: { format },
+    responseType: 'blob'
+  });
+  const mimeType = format === 'json' ? 'application/json' : 'text/csv';
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: mimeType }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `green_atlas_${tableName}.${format}`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+
 // ==================== VIEWS ====================
 
 export const recordView = (path) =>
