@@ -1188,12 +1188,13 @@ function SpeciesPanel({ dark = false }) {
 }
 
 /* ── ExportPanel (Complete 8-Table Database Export Center) ── */
+/* ── ExportPanel (Complete 8-Table Database Export Center) ── */
 function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = [], dark }) {
   const [targetTable, setTargetTable] = useState('trees');
   const [format, setFormat] = useState('csv');
   const [downloading, setDownloading] = useState(false);
+  const [exportError, setExportError] = useState('');
 
-  // All 8 database tables with clear human-readable descriptions
   const tableOptions = [
     {
       key: 'trees',
@@ -1243,6 +1244,8 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
 
   const exportTableData = async () => {
     setDownloading(true);
+    setExportError('');
+
     try {
       if (targetTable === 'trees' && format === 'pdf') {
         await exportPDF();
@@ -1250,50 +1253,10 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
         return;
       }
 
-      // Delegate directly to the backend export endpoint
       await exportTable(targetTable, format);
     } catch (err) {
       console.error('Export error:', err);
-      // Fallback in-browser exporter if target table is loaded in client memory
-      try {
-        let fallbackData = null;
-        if (targetTable === 'trees') fallbackData = trees;
-        else if (targetTable === 'species') fallbackData = speciesList;
-        else if (targetTable === 'areas') fallbackData = areas;
-        else if (targetTable === 'complaints') fallbackData = complaints;
-
-        if (fallbackData && fallbackData.length > 0) {
-          const filename = `green_atlas_${targetTable}_${new Date().toISOString().slice(0, 10)}`;
-          if (format === 'json') {
-            const blob = new Blob([JSON.stringify(fallbackData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${filename}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-          } else {
-            const headers = Object.keys(fallbackData[0]);
-            const csvRows = [headers.join(',')];
-            for (const row of fallbackData) {
-              const vals = headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`);
-              csvRows.push(vals.join(','));
-            }
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${filename}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }
-          setDownloading(false);
-          return;
-        }
-      } catch (e) {
-        console.error('Client fallback failed', e);
-      }
-      alert('Failed to export table. Ensure the backend export route is in place.');
+      setExportError(err.message || 'Failed to export table. Ensure you are logged in as admin.');
     } finally {
       setDownloading(false);
     }
@@ -1312,6 +1275,12 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
         </p>
       </div>
 
+      {exportError && (
+        <div className="p-3 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900">
+          ❌ {exportError}
+        </div>
+      )}
+
       {/* 1. Select Table (All 8 Tables) */}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">
@@ -1321,7 +1290,10 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
           {tableOptions.map(t => (
             <div
               key={t.key}
-              onClick={() => setTargetTable(t.key)}
+              onClick={() => {
+                setTargetTable(t.key);
+                setExportError('');
+              }}
               className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 targetTable === t.key
                   ? 'border-forest-500 bg-forest-50/50 dark:bg-forest-950/30 ring-2 ring-forest-500/20'
