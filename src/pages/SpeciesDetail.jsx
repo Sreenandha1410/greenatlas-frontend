@@ -1,23 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, LayersControl } from 'react-leaflet';
+import { motion } from 'framer-motion';
 import L from 'leaflet';
 import { getSpeciesOne, getTrees } from '../api';
-import TaxonomyTree from '../components/TaxonomyTree'
-import { useDarkMode } from '../context/DarkModeContext'
-import { motion } from 'framer-motion'
-
-function RevealSection({ children, delay = 0 }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay, ease: 'easeOut' }}>
-      {children}
-    </motion.div>
-  )
-}
+import { useDarkMode } from '../context/DarkModeContext';
+import { createStylizedPin, getSpeciesColor, getBotanicalMonogram } from '../utils/mapPins';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -27,202 +15,172 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function SpeciesDetail() {
-  const [dark] = useDarkMode()
-  const { id }     = useParams();
-  const navigate   = useNavigate();
+  const [dark] = useDarkMode();
+  const { name } = useParams();
+  const navigate = useNavigate();
+
   const [species, setSpecies] = useState(null);
-  const [trees, setTrees]     = useState([]);
+  const [trees, setTrees] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSpeciesOne(id)
-      .then(r => {
-        setSpecies(r.data);
-        const botName = `${r.data.genus} ${r.data.species}`;
-        return getTrees({ search: botName });
-      })
-      .then(r => setTrees(r.data))
-      .catch(() => setSpecies(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+    Promise.all([
+      getSpeciesOne(name),
+      getTrees()
+    ]).then(([sRes, tRes]) => {
+      setSpecies(sRes.data);
+      const bot = `${sRes.data.genus || ''} ${sRes.data.species || ''}`.trim().toLowerCase();
+      const com = (sRes.data.common_name || '').toLowerCase();
+      const specId = (sRes.data.species_id || '').toLowerCase();
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <p className="text-gray-400">Loading…</p>
-    </div>
-  );
+      const matched = tRes.data.filter(t => {
+        const tBot = (t.botanical_name || '').toLowerCase();
+        const tCom = (t.common_name || '').toLowerCase();
+        return (bot && tBot.includes(bot)) || (com && tCom === com) || (specId && t.tree_id?.toLowerCase().includes(specId));
+      });
+      setTrees(matched);
+    }).catch(err => {
+      console.error('Failed to load species detail:', err);
+    }).finally(() => setLoading(false));
+  }, [name]);
 
-  if (!species) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <p className="text-xl font-semibold text-gray-700 dark:text-gray-200">Species not found</p>
-      <button className="btn-primary" onClick={() => navigate(-1)}>Go Back</button>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="text-4xl mb-2 animate-bounce">🍃</div>
+          <p className="text-gray-500">Loading species data...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const mapCenter = trees.length > 0
-    ? [trees[0].latitude, trees[0].longitude]
-    : [11.678, 78.125];
+  if (!species) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <h2 className="text-2xl font-bold mb-4">Species Not Found</h2>
+        <button onClick={() => navigate('/species')} className="btn-primary">
+          Back to Species Catalog
+        </button>
+      </div>
+    );
+  }
 
-  const ecologyItems = [
-    { label: '🦋 Wildlife Supported',     value: species.wildlife_supported      },
-    { label: '🌱 Ecological Importance',  value: species.ecological_importance   },
-    { label: '💊 Medicinal Uses',         value: species.medicinal_uses          },
-    { label: '💰 Economic Uses',          value: species.economic_uses           },
-    { label: '🌬️ Environmental Benefits', value: species.environmental_benefits  },
-    { label: '🎭 Cultural Significance',  value: species.cultural_significance   },
-    { label: '✨ Interesting Facts',      value: species.interesting_facts       },
-  ].filter(i => i.value);
+  const validTrees = trees.filter(t => t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude));
+  const center = validTrees.length > 0
+    ? [
+        validTrees.reduce((s, t) => s + parseFloat(t.latitude), 0) / validTrees.length,
+        validTrees.reduce((s, t) => s + parseFloat(t.longitude), 0) / validTrees.length
+      ]
+    : [13.0827, 80.2707];
 
-  const quickStats = [
-    { label: 'Family',      value: species.family            },
-    { label: 'Avg Height',  value: species.avg_height        },
-    { label: 'Lifespan',    value: species.lifespan          },
-    { label: 'Growth Rate', value: species.growth_rate       },
-    { label: 'Flowering',   value: species.flowering_season  },
-    { label: 'Fruiting',    value: species.fruiting_season   },
-    { label: 'Pollination', value: species.pollination_method},
-  ].filter(i => i.value);
+  const pinColor = getSpeciesColor(species.genus + ' ' + species.species);
+  const monogram = getBotanicalMonogram(`${species.genus} ${species.species}`, species.common_name);
+  const isPlant = species.flora_type === 'plant';
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-
-      <button onClick={() => navigate(-1)}
-        className="text-forest-600 dark:text-forest-300 text-sm font-medium hover:underline">
-        ← Back
-      </button>
-
-      {/* ── Header ── */}
-      <div className="card overflow-hidden">
-        <div className="md:flex gap-6 p-6">
-          {/* Image */}
-          <div className="flex-shrink-0 w-full md:w-56 h-48 rounded-xl overflow-hidden
-                          bg-forest-50 dark:bg-forest-950 flex items-center justify-center text-6xl mb-4 md:mb-0">
-            {species.image_url
-              ? <img src={species.image_url} alt={species.common_name}
-                  className="w-full h-full object-cover" />
-              : '🌿'}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1">
-            <div className="flex flex-wrap gap-2 mb-3">
-              {species.native_exotic && (
-                <span className="badge" style={{
-                  background: species.native_exotic === 'Native' ? '#d1fae5' : '#fef3c7',
-                  color:      species.native_exotic === 'Native' ? '#065f46' : '#92400e'
-                }}>{species.native_exotic}</span>
-              )}
-              {species.conservation_status && (
-                <span className="badge" style={{ background: '#fee2e2', color: '#991b1b' }}>
-                  {species.conservation_status}
-                </span>
-              )}
-            </div>
-
-            <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      {/* Back button & Title */}
+      <div>
+        <button
+          onClick={() => navigate('/species')}
+          className="text-xs font-semibold text-forest-600 dark:text-forest-400 hover:underline flex items-center gap-1 mb-2"
+        >
+          ← Back to Species List
+        </button>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-4xl font-extrabold text-gray-900 dark:text-gray-100">
               {species.common_name}
             </h1>
-            {species.tamil_name && (
-              <p className="text-gray-500 dark:text-gray-400 mt-0.5">Tamil: {species.tamil_name}</p>
-            )}
-            <p className="italic text-gray-400 text-sm mt-1 mb-3">
+            <p className="text-lg italic text-forest-700 dark:text-forest-300 font-serif">
               {species.genus} {species.species}
             </p>
-            {species.general_description && (
-              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {species.general_description}
-              </p>
-            )}
           </div>
+          <span className="text-sm font-mono font-bold px-3 py-1 rounded-full bg-forest-100 dark:bg-forest-900/40 text-forest-700 dark:text-forest-300">
+            ID: {species.species_id}
+          </span>
         </div>
-
-        {/* Quick stats */}
-        {quickStats.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 pb-6">
-            {quickStats.map(({ label, value }) => (
-              <div key={label} className="rounded-lg p-3"
-                style={{ background: dark ? '#21262d' : '#f0f7ee' }}>
-                <p className="text-xs" style={{ color: '#8b949e' }}>{label}</p>
-                <p className="font-semibold text-sm mt-0.5"
-                  style={{ color: dark ? '#e6edf3' : '#1f2937' }}>{value}</p>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ── Ecology & Uses ── */}
-      {ecologyItems.length > 0 && (
-        <div>
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Ecology & Uses</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {ecologyItems.map(({ label, value }) => (
-              <div key={label} className="card p-5">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 text-sm">{label}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{value}</p>
-              </div>
-            ))}
-          </div>
+      {/* Campus Distribution Map with Satellite View */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span>🗺️</span> Campus Distribution ({validTrees.length} Recorded Locations)
+          </h3>
+          <span className="text-xs text-gray-400">
+            Switch between Street & Satellite layers in top-right
+          </span>
         </div>
-      )}
 
-      {(species.kingdom || species.family || species.genus) && (
-        <RevealSection>
-          <div className="card p-6">
-            <h2 className="font-display text-2xl font-bold mb-6"
-              style={{ color: dark ? '#e6edf3' : '#111827' }}>🔬 Taxonomy</h2>
-            <TaxonomyTree tree={species} dark={dark} />
-          </div>
-        </RevealSection>
-      )}
+        <div className="h-[380px] rounded-xl overflow-hidden relative border border-gray-200 dark:border-gray-800">
+          <MapContainer
+            center={center}
+            zoom={17}
+            zoomSnap={0.5}
+            zoomDelta={0.5}
+            wheelPxPerZoomLevel={120}
+            className="w-full h-full"
+          >
+            <LayersControl position="topright">
+              <LayersControl.BaseLayer checked name="🗺️ Street Map">
+                <TileLayer
+                  attribution="&copy; OpenStreetMap"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              </LayersControl.BaseLayer>
+              <LayersControl.BaseLayer name="🛰️ Satellite View">
+                <TileLayer
+                  attribution="&copy; Esri World Imagery"
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                />
+              </LayersControl.BaseLayer>
+            </LayersControl>
 
-      {/* ── On Campus ── */}
-      {trees.length > 0 && (
-        <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-              📍 On Campus ({trees.length} trees)
-            </h2>
-          </div>
-
-          {/* Map */}
-          <div style={{ height: 280 }}>
-            <MapContainer center={mapCenter} zoom={16}
-              style={{ height: '100%', width: '100%' }} maxZoom={22}>
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                maxZoom={22} maxNativeZoom={19}
-                attribution="© OpenStreetMap contributors"
-              />
-              {trees.map(t => t.latitude && t.longitude && (
-                <Marker key={t.tree_id} position={[t.latitude, t.longitude]}>
-                  <Popup>
-                    <strong>{t.common_name}</strong><br />{t.area}<br />
-                    <Link to={`/trees/${t.tree_id}`} style={{ color: '#2d5a27', fontWeight: 600 }}>
-                      View →
+            {validTrees.map(t => (
+              <Marker
+                key={t.tree_id}
+                position={[parseFloat(t.latitude), parseFloat(t.longitude)]}
+                icon={createStylizedPin({
+                  color: pinColor,
+                  label: monogram,
+                  isPlant
+                })}
+              >
+                <Popup>
+                  <div className="p-1 text-xs">
+                    <p className="font-bold">{t.common_name}</p>
+                    <p className="font-mono text-forest-600 font-semibold mb-1">{t.tree_id}</p>
+                    <p className="text-gray-500 mb-2">Area: {t.area}</p>
+                    <Link to={`/trees/${t.tree_id}`} className="font-semibold text-forest-600 hover:underline">
+                      View Tree →
                     </Link>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          </div>
-
-          {/* Tree list */}
-          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-72 overflow-y-auto">
-            {trees.map(t => (
-              <Link key={t.tree_id} to={`/trees/${t.tree_id}`}
-                className="flex items-center justify-between px-5 py-3
-                           hover:bg-forest-50 dark:hover:bg-forest-950 transition-colors">
-                <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                  {t.tree_id}
-                </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t.area}</span>
-                <span className="text-sm text-forest-600 dark:text-forest-300">View →</span>
-              </Link>
+                  </div>
+                </Popup>
+              </Marker>
             ))}
-          </div>
+          </MapContainer>
         </div>
-      )}
+      </div>
+
+      {/* Botanical Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="card p-6 space-y-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 border-b pb-2">Taxonomy & Origin</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Family:</strong> {species.family || '—'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Order:</strong> {species.order || '—'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Origin:</strong> {species.origin || '—'} ({species.native_exotic || 'Native'})</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Conservation Status:</strong> {species.conservation_status || 'Least Concern'}</p>
+        </div>
+
+        <div className="card p-6 space-y-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 border-b pb-2">Ecological & Cultural Impact</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Wildlife Supported:</strong> {species.wildlife_supported || '—'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Medicinal Uses:</strong> {species.medicinal_uses || '—'}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Ecological Importance:</strong> {species.ecological_importance || '—'}</p>
+        </div>
+      </div>
     </div>
   );
 }
