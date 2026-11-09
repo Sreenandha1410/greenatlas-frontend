@@ -72,6 +72,12 @@ export const deleteSpecies = (id) =>
 export const getAreas = () =>
   api.get('/areas');
 
+export const addArea = (data) =>
+  api.post('/areas', data);
+
+export const deleteArea = (area) =>
+  api.delete(`/areas/${encodeURIComponent(area)}`);
+
 export const getAreaInfo = (area) =>
   api.get(`/areas/${encodeURIComponent(area)}/info`);
 
