@@ -4,7 +4,7 @@ import {
   getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
   getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
   addSpecies, updateSpecies, deleteSpecies, getComplaints, updateComplaintStatus,
-  addArea, deleteArea, updateAreaInfo
+  addArea, deleteArea, updateAreaInfo, exportTable
 } from '../api';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
@@ -146,7 +146,6 @@ function ExplorerToolbar({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Sort By Dropdown */}
         <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <span>Sort:</span>
           <select
@@ -161,14 +160,13 @@ function ExplorerToolbar({
           </select>
           <button
             onClick={onToggleSortOrder}
-            title={sortOrder === 'asc' ? 'Ascending (Click for Descending)' : 'Descending (Click for Ascending)'}
+            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
             className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#1c2128] text-xs font-semibold hover:bg-gray-100 dark:hover:bg-[#21262d] transition-colors"
           >
             {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
           </button>
         </div>
 
-        {/* Highlight / Filter New Additions */}
         {onToggleNewOnly && (
           <button
             onClick={onToggleNewOnly}
@@ -182,7 +180,6 @@ function ExplorerToolbar({
           </button>
         )}
 
-        {/* View as Tiles / List */}
         <div className="flex items-center border border-gray-300 dark:border-[#30363d] rounded-lg overflow-hidden">
           <button
             onClick={() => onViewModeChange('list')}
@@ -216,7 +213,7 @@ function ExplorerToolbar({
   );
 }
 
-/* ── TreeForm ── */
+/* ── TreeForm (With Step 1 Dark Theme Legibility Fix) ── */
 function TreeForm({
   initial = EMPTY,
   onSubmit,
@@ -1190,16 +1187,58 @@ function SpeciesPanel({ dark = false }) {
   );
 }
 
-/* ── ExportPanel (Dedicated Subpage to Select and Export DB Tables) ── */
-function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
+/* ── ExportPanel (Complete 8-Table Database Export Center) ── */
+function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = [], dark }) {
   const [targetTable, setTargetTable] = useState('trees');
   const [format, setFormat] = useState('csv');
   const [downloading, setDownloading] = useState(false);
 
+  // All 8 database tables with clear human-readable descriptions
   const tableOptions = [
-    { key: 'trees', name: 'Campus Trees', count: trees.length, desc: 'All tree inventory, coordinates, area codes, age, and notes.' },
-    { key: 'species', name: 'Species Taxonomy', count: speciesList.length, desc: 'Botanical names, families, origins, ecological facts, and medical uses.' },
-    { key: 'areas', name: 'Campus Areas', count: areas.length, desc: 'Campus zone names, area codes, descriptions, and navigation notes.' }
+    {
+      key: 'trees',
+      name: 'Campus Trees',
+      count: trees.length,
+      desc: 'All trees inventory, GPS coordinates, area, family, age, and notes.'
+    },
+    {
+      key: 'species',
+      name: 'Species Taxonomy',
+      count: speciesList.length,
+      desc: 'Botanical taxonomy, families, origins, ecological facts, and medical uses.'
+    },
+    {
+      key: 'areas',
+      name: 'Campus Areas',
+      count: areas.length,
+      desc: 'Campus zone names, area codes, descriptions, and directions/navigation notes.'
+    },
+    {
+      key: 'complaints',
+      name: 'Maintenance Reports',
+      count: complaints.length,
+      desc: 'Student/staff issues, tree damages, hazard complaints, and resolutions.'
+    },
+    {
+      key: 'tree_images',
+      name: 'Tree Images Gallery',
+      desc: 'Image URLs, captions, primary badges, and photo associations.'
+    },
+    {
+      key: 'tree_location_history',
+      name: 'Location Audit Log',
+      desc: 'Full coordinate changes history, admin logs, previous coordinates, and undo events.'
+    },
+    {
+      key: 'page_views',
+      name: 'Page Views Analytics',
+      desc: 'Aggregated website traffic timestamps, routes, and visitor analytics.'
+    },
+    {
+      key: 'users',
+      name: 'Admin Accounts',
+      desc: 'Administrator usernames, assigned roles, and creation timestamps.'
+    }
   ];
 
   const exportTableData = async () => {
@@ -1211,93 +1250,98 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
         return;
       }
 
-      let dataToExport = [];
-      let filename = `green_atlas_${targetTable}_${new Date().toISOString().slice(0, 10)}`;
+      // Delegate directly to the backend export endpoint
+      await exportTable(targetTable, format);
+    } catch (err) {
+      console.error('Export error:', err);
+      // Fallback in-browser exporter if target table is loaded in client memory
+      try {
+        let fallbackData = null;
+        if (targetTable === 'trees') fallbackData = trees;
+        else if (targetTable === 'species') fallbackData = speciesList;
+        else if (targetTable === 'areas') fallbackData = areas;
+        else if (targetTable === 'complaints') fallbackData = complaints;
 
-      if (targetTable === 'trees') dataToExport = trees;
-      else if (targetTable === 'species') dataToExport = speciesList;
-      else if (targetTable === 'areas') dataToExport = areas;
-
-      if (format === 'json') {
-        const jsonStr = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        // CSV Conversion
-        if (dataToExport.length === 0) {
-          alert('No records available to export.');
+        if (fallbackData && fallbackData.length > 0) {
+          const filename = `green_atlas_${targetTable}_${new Date().toISOString().slice(0, 10)}`;
+          if (format === 'json') {
+            const blob = new Blob([JSON.stringify(fallbackData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          } else {
+            const headers = Object.keys(fallbackData[0]);
+            const csvRows = [headers.join(',')];
+            for (const row of fallbackData) {
+              const vals = headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`);
+              csvRows.push(vals.join(','));
+            }
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
           setDownloading(false);
           return;
         }
-
-        const headers = Object.keys(dataToExport[0]);
-        const csvRows = [];
-        csvRows.push(headers.join(','));
-
-        for (const row of dataToExport) {
-          const values = headers.map(header => {
-            const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
-            const escaped = val.replace(/"/g, '""');
-            return `"${escaped}"`;
-          });
-          csvRows.push(values.join(','));
-        }
-
-        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Client fallback failed', e);
       }
-    } catch (err) {
-      console.error('Export error:', err);
-      alert('Failed to export data.');
+      alert('Failed to export table. Ensure the backend export route is in place.');
     } finally {
       setDownloading(false);
     }
   };
 
+  const selectedTableObj = tableOptions.find(t => t.key === targetTable);
+
   return (
-    <div className="card p-6 max-w-3xl space-y-6">
+    <div className="card p-6 max-w-4xl space-y-6">
       <div>
         <h2 className="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span>📁</span> Database Export Center
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Select any database table and export format to generate backups or reporting spreadsheets.
+          Select any of the 8 database tables and export format to generate instant backups or reporting spreadsheets.
         </p>
       </div>
 
-      {/* 1. Select Table */}
+      {/* 1. Select Table (All 8 Tables) */}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">
-          Step 1: Select Database Table
+          Step 1: Select Database Table ({tableOptions.length} Tables Available)
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {tableOptions.map(t => (
             <div
               key={t.key}
               onClick={() => setTargetTable(t.key)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 targetTable === t.key
                   ? 'border-forest-500 bg-forest-50/50 dark:bg-forest-950/30 ring-2 ring-forest-500/20'
                   : 'border-gray-200 dark:border-[#30363d] hover:border-gray-300 dark:hover:border-gray-700'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{t.name}</span>
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                  {t.count}
-                </span>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-gray-900 dark:text-gray-100">{t.name}</span>
+                  {t.count !== undefined && (
+                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                      {t.count}
+                    </span>
+                  )}
+                </div>
+                <code className="text-[10px] text-forest-600 dark:text-forest-400 block mt-0.5">
+                  {t.key}
+                </code>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t.desc}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">{t.desc}</p>
             </div>
           ))}
         </div>
@@ -1308,7 +1352,7 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
         <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">
           Step 2: Choose File Format
         </label>
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
             <input
               type="radio"
@@ -1329,7 +1373,7 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
               onChange={() => setFormat('json')}
               className="accent-forest-600"
             />
-            <span>JSON (Structured Data)</span>
+            <span>JSON (Structured Format)</span>
           </label>
           {targetTable === 'trees' && (
             <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
@@ -1347,16 +1391,17 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      {/* Action Footer */}
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between flex-wrap gap-3">
         <span className="text-xs text-gray-400">
-          Selected: <strong className="text-forest-600 dark:text-forest-400 uppercase">{targetTable}</strong> as <strong className="text-forest-600 dark:text-forest-400 uppercase">{format}</strong>
+          Exporting table: <strong className="text-forest-600 dark:text-forest-400 font-mono font-semibold">{targetTable}</strong> ({selectedTableObj?.name}) as <strong className="text-forest-600 dark:text-forest-400 uppercase">{format}</strong>
         </span>
         <button
           disabled={downloading}
           onClick={exportTableData}
           className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm font-semibold"
         >
-          {downloading ? 'Generating...' : `⬇ Download ${targetTable.toUpperCase()} (${format.toUpperCase()})`}
+          {downloading ? 'Preparing Export...' : `⬇ Export ${targetTable.toUpperCase()} (${format.toUpperCase()})`}
         </button>
       </div>
     </div>
@@ -2136,9 +2181,15 @@ export default function Admin() {
             <AreaPanel areas={areas} onRefresh={loadData} dark={dark} />
           )}
 
-          {/* 6. EXPORT DATA (Dedicated Subpage) */}
+          {/* 6. EXPORT DATA (Dedicated Subpage for All 8 Tables) */}
           {!loading && tab === 'export' && (
-            <ExportPanel trees={trees} speciesList={speciesList} areas={areas} dark={dark} />
+            <ExportPanel
+              trees={trees}
+              speciesList={speciesList}
+              areas={areas}
+              complaints={complaints}
+              dark={dark}
+            />
           )}
 
           {/* 7. REPORTS & COMPLAINTS */}
