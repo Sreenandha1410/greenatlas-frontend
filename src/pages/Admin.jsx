@@ -1,33 +1,86 @@
 import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
-         getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
-         addSpecies, updateSpecies, deleteSpecies, getComplaints, updateComplaintStatus } from '../api';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
-         ResponsiveContainer, Legend } from 'recharts';
+import {
+  getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
+  getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
+  addSpecies, updateSpecies, deleteSpecies, getComplaints, updateComplaintStatus,
+  addArea, deleteArea, updateAreaInfo
+} from '../api';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
+  ResponsiveContainer, Legend
+} from 'recharts';
 import ImageUpload from '../components/ImageUpload';
-import { motion, AnimatePresence } from 'framer-motion'
-import { useDarkMode } from '../context/DarkModeContext'
+import { motion, AnimatePresence } from 'framer-motion';
+import { useDarkMode } from '../context/DarkModeContext';
 
-const COLORS = ['#1b5e20','#2e7d32','#388e3c','#43a047','#4caf50',
-                '#66bb6a','#81c784','#a5d6a7','#c8e6c9','#e8f5e9'];
-const EMPTY  = { tree_id:'', botanical_name:'', common_name:'', family:'',
-                 area:'', latitude:'', longitude:'', age:'', notes:'', image_link:'' };
-const SPECIES_EMPTY = {
-  species_id:'', common_name:'', tamil_name:'', kingdom:'Plantae', division:'',
-  class:'', order:'', family:'', genus:'', species:'', origin:'', native_exotic:'Native',
-  avg_height:'', lifespan:'', growth_rate:'', flowering_season:'', fruiting_season:'',
-  pollination_method:'', wildlife_supported:'', ecological_importance:'',
-  medicinal_uses:'', economic_uses:'', environmental_benefits:'', cultural_significance:'',
-  interesting_facts:'', conservation_status:'Least Concern', general_description:'',
+const COLORS = [
+  '#1b5e20', '#2e7d32', '#388e3c', '#43a047', '#4caf50',
+  '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9', '#e8f5e9'
+];
+
+const EMPTY = {
+  tree_id: '',
+  botanical_name: '',
+  common_name: '',
+  family: '',
+  area: '',
+  latitude: '',
+  longitude: '',
+  age: '',
+  notes: '',
+  image_link: '',
   flora_type: 'tree'
+};
+
+const SPECIES_EMPTY = {
+  species_id: '',
+  common_name: '',
+  tamil_name: '',
+  kingdom: 'Plantae',
+  division: '',
+  class: '',
+  order: '',
+  family: '',
+  genus: '',
+  species: '',
+  origin: '',
+  native_exotic: 'Native',
+  avg_height: '',
+  lifespan: '',
+  growth_rate: '',
+  flowering_season: '',
+  fruiting_season: '',
+  pollination_method: '',
+  wildlife_supported: '',
+  ecological_importance: '',
+  medicinal_uses: '',
+  economic_uses: '',
+  environmental_benefits: '',
+  cultural_significance: '',
+  interesting_facts: '',
+  conservation_status: 'Least Concern',
+  general_description: '',
+  flora_type: 'tree'
+};
+
+const AREA_EMPTY = {
+  area: '',
+  area_code: '',
+  description: '',
+  image_url: '',
+  navigation_notes: ''
 };
 
 const Btn = ({ color = 'primary', children, ...props }) => (
   <button
-    className={color === 'primary' ? 'btn-primary text-sm'
-             : color === 'danger'  ? 'bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors'
-             :                       'bg-gray-400 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors'}
+    className={
+      color === 'primary'
+        ? 'btn-primary text-sm'
+        : color === 'danger'
+        ? 'bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors'
+        : 'bg-gray-400 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors'
+    }
     {...props}
   >
     {children}
@@ -38,95 +91,279 @@ const Flash = ({ msg }) => {
   if (!msg) return null;
   const ok = msg.startsWith('✅');
   return (
-    <div className={`px-4 py-3 rounded-lg mb-4 text-sm font-medium
-      ${ok ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
-           : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'}`}>
+    <div
+      className={`px-4 py-3 rounded-lg mb-4 text-sm font-medium ${
+        ok
+          ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
+          : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300'
+      }`}
+    >
       {msg}
     </div>
   );
 };
 
-/* ── AutoField ── */
-function AutoField({ label, value, onChange, suggestions = [], dark = false }) {
-  const [open, setOpen] = useState(false);
-  const filtered = suggestions.filter(
-    s => s?.toLowerCase().includes(value?.toLowerCase()) && s !== value
-  );
-  return (
-    <div className="relative mb-3">
-      <label className="block text-xs font-medium mb-1"
-        style={{ color: dark ? '#8b949e' : '#6b7280' }}>{label}</label>
-      <input className="input"
-        style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-        value={value}
-        onChange={e => { onChange(e.target.value); setOpen(true) }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)} />
-      {open && filtered.length > 0 && (
-        <div className="absolute z-10 w-full rounded-lg shadow-lg max-h-40 overflow-y-auto mt-1"
-          style={{ background: dark ? '#1c2128' : '#ffffff',
-                   border: `1px solid ${dark ? '#30363d' : '#e5e7eb'}` }}>
-          {filtered.map((s, i) => (
-            <div key={i}
-              className="px-3 py-2 text-sm cursor-pointer transition-colors"
-              style={{ color: dark ? '#e6edf3' : '#374151' }}
-              onMouseDown={() => { onChange(s); setOpen(false) }}
-              onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f0f7ee'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              {s}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+/* ── TreeForm (With Auto-ID, Family & Common Name Assignment) ── */
+function TreeForm({
+  initial = EMPTY,
+  onSubmit,
+  submitLabel,
+  onCancel,
+  areas = [],
+  speciesList = [],
+  trees = [],
+  dark = false
+}) {
+  const [form, setForm] = useState(initial);
+  const [manualIdEdit, setManualIdEdit] = useState(Boolean(initial.tree_id));
+  const isEditing = Boolean(initial.tree_id);
 
-/* ── TreeForm ── */
-function TreeForm({ initial = EMPTY, onSubmit, submitLabel, onCancel, areas = [], trees = [], dark = false }) {
-  const [form, setForm] = useState(initial)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const iStyle = { background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }
-  const lStyle = { color: dark ? '#8b949e' : '#6b7280' }
-  const allNames    = [...new Set(trees.map(t => t.common_name).filter(Boolean))];
-  const allBotNames = [...new Set(trees.map(t => t.botanical_name).filter(Boolean))];
-  const allFamilies = [...new Set(trees.map(t => t.family).filter(Boolean))];
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+  const lStyle = { color: dark ? '#8b949e' : '#6b7280' };
+
+  // Calculate botanical name options from species table
+  const botanicalOptions = speciesList.map(s => {
+    const bot = `${s.genus || ''} ${s.species || ''}`.trim();
+    return {
+      botanical_name: bot || s.common_name,
+      common_name: s.common_name,
+      family: s.family,
+      species_id: s.species_id,
+      flora_type: s.flora_type || 'tree'
+    };
+  });
+
+  // Auto-generation logic when botanical_name or area changes in "Add" mode
+  const handleBotanicalChange = (selectedBotName) => {
+    const matched = botanicalOptions.find(b => b.botanical_name === selectedBotName);
+    const newCommonName = matched ? matched.common_name : form.common_name;
+    const newFamily = matched ? matched.family : form.family;
+    const newFloraType = matched?.flora_type || form.flora_type || 'tree';
+
+    let newTreeId = form.tree_id;
+    if (!isEditing && !manualIdEdit) {
+      newTreeId = computeAutoTreeId(selectedBotName, form.area, matched?.species_id);
+    }
+
+    setForm(f => ({
+      ...f,
+      botanical_name: selectedBotName,
+      common_name: newCommonName,
+      family: newFamily,
+      flora_type: newFloraType,
+      tree_id: newTreeId
+    }));
+  };
+
+  const handleAreaChange = (selectedArea) => {
+    let newTreeId = form.tree_id;
+    if (!isEditing && !manualIdEdit) {
+      const matched = botanicalOptions.find(b => b.botanical_name === form.botanical_name);
+      newTreeId = computeAutoTreeId(form.botanical_name, selectedArea, matched?.species_id);
+    }
+
+    setForm(f => ({
+      ...f,
+      area: selectedArea,
+      tree_id: newTreeId
+    }));
+  };
+
+  const computeAutoTreeId = (botName, areaName, specId) => {
+    if (!areaName || !botName) return '';
+
+    // 1. Get Area Code
+    const areaObj = areas.find(a => a.area === areaName);
+    const areaCode = (areaObj?.area_code || areaName.substring(0, 3)).toUpperCase().trim();
+
+    // 2. Get Species ID
+    let speciesCode = specId;
+    if (!speciesCode) {
+      const sp = speciesList.find(s => {
+        const full = `${s.genus || ''} ${s.species || ''}`.trim();
+        return full === botName || s.common_name === botName;
+      });
+      speciesCode = sp?.species_id || '';
+    }
+    speciesCode = (speciesCode || 'X').trim();
+
+    // 3. Count existing trees for this botanical name in this area
+    const count = trees.filter(
+      t => t.area === areaName && t.botanical_name === botName
+    ).length;
+    const nextSeq = String(count + 1).padStart(3, '0');
+
+    return `${areaCode}${speciesCode}${nextSeq}`;
+  };
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-x-4">
-        <div>
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Tree ID</label>
-          <input className="input mb-3" style={iStyle}
-            value={form.tree_id ?? ''} onChange={e => set('tree_id', e.target.value)} />
-        </div>
-        <AutoField label="Common Name"    value={form.common_name}
-          onChange={v => set('common_name', v)}    suggestions={allNames}    dark={dark} />
-        <AutoField label="Botanical Name" value={form.botanical_name}
-          onChange={v => set('botanical_name', v)} suggestions={allBotNames} dark={dark} />
-        <AutoField label="Family"         value={form.family}
-          onChange={v => set('family', v)}         suggestions={allFamilies} dark={dark} />
-        <AutoField label="Area"           value={form.area}
-          onChange={v => set('area', v)}           suggestions={areas}       dark={dark} />
-        <div>
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Age (years)</label>
-          <input className="input mb-3" style={iStyle} type="number"
-            value={form.age ?? ''} onChange={e => set('age', e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Latitude</label>
-          <input className="input mb-3" style={iStyle}
-            value={form.latitude ?? ''} onChange={e => set('latitude', e.target.value)} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Longitude</label>
-          <input className="input mb-3" style={iStyle}
-            value={form.longitude ?? ''} onChange={e => set('longitude', e.target.value)} />
+      {/* Step 1: Area & Botanical Name Selection */}
+      <div className="bg-forest-50/50 dark:bg-forest-950/20 p-4 rounded-xl border border-forest-100 dark:border-forest-900/50 mb-5">
+        <p className="text-xs font-semibold text-forest-700 dark:text-forest-400 mb-3 uppercase tracking-wider">
+          Step 1: Select Botanical Name & Campus Area (Auto-assigns ID, Family & Common Name)
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={lStyle}>
+              Botanical Name <span className="text-red-500">*</span>
+            </label>
+            <select
+              className="input"
+              style={iStyle}
+              value={form.botanical_name ?? ''}
+              onChange={e => handleBotanicalChange(e.target.value)}
+            >
+              <option value="">-- Choose Botanical Name --</option>
+              {botanicalOptions.map(opt => (
+                <option key={opt.species_id || opt.botanical_name} value={opt.botanical_name}>
+                  {opt.botanical_name} ({opt.common_name})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1" style={lStyle}>
+              Campus Area <span className="text-red-500">*</span>
+            </label>
+            <select
+              className="input"
+              style={iStyle}
+              value={form.area ?? ''}
+              onChange={e => handleAreaChange(e.target.value)}
+            >
+              <option value="">-- Choose Campus Area --</option>
+              {areas.map(a => (
+                <option key={a.area} value={a.area}>
+                  {a.area} {a.area_code ? `(${a.area_code})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      <label className="block text-xs font-medium mb-1" style={lStyle}>Image</label>
+      {/* Step 2: Auto-Assigned & Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-medium" style={lStyle}>
+              Tree ID <span className="text-red-500">*</span>
+            </label>
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={() => setManualIdEdit(!manualIdEdit)}
+                className="text-[11px] text-forest-600 dark:text-forest-400 hover:underline"
+              >
+                {manualIdEdit ? 'Auto-generate' : 'Edit manually'}
+              </button>
+            )}
+          </div>
+          <input
+            className="input mb-3 font-mono font-semibold"
+            style={{
+              ...iStyle,
+              background: !manualIdEdit && !isEditing ? (dark ? '#161b22' : '#f0fdf4') : iStyle.background
+            }}
+            value={form.tree_id ?? ''}
+            onChange={e => {
+              setManualIdEdit(true);
+              set('tree_id', e.target.value);
+            }}
+            readOnly={!manualIdEdit && !isEditing}
+            placeholder="e.g. CAIA9001"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>
+            Common Name
+          </label>
+          <input
+            className="input mb-3"
+            style={iStyle}
+            value={form.common_name ?? ''}
+            onChange={e => set('common_name', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>
+            Family
+          </label>
+          <input
+            className="input mb-3"
+            style={iStyle}
+            value={form.family ?? ''}
+            onChange={e => set('family', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>
+            Flora Type
+          </label>
+          <select
+            className="input mb-3"
+            style={iStyle}
+            value={form.flora_type || 'tree'}
+            onChange={e => set('flora_type', e.target.value)}
+          >
+            <option value="tree">🌳 Tree</option>
+            <option value="plant">🌿 Plant / Shrub</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1" style={lStyle}>
+            Age (years)
+          </label>
+          <input
+            className="input mb-3"
+            style={iStyle}
+            type="number"
+            value={form.age ?? ''}
+            onChange={e => set('age', e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={lStyle}>
+              Latitude
+            </label>
+            <input
+              className="input mb-3"
+              style={iStyle}
+              value={form.latitude ?? ''}
+              onChange={e => set('latitude', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={lStyle}>
+              Longitude
+            </label>
+            <input
+              className="input mb-3"
+              style={iStyle}
+              value={form.longitude ?? ''}
+              onChange={e => set('longitude', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <label className="block text-xs font-medium mb-1" style={lStyle}>
+        Image
+      </label>
       <ImageUpload label="Upload Image" onUploaded={v => set('image_link', v)} />
       {form.image_link && (
         <div className="flex items-center gap-2 mb-2">
@@ -134,53 +371,83 @@ function TreeForm({ initial = EMPTY, onSubmit, submitLabel, onCancel, areas = []
           <span className="text-xs" style={{ color: '#8b949e' }}>or paste URL:</span>
         </div>
       )}
-      <input className="input mb-3" style={iStyle}
+      <input
+        className="input mb-3"
+        style={iStyle}
         placeholder="...or paste image URL directly"
-        value={form.image_link ?? ''} onChange={e => set('image_link', e.target.value)} />
+        value={form.image_link ?? ''}
+        onChange={e => set('image_link', e.target.value)}
+      />
 
-      <label className="block text-xs font-medium mb-1" style={lStyle}>Notes</label>
-      <textarea className="input mb-3 resize-y" style={{ ...iStyle, height: 72 }}
-        value={form.notes ?? ''} onChange={e => set('notes', e.target.value)} />
+      <label className="block text-xs font-medium mb-1" style={lStyle}>
+        Notes
+      </label>
+      <textarea
+        className="input mb-3 resize-y"
+        style={{ ...iStyle, height: 72 }}
+        value={form.notes ?? ''}
+        onChange={e => set('notes', e.target.value)}
+      />
 
-      <div className="flex gap-3 mt-2">
-        <Btn color="primary" onClick={() => onSubmit(form)}>{submitLabel}</Btn>
-        {onCancel && <Btn color="gray" onClick={onCancel}>Cancel</Btn>}
+      <div className="flex gap-3 mt-4">
+        <Btn color="primary" onClick={() => onSubmit(form)}>
+          {submitLabel}
+        </Btn>
+        {onCancel && (
+          <Btn color="gray" onClick={onCancel}>
+            Cancel
+          </Btn>
+        )}
       </div>
     </div>
-  )
+  );
 }
 
 /* ── SpeciesForm ── */
 function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel, dark = false }) {
-  const [form, setForm] = useState(initial)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const [form, setForm] = useState(initial);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const iStyle = { background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }
-  const lStyle = { color: dark ? '#8b949e' : '#6b7280' }
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+  const lStyle = { color: dark ? '#8b949e' : '#6b7280' };
 
   const field = (key, label, multiline = false, disabled = false) => (
     <div key={key}>
       <label className="block text-xs font-medium mb-1" style={lStyle}>{label}</label>
-      {multiline
-        ? <textarea className="input mb-3 resize-y" style={{ ...iStyle, height: 70 }}
-            value={form[key] || ''} onChange={e => set(key, e.target.value)} disabled={disabled} />
-        : <input className="input mb-3" style={{ ...iStyle, opacity: disabled ? 0.6 : 1 }}
-            value={form[key] || ''} onChange={e => set(key, e.target.value)} disabled={disabled} />
-      }
+      {multiline ? (
+        <textarea
+          className="input mb-3 resize-y"
+          style={{ ...iStyle, height: 70 }}
+          value={form[key] || ''}
+          onChange={e => set(key, e.target.value)}
+          disabled={disabled}
+        />
+      ) : (
+        <input
+          className="input mb-3"
+          style={{ ...iStyle, opacity: disabled ? 0.6 : 1 }}
+          value={form[key] || ''}
+          onChange={e => set(key, e.target.value)}
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-x-4">
-        {field('species_id',    'Species ID', false, Boolean(initial.species_id))}
-        {field('common_name',   'Common Name')}
-        {field('tamil_name',    'Tamil Name')}
-        {field('genus',         'Genus')}
-        {field('species',       'Species Epithet')}
-        {field('family',        'Family')}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+        {field('species_id', 'Species ID', false, Boolean(initial.species_id))}
+        {field('common_name', 'Common Name')}
+        {field('tamil_name', 'Tamil Name')}
+        {field('genus', 'Genus')}
+        {field('species', 'Species Epithet')}
+        {field('family', 'Family')}
 
-        {/* Kingdom — Locked to Plantae */}
         <div>
           <label className="block text-xs font-medium mb-1" style={lStyle}>Kingdom</label>
           <input
@@ -192,12 +459,11 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
           />
         </div>
 
-        {field('division',      'Division')}
-        {field('class',         'Class')}
-        {field('order',         'Order')}
-        {field('origin',        'Origin')}
+        {field('division', 'Division')}
+        {field('class', 'Class')}
+        {field('order', 'Order')}
+        {field('origin', 'Origin')}
 
-        {/* Native / Exotic Dropdown */}
         <div>
           <label className="block text-xs font-medium mb-1" style={lStyle}>Native / Exotic</label>
           <select
@@ -211,14 +477,13 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
           </select>
         </div>
 
-        {field('avg_height',    'Avg Height')}
-        {field('lifespan',      'Lifespan')}
-        {field('growth_rate',   'Growth Rate')}
-        {field('flowering_season',    'Flowering Season')}
-        {field('fruiting_season',     'Fruiting Season')}
-        {field('pollination_method',  'Pollination Method')}
+        {field('avg_height', 'Avg Height')}
+        {field('lifespan', 'Lifespan')}
+        {field('growth_rate', 'Growth Rate')}
+        {field('flowering_season', 'Flowering Season')}
+        {field('fruiting_season', 'Fruiting Season')}
+        {field('pollination_method', 'Pollination Method')}
 
-        {/* Conservation Status Dropdown */}
         <div>
           <label className="block text-xs font-medium mb-1" style={lStyle}>Conservation Status</label>
           <select
@@ -238,11 +503,10 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
           </select>
         </div>
 
-        {/* Flora Type Dropdown */}
         <div>
           <label className="block text-xs font-medium mb-1" style={lStyle}>Flora Type</label>
-          <select 
-            className="input mb-3" 
+          <select
+            className="input mb-3"
             style={iStyle}
             value={form.flora_type || 'tree'}
             onChange={e => set('flora_type', e.target.value)}
@@ -251,28 +515,18 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
             <option value="plant">🌿 Plant / Shrub</option>
           </select>
         </div>
-
-        {/* Species Image */}
-        <div className="col-span-2">
-          <label className="block text-xs font-medium mb-1" style={lStyle}>Species Image</label>
-          <ImageUpload label="Upload general species image" onUploaded={v => set('image_url', v)} />
-          {form.image_url && (
-            <img src={form.image_url} className="w-28 h-20 object-cover rounded-lg mt-2 mb-2" alt="" />
-          )}
-          <input className="input mb-3" style={iStyle}
-            placeholder="...or paste image URL"
-            value={form.image_url || ''} onChange={e => set('image_url', e.target.value)} />
-        </div>
       </div>
-      {field('general_description',    'General Description',    true)}
-      {field('wildlife_supported',     'Wildlife Supported',     true)}
-      {field('ecological_importance',  'Ecological Importance',  true)}
-      {field('medicinal_uses',         'Medicinal Uses',         true)}
-      {field('economic_uses',          'Economic Uses',          true)}
+
+      {field('wildlife_supported', 'Wildlife Supported', true)}
+      {field('ecological_importance', 'Ecological Importance', true)}
+      {field('medicinal_uses', 'Medicinal Uses', true)}
+      {field('economic_uses', 'Economic Uses', true)}
       {field('environmental_benefits', 'Environmental Benefits', true)}
-      {field('cultural_significance',  'Cultural Significance',  true)}
-      {field('interesting_facts',      'Interesting Facts',      true)}
-      <div className="flex gap-3 mt-2">
+      {field('cultural_significance', 'Cultural Significance', true)}
+      {field('interesting_facts', 'Interesting Facts', true)}
+      {field('general_description', 'General Description', true)}
+
+      <div className="flex gap-3 mt-4">
         <Btn color="primary" onClick={() => onSubmit(form)}>{submitLabel}</Btn>
         {onCancel && <Btn color="gray" onClick={onCancel}>Cancel</Btn>}
       </div>
@@ -280,125 +534,268 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
   );
 }
 
-/* ── ChangePassword ── */
-function ChangePassword({ dark = false }) {
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
-  const [msg, setMsg]   = useState('');
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+/* ── AreaPanel (Subpage to Manage & Add Campus Areas) ── */
+function AreaPanel({ areas = [], onRefresh, dark = false }) {
+  const [form, setForm] = useState(AREA_EMPTY);
+  const [adding, setAdding] = useState(false);
+  const [editingArea, setEditingArea] = useState(null);
+  const [msg, setMsg] = useState('');
+  const [search, setSearch] = useState('');
 
-  const iStyle = { background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }
-  const lStyle = { color: dark ? '#8b949e' : '#6b7280' }
+  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
-  const handleSubmit = async () => {
-    if (form.newPassword !== form.confirm)
-      return setMsg('❌ New passwords do not match');
-    if (form.newPassword.length < 6)
-      return setMsg('❌ Password must be at least 6 characters');
-    try {
-      await changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword });
-      setMsg('✅ Password changed successfully');
-      setForm({ currentPassword: '', newPassword: '', confirm: '' });
-    } catch {
-      setMsg('❌ Current password is incorrect');
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+  const lStyle = { color: dark ? '#8b949e' : '#6b7280' };
+
+  const handleAdd = async () => {
+    if (!form.area.trim() || !form.area_code.trim()) {
+      flash('❌ Area name and Area code are required');
+      return;
     }
-    setTimeout(() => setMsg(''), 3000);
+    try {
+      await addArea(form);
+      setForm(AREA_EMPTY);
+      setAdding(false);
+      onRefresh();
+      flash('✅ Area added successfully');
+    } catch (err) {
+      flash(`❌ ${err.response?.data?.error || 'Failed to add area'}`);
+    }
   };
 
-  return (
-    <div className="max-w-sm">
-      <Flash msg={msg} />
-      <label className="block text-xs font-medium mb-1" style={lStyle}>Current Password</label>
-      <input className="input mb-3" style={iStyle} type="password"
-        value={form.currentPassword} onChange={e => set('currentPassword', e.target.value)} />
-      <label className="block text-xs font-medium mb-1" style={lStyle}>New Password</label>
-      <input className="input mb-3" style={iStyle} type="password"
-        value={form.newPassword} onChange={e => set('newPassword', e.target.value)} />
-      <label className="block text-xs font-medium mb-1" style={lStyle}>Confirm New Password</label>
-      <input className="input mb-3" style={iStyle} type="password"
-        value={form.confirm} onChange={e => set('confirm', e.target.value)} />
-      <Btn color="primary" onClick={handleSubmit}>Update Password</Btn>
-    </div>
+  const handleUpdate = async () => {
+    try {
+      await updateAreaInfo(editingArea.area, editingArea);
+      setEditingArea(null);
+      onRefresh();
+      flash('✅ Area metadata updated');
+    } catch {
+      flash('❌ Failed to update area');
+    }
+  };
+
+  const handleDelete = async (areaName) => {
+    if (!window.confirm(`Delete area "${areaName}"? Trees located here will lose their assigned area.`)) {
+      return;
+    }
+    try {
+      await deleteArea(areaName);
+      onRefresh();
+      flash('🗑️ Area deleted');
+    } catch {
+      flash('❌ Failed to delete area');
+    }
+  };
+
+  const filtered = areas.filter(a =>
+    !search ||
+    a.area?.toLowerCase().includes(search.toLowerCase()) ||
+    a.area_code?.toLowerCase().includes(search.toLowerCase()) ||
+    a.description?.toLowerCase().includes(search.toLowerCase())
   );
-}
 
-/* ── StatsPanel ── */
-function StatsPanel({ dark = false }) {
-  const [stats, setStats] = useState(null);
-  useEffect(() => {
-           getDetailedStats()
-             .then(r => setStats(r.data))
-             .catch(() => setStats({ error: true }));
-         }, []);
-
-  if (!stats) return <p style={{ color: '#8b949e' }}>Loading statistics…</p>;
-
-  const headingStyle = { color: dark ? '#7dc070' : 'var(--color-forest-600)' }
   return (
-    <div className="space-y-6">
+    <div>
+      <Flash msg={msg} />
 
-      <div className="card p-6">
-        <h3 className="font-semibold mb-4" style={headingStyle}>Native vs Exotic Species</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie data={stats.nativeExotic} dataKey="count" nameKey="native_exotic"
-              cx="50%" cy="50%" outerRadius={90}
-              label={({ native_exotic, percent }) => `${native_exotic} ${(percent*100).toFixed(0)}%`}>
-              {stats.nativeExotic.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <input
+          className="input max-w-xs"
+          placeholder="Search campus areas…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={iStyle}
+        />
+        <Btn color="primary" onClick={() => { setAdding(!adding); setEditingArea(null); }}>
+          {adding ? 'Cancel' : '+ Add New Area'}
+        </Btn>
       </div>
 
-      <div className="card p-6">
-        <h3 className="font-semibold mb-4" style={headingStyle}>Trees per Area</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 600 }}>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={stats.byArea} layout="vertical" margin={{ left: 160, right: 20 }}>
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="area" width={155} tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#3d7a32" radius={[0,4,4,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+      {adding && (
+        <div className="card p-6 mb-6">
+          <h3 className="font-semibold text-forest-700 dark:text-forest-300 mb-4">
+            Add New Campus Area
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={lStyle}>
+                Area Name (e.g. Canteen) <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="input"
+                style={iStyle}
+                value={form.area}
+                onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
+                placeholder="e.g. Canteen"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={lStyle}>
+                Area Code (e.g. CAI) <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="input font-mono uppercase"
+                style={iStyle}
+                value={form.area_code}
+                onChange={e => setForm(f => ({ ...f, area_code: e.target.value.toUpperCase() }))}
+                placeholder="e.g. CAI"
+                maxLength={6}
+              />
+            </div>
+          </div>
+
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Area Image</label>
+          <ImageUpload label="Upload Area Photo" onUploaded={url => setForm(f => ({ ...f, image_url: url }))} />
+          {form.image_url && (
+            <div className="flex items-center gap-2 my-2">
+              <img src={form.image_url} className="w-20 h-12 object-cover rounded-lg" alt="" />
+              <span className="text-xs text-gray-400">or paste URL below:</span>
+            </div>
+          )}
+          <input
+            className="input mb-3"
+            style={iStyle}
+            placeholder="...or paste image URL directly"
+            value={form.image_url}
+            onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+          />
+
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Description</label>
+          <textarea
+            className="input mb-3 resize-y"
+            style={{ ...iStyle, height: 60 }}
+            value={form.description}
+            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+            placeholder="Describe landmarks, flora composition or key points..."
+          />
+
+          <label className="block text-xs font-medium mb-1" style={lStyle}>Navigation Notes</label>
+          <textarea
+            className="input mb-4 resize-y"
+            style={{ ...iStyle, height: 60 }}
+            value={form.navigation_notes}
+            onChange={e => setForm(f => ({ ...f, navigation_notes: e.target.value }))}
+            placeholder="Directions from main gate or nearest landmark..."
+          />
+
+          <div className="flex gap-3">
+            <Btn color="primary" onClick={handleAdd}>Save Area</Btn>
+            <Btn color="gray" onClick={() => setAdding(false)}>Cancel</Btn>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="card p-6">
-        <h3 className="font-semibold mb-4" style={headingStyle}>Top 10 Families</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 500 }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.byFamily} margin={{ bottom: 60 }}>
-                <XAxis dataKey="family" angle={-35} textAnchor="end" tick={{ fontSize: 11 }} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" radius={[4,4,0,0]}>
-                  {stats.byFamily.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Areas Table */}
+      <div className="card overflow-x-auto">
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-700 dark:text-gray-200">
+          Campus Areas ({filtered.length})
         </div>
-      </div>
+        <table className="w-full text-sm min-w-[650px]">
+          <thead>
+            <tr style={{ background: 'var(--color-forest-500)' }}>
+              {['Area Name', 'Code', 'Photo', 'Description', 'Actions'].map(h => (
+                <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {filtered.map(a => (
+              <Fragment key={a.area}>
+                <tr
+                  className="transition-colors"
+                  style={{
+                    background: dark ? '#1c2128' : '#fff',
+                    borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
+                  onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
+                >
+                  <td className="px-4 py-3 font-semibold" style={{ color: dark ? '#e6edf3' : '#111827' }}>
+                    {a.area}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs font-bold text-forest-600 dark:text-forest-400">
+                    {a.area_code || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {a.image_url ? (
+                      <img src={a.image_url} alt={a.area} className="w-12 h-8 object-cover rounded" />
+                    ) : (
+                      <span className="text-xs text-gray-400">No image</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs max-w-xs truncate" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                    {a.description || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <Btn
+                        color="primary"
+                        onClick={() => setEditingArea(editingArea?.area === a.area ? null : { ...a })}
+                      >
+                        {editingArea?.area === a.area ? 'Close' : 'Edit'}
+                      </Btn>
+                      <Btn color="danger" onClick={() => handleDelete(a.area)}>Delete</Btn>
+                    </div>
+                  </td>
+                </tr>
 
-      <div className="card p-6">
-        <h3 className="font-semibold mb-4" style={headingStyle}>Conservation Status</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie data={stats.conservation} dataKey="count" nameKey="conservation_status"
-              cx="50%" cy="50%" outerRadius={90}
-              label={({ conservation_status, percent }) => `${conservation_status} ${(percent*100).toFixed(0)}%`}>
-              {stats.conservation.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+                {editingArea?.area === a.area && (
+                  <tr key={`edit-area-${a.area}`}>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4"
+                      style={{
+                        background: dark ? '#161b22' : '#f9fdf9',
+                        borderLeft: '4px solid var(--color-forest-500)',
+                        borderBottom: '2px solid var(--color-forest-500)'
+                      }}
+                    >
+                      <h4 className="font-semibold mb-3 text-forest-700 dark:text-forest-300">
+                        Edit Metadata: {a.area}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1" style={lStyle}>Image URL</label>
+                          <input
+                            className="input"
+                            style={iStyle}
+                            value={editingArea.image_url || ''}
+                            onChange={e => setEditingArea({ ...editingArea, image_url: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1" style={lStyle}>Navigation Notes</label>
+                          <input
+                            className="input"
+                            style={iStyle}
+                            value={editingArea.navigation_notes || ''}
+                            onChange={e => setEditingArea({ ...editingArea, navigation_notes: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <label className="block text-xs font-medium mb-1" style={lStyle}>Description</label>
+                      <textarea
+                        className="input mb-3 resize-y"
+                        style={{ ...iStyle, height: 60 }}
+                        value={editingArea.description || ''}
+                        onChange={e => setEditingArea({ ...editingArea, description: e.target.value })}
+                      />
+                      <div className="flex gap-3">
+                        <Btn color="primary" onClick={handleUpdate}>Save Changes</Btn>
+                        <Btn color="gray" onClick={() => setEditingArea(null)}>Cancel</Btn>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
-
     </div>
   );
 }
@@ -406,13 +803,15 @@ function StatsPanel({ dark = false }) {
 /* ── SpeciesPanel ── */
 function SpeciesPanel({ dark = false }) {
   const [species, setSpecies] = useState([]);
-  const [editId, setEditId]   = useState(null);
-  const [adding, setAdding]   = useState(false);
-  const [msg, setMsg]         = useState('');
-  const [search, setSearch]   = useState('');
+  const [editId, setEditId] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [search, setSearch] = useState('');
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
-  useEffect(() => { getSpecies().then(r => setSpecies(r.data)); }, []);
+  useEffect(() => {
+    getSpecies().then(r => setSpecies(r.data));
+  }, []);
 
   const handleAdd = async (form) => {
     try {
@@ -420,21 +819,21 @@ function SpeciesPanel({ dark = false }) {
       setSpecies(prev => [...prev, res.data]);
       setAdding(false);
       flash('✅ Species added');
-    } catch { flash('❌ Failed to add species'); }
+    } catch {
+      flash('❌ Failed to add species');
+    }
   };
 
-    const handleEdit = async (form) => {
-             try {
-               // Use editId to target the exact existing record
-               const res = await updateSpecies(editId, form);
-               // Update by matching the original editId in the state list
-               setSpecies(prev => prev.map(s => s.species_id === editId ? res.data : s));
-               setEditId(null);
-               flash('✅ Species updated');
-             } catch { 
-               flash('❌ Failed to update species'); 
-             }
-           };
+  const handleEdit = async (form) => {
+    try {
+      const res = await updateSpecies(editId, form);
+      setSpecies(prev => prev.map(s => s.species_id === editId ? res.data : s));
+      setEditId(null);
+      flash('✅ Species updated');
+    } catch {
+      flash('❌ Failed to update species');
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm(`Delete species ${id}?`)) return;
@@ -442,7 +841,9 @@ function SpeciesPanel({ dark = false }) {
       await deleteSpecies(id);
       setSpecies(prev => prev.filter(s => s.species_id !== id));
       flash('🗑️ Species deleted');
-    } catch { flash('❌ Failed to delete species'); }
+    } catch {
+      flash('❌ Failed to delete species');
+    }
   };
 
   const filtered = species.filter(s =>
@@ -452,15 +853,19 @@ function SpeciesPanel({ dark = false }) {
     s.species_id?.toLowerCase().includes(search.toLowerCase()) ||
     s.family?.toLowerCase().includes(search.toLowerCase()) ||
     s.genus?.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   return (
     <div>
       <Flash msg={msg} />
       <div className="flex items-center justify-between mb-4 gap-3">
-        <input className="input max-w-xs" placeholder="Search species…"
-          value={search} onChange={e => setSearch(e.target.value)}
-          style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
+        <input
+          className="input max-w-xs"
+          placeholder="Search species…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+        />
         <Btn color="primary" onClick={() => setAdding(!adding)}>
           {adding ? 'Cancel' : '+ Add Species'}
         </Btn>
@@ -469,8 +874,12 @@ function SpeciesPanel({ dark = false }) {
       {adding && (
         <div className="card p-6 mb-6">
           <h3 className="font-semibold text-forest-700 dark:text-forest-300 mb-4">Add New Species</h3>
-          <SpeciesForm submitLabel="Add Species" onSubmit={handleAdd}
-            onCancel={() => setAdding(false)} dark={dark} />
+          <SpeciesForm
+            submitLabel="Add Species"
+            onSubmit={handleAdd}
+            onCancel={() => setAdding(false)}
+            dark={dark}
+          />
         </div>
       )}
 
@@ -481,7 +890,7 @@ function SpeciesPanel({ dark = false }) {
         <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr style={{ background: 'var(--color-forest-500)' }}>
-              {['ID','Common Name','Botanical Name','Family','Actions'].map(h => (
+              {['ID', 'Common Name', 'Botanical Name', 'Family', 'Actions'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
               ))}
             </tr>
@@ -489,11 +898,16 @@ function SpeciesPanel({ dark = false }) {
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {filtered.map(s => (
               <Fragment key={s.species_id}>
-                <tr key={s.species_id}
+                <tr
+                  key={s.species_id}
                   className="transition-colors"
-                  style={{ background: dark ? '#1c2128' : '#fff', borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}
+                  style={{
+                    background: dark ? '#1c2128' : '#fff',
+                    borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
+                  }}
                   onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
-                  onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}>
+                  onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
+                >
                   <td className="px-4 py-3 text-xs" style={{ color: '#8b949e' }}>{s.species_id}</td>
                   <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>{s.common_name}</td>
                   <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>{s.genus} {s.species}</td>
@@ -509,18 +923,25 @@ function SpeciesPanel({ dark = false }) {
                 </tr>
                 {editId === s.species_id && (
                   <tr key={`edit-${s.species_id}`}>
-                    <td colSpan={5} className="px-6 py-4"
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4"
                       style={{
                         background: dark ? '#161b22' : '#f9fdf9',
                         borderLeft: '4px solid var(--color-forest-500)',
-                        borderBottom: `2px solid var(--color-forest-500)`
-                      }}>
-                      <h3 className="font-semibold mb-4"
-                        style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
+                        borderBottom: '2px solid var(--color-forest-500)'
+                      }}
+                    >
+                      <h3 className="font-semibold mb-4" style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
                         Edit: {s.common_name}
                       </h3>
-                      <SpeciesForm initial={s} submitLabel="Save Changes"
-                        onSubmit={handleEdit} onCancel={() => setEditId(null)} dark={dark} />
+                      <SpeciesForm
+                        initial={s}
+                        submitLabel="Save Changes"
+                        onSubmit={handleEdit}
+                        onCancel={() => setEditId(null)}
+                        dark={dark}
+                      />
                     </td>
                   </tr>
                 )}
@@ -532,31 +953,116 @@ function SpeciesPanel({ dark = false }) {
     </div>
   );
 }
-function ComplaintPanel({ dark }) {
 
+/* ── StatsPanel ── */
+function StatsPanel({ dark = false }) {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    getDetailedStats()
+      .then(r => setStats(r.data))
+      .catch(() => setStats({ error: true }));
+  }, []);
+
+  if (!stats) return <p style={{ color: '#8b949e' }}>Loading statistics…</p>;
+  if (stats.error) return <p style={{ color: '#ef4444' }}>Failed to load statistics.</p>;
+
+  const headingStyle = { color: dark ? '#7dc070' : 'var(--color-forest-600)' };
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4" style={headingStyle}>Native vs Exotic Species</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={stats.nativeExotic || []}
+                dataKey="count"
+                nameKey="native_exotic"
+                cx="50%"
+                cy="50%"
+                outerRadius={90}
+                label={({ native_exotic, percent }) => `${native_exotic} ${(percent * 100).toFixed(0)}%`}
+              >
+                {(stats.nativeExotic || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4" style={headingStyle}>Conservation Status</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={stats.conservation || []}
+                dataKey="count"
+                nameKey="conservation_status"
+                cx="50%"
+                cy="50%"
+                outerRadius={90}
+                label={({ conservation_status, percent }) => `${conservation_status} ${(percent * 100).toFixed(0)}%`}
+              >
+                {(stats.conservation || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <h3 className="font-semibold mb-4" style={headingStyle}>Trees per Area</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 600 }}>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={stats.byArea || []} layout="vertical" margin={{ left: 160, right: 20 }}>
+                <XAxis type="number" />
+                <YAxis type="category" dataKey="area" width={155} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#3d7a32" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <h3 className="font-semibold mb-4" style={headingStyle}>Top 10 Families</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 500 }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.byFamily || []} margin={{ bottom: 60 }}>
+                <XAxis dataKey="family" angle={-35} textAnchor="end" tick={{ fontSize: 11 }} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#1b5e20" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── ComplaintPanel ── */
+function ComplaintPanel({ dark }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [updating, setUpdating] = useState(null);
 
   const loadComplaints = async () => {
-
     try {
-
       setLoading(true);
-
       const res = await getComplaints();
-
       setComplaints(res.data);
-
     } catch (err) {
-
       console.error('Failed to load complaints', err);
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
@@ -564,313 +1070,96 @@ function ComplaintPanel({ dark }) {
     loadComplaints();
   }, []);
 
-  const updateStatus = async (
-    id,
-    status,
-    currentNotes = ''
-  ) => {
-
+  const updateStatus = async (id, status, admin_notes) => {
     try {
-
       setUpdating(id);
-
-      const res = await updateComplaintStatus(id, {
-        status,
-        admin_notes: currentNotes
-      });
-
-      setComplaints(prev =>
-        prev.map(item =>
-          item.id === id
-            ? res.data
-            : item
-        )
-      );
-
+      await updateComplaintStatus(id, { status, admin_notes });
+      await loadComplaints();
     } catch (err) {
-
-      alert('Failed to update complaint');
-
+      console.error('Failed to update complaint status', err);
     } finally {
-
       setUpdating(null);
-
     }
   };
 
-  const filtered =
-    filter === 'All'
-      ? complaints
-      : complaints.filter(
-          c => c.status === filter
-        );
+  const filtered = filter === 'All'
+    ? complaints
+    : complaints.filter(c => c.status === filter);
 
-  const pending =
-    complaints.filter(
-      c => c.status === 'Pending'
-    ).length;
-
-  const inProgress =
-    complaints.filter(
-      c => c.status === 'In Progress'
-    ).length;
-
-  const resolved =
-    complaints.filter(
-      c => c.status === 'Resolved'
-    ).length;
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Loading reports...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-
-      {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-        <div className="card p-5">
-          <p className="text-xs text-gray-500">
-            Total Reports
-          </p>
-
-          <p className="text-3xl font-bold mt-2">
-            {complaints.length}
-          </p>
-        </div>
-
-        <div className="card p-5">
-          <p className="text-xs text-gray-500">
-            Pending
-          </p>
-
-          <p className="text-3xl font-bold text-amber-600 mt-2">
-            {pending}
-          </p>
-        </div>
-
-        <div className="card p-5">
-          <p className="text-xs text-gray-500">
-            In Progress
-          </p>
-
-          <p className="text-3xl font-bold text-blue-600 mt-2">
-            {inProgress}
-          </p>
-        </div>
-
-        <div className="card p-5">
-          <p className="text-xs text-gray-500">
-            Resolved
-          </p>
-
-          <p className="text-3xl font-bold text-green-600 mt-2">
-            {resolved}
-          </p>
-        </div>
-
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-
-        {[
-          'All',
-          'Pending',
-          'In Progress',
-          'Resolved'
-        ].map(status => (
-
+      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-800 pb-3 flex-wrap">
+        {['All', 'Pending', 'In Progress', 'Resolved'].map(tab => (
           <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className="px-4 py-2 rounded-lg text-sm font-medium"
-            style={{
-              background:
-                filter === status
-                  ? '#2d5a27'
-                  : dark
-                    ? '#21262d'
-                    : '#f0f7ee',
-
-              color:
-                filter === status
-                  ? '#fff'
-                  : dark
-                    ? '#e6edf3'
-                    : '#356b31'
-            }}
+            key={tab}
+            onClick={() => setFilter(tab)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              filter === tab
+                ? 'bg-forest-600 text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
           >
-            {status}
+            {tab}
           </button>
-
         ))}
-
       </div>
 
-      {/* Reports */}
       <div className="space-y-4">
-
-        {loading ? (
-
-          <div className="card p-10 text-center text-gray-400">
-            Loading reports...
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">
+            No reports found.
           </div>
-
-        ) : filtered.length === 0 ? (
-
-          <div className="card p-10 text-center">
-
-            <div className="text-5xl mb-3">
-              🌿
-            </div>
-
-            <p className="font-semibold">
-              No reports found
-            </p>
-
-          </div>
-
         ) : (
-
           filtered.map(complaint => (
-
             <div
               key={complaint.id}
-              className="card overflow-hidden"
+              className="card p-5 flex flex-col md:flex-row gap-5"
             >
+              {complaint.image_url && (
+                <img
+                  src={complaint.image_url}
+                  alt="Issue"
+                  className="w-full md:w-36 h-36 object-cover rounded-xl"
+                />
+              )}
 
-              <div className="p-5">
-
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-
-                  {/* Main information */}
-                  <div className="flex-1">
-
-                    <div className="flex flex-wrap gap-2 items-center">
-
-                      <h3
-                        className="font-semibold text-lg"
-                        style={{
-                          color: dark
-                            ? '#e6edf3'
-                            : '#172016'
-                        }}
-                      >
-                        {complaint.tree_name ||
-                          complaint.tree_id}
-                      </h3>
-
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                        style={{
-                          background:
-                            complaint.status === 'Resolved'
-                              ? '#dcfce7'
-                              : complaint.status === 'In Progress'
-                                ? '#dbeafe'
-                                : '#fef3c7',
-
-                          color:
-                            complaint.status === 'Resolved'
-                              ? '#166534'
-                              : complaint.status === 'In Progress'
-                                ? '#1d4ed8'
-                                : '#92400e'
-                        }}
-                      >
-                        {complaint.status}
-                      </span>
-
-                    </div>
-
-                    <p className="text-xs text-gray-500 mt-1">
-                      Tree ID: {complaint.tree_id}
-                      {' · '}
-                      📍 {complaint.tree_area}
-                    </p>
-
-                    <div className="mt-4 grid sm:grid-cols-2 gap-3">
-
-                      <div>
-                        <p className="text-xs text-gray-400">
-                          Reported By
-                        </p>
-
-                        <p className="font-medium text-sm">
-                          {complaint.student_name}
-                        </p>
-
-                        <p className="text-xs text-gray-500">
-                          {complaint.department}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-gray-400">
-                          Issue
-                        </p>
-
-                        <p className="font-medium text-sm">
-                          {complaint.issue_type}
-                        </p>
-                      </div>
-
-                    </div>
-
-                    {complaint.description && (
-                      <div className="mt-4">
-
-                        <p className="text-xs text-gray-400 mb-1">
-                          Description
-                        </p>
-
-                        <p className="text-sm leading-relaxed">
-                          {complaint.description}
-                        </p>
-
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Image */}
-                  {complaint.image_url && (
-                    <img
-                      src={complaint.image_url}
-                      alt="Reported issue"
-                      className="w-full md:w-40 h-32 object-cover rounded-xl"
-                    />
-                  )}
-
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {complaint.issue_type}
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      complaint.status === 'Resolved'
+                        ? 'bg-green-100 text-green-700'
+                        : complaint.status === 'In Progress'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {complaint.status}
+                  </span>
                 </div>
 
-                {/* Admin actions */}
-                <div
-                  className="mt-5 pt-4 border-t flex flex-wrap items-center gap-2"
-                  style={{
-                    borderColor:
-                      dark
-                        ? '#30363d'
-                        : '#e5e7eb'
-                  }}
-                >
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {complaint.description}
+                </p>
 
-                  <span className="text-xs text-gray-400 mr-2">
-                    Update status:
-                  </span>
+                <div className="text-xs text-gray-400 flex flex-wrap gap-4 pt-1">
+                  {complaint.tree_id && <span>Tree ID: {complaint.tree_id}</span>}
+                  {complaint.area && <span>Area: {complaint.area}</span>}
+                  {complaint.user_email && <span>By: {complaint.user_email}</span>}
+                </div>
 
-                  <button
-                    disabled={updating === complaint.id}
-                    onClick={() =>
-                      updateStatus(
-                        complaint.id,
-                        'Pending',
-                        complaint.admin_notes
-                      )
-                    }
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-100 text-amber-700"
-                  >
-                    Pending
-                  </button>
-
+                <div className="pt-3 flex gap-2 flex-wrap items-center">
                   <button
                     disabled={updating === complaint.id}
                     onClick={() =>
@@ -880,9 +1169,9 @@ function ComplaintPanel({ dark }) {
                         complaint.admin_notes
                       )
                     }
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                   >
-                    In Progress
+                    Set In Progress
                   </button>
 
                   <button
@@ -894,71 +1183,248 @@ function ComplaintPanel({ dark }) {
                         complaint.admin_notes
                       )
                     }
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700"
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700 hover:bg-green-200"
                   >
                     ✓ Resolved
                   </button>
 
                   <span className="text-xs text-gray-400 ml-auto">
-                    {new Date(
-                      complaint.created_at
-                    ).toLocaleString()}
+                    {new Date(complaint.created_at).toLocaleString()}
                   </span>
-
                 </div>
-
               </div>
-
             </div>
-
           ))
-
         )}
-
       </div>
-
     </div>
   );
 }
-/* ── Admin (main) ── */
+
+/* ── ChangePassword ── */
+function ChangePassword({ dark = false }) {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
+  const [msg, setMsg] = useState('');
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+  const lStyle = { color: dark ? '#8b949e' : '#6b7280' };
+
+  const handleSubmit = async () => {
+    if (form.newPassword !== form.confirm) {
+      setMsg('❌ New passwords do not match');
+      return;
+    }
+    try {
+      await changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword });
+      setMsg('✅ Password changed successfully');
+      setForm({ currentPassword: '', newPassword: '', confirm: '' });
+    } catch {
+      setMsg('❌ Current password is incorrect');
+    }
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  return (
+    <div className="max-w-sm">
+      <Flash msg={msg} />
+      <label className="block text-xs font-medium mb-1" style={lStyle}>Current Password</label>
+      <input
+        className="input mb-3"
+        style={iStyle}
+        type="password"
+        value={form.currentPassword}
+        onChange={e => set('currentPassword', e.target.value)}
+      />
+      <label className="block text-xs font-medium mb-1" style={lStyle}>New Password</label>
+      <input
+        className="input mb-3"
+        style={iStyle}
+        type="password"
+        value={form.newPassword}
+        onChange={e => set('newPassword', e.target.value)}
+      />
+      <label className="block text-xs font-medium mb-1" style={lStyle}>Confirm New Password</label>
+      <input
+        className="input mb-4"
+        style={iStyle}
+        type="password"
+        value={form.confirm}
+        onChange={e => set('confirm', e.target.value)}
+      />
+      <Btn color="primary" onClick={handleSubmit}>Update Password</Btn>
+    </div>
+  );
+}
+
+/* ── Dashboard Overview Component (Modern Dashboard Landing) ── */
+function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTab, dark }) {
+  const pendingComplaints = complaints.filter(c => c.status === 'Pending').length;
+
+  const cards = [
+    {
+      title: 'Total Trees',
+      count: trees.length,
+      icon: '🌳',
+      desc: 'Catalogued on campus',
+      actionTab: 'list',
+      color: 'forest'
+    },
+    {
+      title: 'Botanical Species',
+      count: speciesList.length,
+      icon: '🍃',
+      desc: 'Registered taxonomy',
+      actionTab: 'species',
+      color: 'blue'
+    },
+    {
+      title: 'Campus Areas',
+      count: areas.length,
+      icon: '📍',
+      desc: 'Mapped zones',
+      actionTab: 'areas',
+      color: 'amber'
+    },
+    {
+      title: 'Reports & Issues',
+      count: complaints.length,
+      badge: pendingComplaints > 0 ? `${pendingComplaints} Pending` : null,
+      icon: '⚠️',
+      desc: 'Maintenance inquiries',
+      actionTab: 'complaints',
+      color: 'rose'
+    }
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map(c => (
+          <div
+            key={c.title}
+            onClick={() => onNavigateTab(c.actionTab)}
+            className="card p-5 cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 border-l-forest-500 hover:-translate-y-0.5"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-2xl">{c.icon}</span>
+              {c.badge && (
+                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300">
+                  {c.badge}
+                </span>
+              )}
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{c.count}</div>
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-0.5">{c.title}</div>
+            <div className="text-xs text-gray-400 mt-1">{c.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Actions Bar */}
+      <div className="card p-6">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <span>⚡</span> Quick Management Actions
+        </h3>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => onNavigateTab('add')}
+            className="btn-primary flex items-center gap-2 text-sm px-4 py-2"
+          >
+            ➕ Add New Tree
+          </button>
+          <button
+            onClick={() => onNavigateTab('areas')}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-forest-100 text-forest-800 dark:bg-forest-900/40 dark:text-forest-200 hover:bg-forest-200 transition-colors"
+          >
+            📍 Add / Manage Areas
+          </button>
+          <button
+            onClick={() => onNavigateTab('species')}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 hover:bg-emerald-200 transition-colors"
+          >
+            🍃 Manage Species
+          </button>
+          <button
+            onClick={exportCSV}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-sky-700 hover:bg-sky-800 transition-colors"
+          >
+            ⬇ Export CSV
+          </button>
+          <button
+            onClick={exportPDF}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-rose-700 hover:bg-rose-800 transition-colors"
+          >
+            ⬇ Export PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Embedded High-Level Visual Statistics */}
+      <div>
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <span>📊</span> Campus Flora Analytics
+        </h3>
+        <StatsPanel dark={dark} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Admin (Main Dashboard Component) ── */
 const TABS = [
-  { key: 'list',        label: 'Manage Trees' },
-  { key: 'complaints',  label: '🌿 Reports' },
-  { key: 'add',         label: 'Add New Tree' },
-  { key: 'species',     label: 'Manage Species' },
-  { key: 'stats',       label: 'Statistics' },
-  { key: 'password',    label: 'Change Password' },
+  { key: 'dashboard',   label: '📊 Dashboard', desc: 'Overview & Analytics' },
+  { key: 'list',        label: '🌳 Manage Trees', desc: 'Catalog & QR' },
+  { key: 'add',         label: '➕ Add Tree', desc: 'Auto ID generator' },
+  { key: 'species',     label: '🍃 Species', desc: 'Botanical database' },
+  { key: 'areas',       label: '📍 Areas', desc: 'Campus zones' },
+  { key: 'complaints',  label: '🌿 Reports', desc: 'Issue tracker' },
+  { key: 'password',    label: '🔐 Security', desc: 'Password change' }
 ];
 
 export default function Admin() {
-  const [dark] = useDarkMode()
-  const navigate  = useNavigate();
-  const role      = localStorage.getItem('role');
+  const [dark] = useDarkMode();
+  const navigate = useNavigate();
+  const role = localStorage.getItem('role');
 
-  const [trees, setTrees]     = useState([]);
-  const [areas, setAreas]     = useState([]);
-  const [tab, setTab]         = useState('list');
-  const [editId, setEditId]   = useState(null);
-  const [msg, setMsg]         = useState('');
+  const [trees, setTrees] = useState([]);
+  const [areas, setAreas] = useState([]);
+  const [speciesList, setSpeciesList] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [tab, setTab] = useState('dashboard');
+  const [editId, setEditId] = useState(null);
+  const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [qrModal, setQrModal] = useState(null);
-  const [treeSearch, setTreeSearch] = useState('')
+  const [treeSearch, setTreeSearch] = useState('');
 
-  const filteredTrees = trees.filter(t => {
-    const q = treeSearch.toLowerCase()
-    return !q || [t.common_name, t.botanical_name, t.area, t.tree_id]
-      .some(v => v?.toLowerCase().includes(q))
-  })
+  const loadData = () => {
+    return Promise.all([
+      getTrees(),
+      getAreas(),
+      getSpecies(),
+      getComplaints()
+    ])
+      .then(([t, a, s, c]) => {
+        setTrees(t.data);
+        setAreas(a.data);
+        setSpeciesList(s.data);
+        setComplaints(c.data);
+      })
+      .catch(err => {
+        console.error('Failed to load dashboard data:', err);
+      });
+  };
 
   useEffect(() => {
     if (role !== 'admin') return;
-    Promise.all([getTrees(), getAreas()])
-      .then(([t, a]) => {
-        setTrees(t.data);
-        setAreas(a.data.map(a => a.area));
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    loadData().finally(() => setLoading(false));
+  }, [role]);
 
   if (role !== 'admin') {
     return (
@@ -971,172 +1437,252 @@ export default function Admin() {
 
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
-  const handleAdd = async (form) => {
+  const handleAddTree = async (form) => {
     try {
       const res = await addTree(form);
       setTrees(prev => [...prev, res.data]);
       setTab('list');
       flash('✅ Tree added successfully');
-    } catch { flash('❌ Failed to add tree'); }
+    } catch {
+      flash('❌ Failed to add tree');
+    }
   };
 
-  const handleEdit = async (form) => {
+  const handleEditTree = async (form) => {
     try {
       const res = await updateTree(form.tree_id, form);
       setTrees(prev => prev.map(t => t.tree_id === form.tree_id ? res.data : t));
       setEditId(null);
       flash('✅ Tree updated successfully');
-    } catch { flash('❌ Failed to update tree'); }
+    } catch {
+      flash('❌ Failed to update tree');
+    }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteTree = async (id) => {
     if (!window.confirm(`Delete tree ${id}?`)) return;
     try {
       await deleteTree(id);
       setTrees(prev => prev.filter(t => t.tree_id !== id));
       flash('🗑️ Tree deleted');
-    } catch { flash('❌ Failed to delete tree'); }
+    } catch {
+      flash('❌ Failed to delete tree');
+    }
   };
 
   const previewQR = async (tree_id, common_name) => {
     try {
       const res = await getTreeQR(tree_id);
       setQrModal({ qr: res.data.qr, tree_id, common_name });
-    } catch { flash('❌ Failed to generate QR'); }
+    } catch {
+      flash('❌ Failed to generate QR');
+    }
   };
 
-  
-return (
-  <div className="max-w-6xl mx-auto px-4 py-8">
+  const filteredTrees = trees.filter(t => {
+    const q = treeSearch.toLowerCase();
+    return (
+      !q ||
+      [t.common_name, t.botanical_name, t.area, t.tree_id].some(v =>
+        v?.toLowerCase().includes(q)
+      )
+    );
+  });
 
-    {/* Admin Header */}
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Dashboard Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-display text-3xl font-extrabold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+            <span>🌿</span> Green Atlas Dashboard
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Administrative console for flora mapping, species taxonomy, and campus zone management.
+          </p>
+        </div>
 
-      <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-gray-100">
-        Admin Panel
-      </h1>
-
-      <button
-        onClick={() => navigate('/admin/map-editor')}
-        className="btn-primary flex items-center gap-2"
-      >
-        📍 Edit Tree Locations
-      </button>
-
-    </div>
-
-    <Flash msg={msg} />
-
-
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto">
-        {TABS.map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors
-              ${tab === key
-                ? 'border-forest-500 text-forest-600 dark:text-forest-300'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>
-            {label}
-          </button>
-        ))}
+        <button
+          onClick={() => navigate('/admin/map-editor')}
+          className="btn-primary flex items-center gap-2 shadow-sm"
+        >
+          📍 Edit Map Coordinates
+        </button>
       </div>
 
+      <Flash msg={msg} />
+
+      {/* Navigation Subpage Bar (Pill Tabs) */}
+      <div className="flex gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl mb-8 overflow-x-auto">
+        {TABS.map(({ key, label }) => {
+          const active = tab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                setTab(key);
+                setEditId(null);
+              }}
+              className={`px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-150 ${
+                active
+                  ? 'bg-white dark:bg-gray-900 text-forest-700 dark:text-forest-300 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Panels */}
       <AnimatePresence mode="wait">
         <motion.div
           key={tab}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}>
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2 }}
+        >
+          {loading && <p className="text-gray-400 py-8 text-center">Loading dashboard data...</p>}
 
-          {loading && <p className="text-gray-400">Loading…</p>}
-
-          {/* Add Tree */}
-          {!loading && tab === 'add' && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4"
-                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
-                Add New Tree
-              </h2>
-              <TreeForm submitLabel="Add Tree" onSubmit={handleAdd}
-                areas={areas} trees={trees} dark={dark} />
-            </div>
+          {/* 1. DASHBOARD OVERVIEW */}
+          {!loading && tab === 'dashboard' && (
+            <DashboardOverview
+              trees={trees}
+              speciesList={speciesList}
+              areas={areas}
+              complaints={complaints}
+              onNavigateTab={setTab}
+              dark={dark}
+            />
           )}
 
-          {/* Species */}
-          {!loading && tab === 'species' && <SpeciesPanel dark={dark} />}
-
-          {/* Manage Trees */}
+          {/* 2. MANAGE TREES */}
           {!loading && tab === 'list' && (
             <div className="card overflow-hidden">
-              <div className="p-4 border-b flex items-center justify-between flex-wrap gap-3"
-                style={{ borderColor: dark ? '#30363d' : '#f3f4f6' }}>
-                <span className="font-semibold"
-                  style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                  All Trees ({filteredTrees.length})
-                </span>
-                <div className="flex gap-2 flex-wrap">
-                  <input className="input text-sm w-52"
+              <div
+                className="p-4 border-b flex items-center justify-between flex-wrap gap-3"
+                style={{ borderColor: dark ? '#30363d' : '#f3f4f6' }}
+              >
+                <div>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    All Trees ({filteredTrees.length})
+                  </span>
+                  <span className="text-xs text-gray-400 ml-2">
+                    Click 'Edit' to alter tree info or generate QR
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-wrap items-center">
+                  <input
+                    className="input text-sm w-56"
                     placeholder="Search trees…"
-                    value={treeSearch} onChange={e => setTreeSearch(e.target.value)}
-                    style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
-                  <button onClick={exportCSV}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white"
-                    style={{ background: '#0369a1' }}>⬇ CSV</button>
-                  <button onClick={exportPDF}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white"
-                    style={{ background: '#be123c' }}>⬇ PDF</button>
+                    value={treeSearch}
+                    onChange={e => setTreeSearch(e.target.value)}
+                    style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+                  />
+                  <button
+                    onClick={exportCSV}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-sm"
+                    style={{ background: '#0369a1' }}
+                  >
+                    ⬇ CSV
+                  </button>
+                  <button
+                    onClick={exportPDF}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-sm"
+                    style={{ background: '#be123c' }}
+                  >
+                    ⬇ PDF
+                  </button>
                 </div>
               </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--color-forest-500)' }}>
-                      {['ID','Common Name','Botanical Name','Area','Actions'].map(h => (
-                        <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+                      {['Tree ID', 'Common Name', 'Botanical Name', 'Area', 'Actions'].map(h => (
+                        <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {filteredTrees.map(tree => (
                       <Fragment key={tree.tree_id}>
-                        <tr key={tree.tree_id}
+                        <tr
+                          key={tree.tree_id}
                           className="transition-colors"
-                          style={{ borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
-                                  background: dark ? '#1c2128' : '#ffffff' }}
+                          style={{
+                            borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
+                            background: dark ? '#1c2128' : '#ffffff'
+                          }}
                           onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
-                          onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#ffffff'}>
-                          <td className="px-4 py-3 text-xs" style={{ color: '#8b949e' }}>{tree.tree_id}</td>
-                          <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>{tree.common_name}</td>
-                          <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>{tree.botanical_name}</td>
-                          <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>{tree.area}</td>
+                          onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#ffffff'}
+                        >
+                          <td className="px-4 py-3 text-xs font-mono font-bold" style={{ color: '#8b949e' }}>
+                            {tree.tree_id}
+                          </td>
+                          <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>
+                            {tree.common_name}
+                          </td>
+                          <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>
+                            {tree.botanical_name}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                            {tree.area}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
-                              <Btn color="primary" onClick={() => setEditId(editId === tree.tree_id ? null : tree.tree_id)}>
+                              <Btn
+                                color="primary"
+                                onClick={() => setEditId(editId === tree.tree_id ? null : tree.tree_id)}
+                              >
                                 {editId === tree.tree_id ? 'Close' : 'Edit'}
                               </Btn>
-                              <Btn color="danger" onClick={() => handleDelete(tree.tree_id)}>Delete</Btn>
-                              <button onClick={() => previewQR(tree.tree_id, tree.common_name)}
+                              <Btn color="danger" onClick={() => handleDeleteTree(tree.tree_id)}>
+                                Delete
+                              </Btn>
+                              <button
+                                onClick={() => previewQR(tree.tree_id, tree.common_name)}
                                 className="px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors"
-                                style={{ background: '#0369a1' }}>QR</button>
+                                style={{ background: '#0369a1' }}
+                              >
+                                QR
+                              </button>
                             </div>
                           </td>
                         </tr>
+
                         {editId === tree.tree_id && (
                           <tr key={`edit-${tree.tree_id}`}>
-                            <td colSpan={5} className="px-6 py-4"
+                            <td
+                              colSpan={5}
+                              className="px-6 py-4"
                               style={{
                                 background: dark ? '#161b22' : '#f9fdf9',
                                 borderLeft: '4px solid var(--color-forest-500)',
-                                borderBottom: `2px solid var(--color-forest-500)`
-                              }}>
-                              <h3 className="font-semibold mb-4"
-                                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
-                                Edit: {tree.common_name}
+                                borderBottom: '2px solid var(--color-forest-500)'
+                              }}
+                            >
+                              <h3
+                                className="font-semibold mb-4"
+                                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}
+                              >
+                                Edit Tree: {tree.common_name} ({tree.tree_id})
                               </h3>
-                              <TreeForm initial={tree} submitLabel="Save Changes"
-                                onSubmit={handleEdit} onCancel={() => setEditId(null)}
-                                areas={areas} trees={trees} dark={dark} />
+                              <TreeForm
+                                initial={tree}
+                                submitLabel="Save Changes"
+                                onSubmit={handleEditTree}
+                                onCancel={() => setEditId(null)}
+                                areas={areas}
+                                speciesList={speciesList}
+                                trees={trees}
+                                dark={dark}
+                              />
                             </td>
                           </tr>
                         )}
@@ -1148,15 +1694,48 @@ return (
             </div>
           )}
 
-          {!loading && tab === 'stats' && <StatsPanel dark={dark} />}
-          {!loading && tab === 'complaints' && (
-                  <ComplaintPanel dark={dark} />
-           )}
+          {/* 3. ADD NEW TREE */}
+          {!loading && tab === 'add' && (
+            <div className="card p-6">
+              <h2
+                className="font-bold text-lg mb-2"
+                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}
+              >
+                Add New Tree
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+                Select the botanical name and campus area. Tree ID, family and common name will be automatically calculated.
+              </p>
+              <TreeForm
+                submitLabel="Add Tree"
+                onSubmit={handleAddTree}
+                areas={areas}
+                speciesList={speciesList}
+                trees={trees}
+                dark={dark}
+              />
+            </div>
+          )}
+
+          {/* 4. MANAGE SPECIES */}
+          {!loading && tab === 'species' && <SpeciesPanel dark={dark} />}
+
+          {/* 5. MANAGE AREAS */}
+          {!loading && tab === 'areas' && (
+            <AreaPanel areas={areas} onRefresh={loadData} dark={dark} />
+          )}
+
+          {/* 6. REPORTS & COMPLAINTS */}
+          {!loading && tab === 'complaints' && <ComplaintPanel dark={dark} />}
+
+          {/* 7. PASSWORD CHANGE */}
           {!loading && tab === 'password' && (
             <div className="card p-6">
-              <h2 className="font-semibold mb-4"
-                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
-                Change Password
+              <h2
+                className="font-semibold mb-4"
+                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}
+              >
+                Change Admin Password
               </h2>
               <ChangePassword dark={dark} />
             </div>
@@ -1166,20 +1745,26 @@ return (
 
       {/* QR Modal */}
       {qrModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-             onClick={() => setQrModal(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 text-center shadow-2xl min-w-64"
-               onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setQrModal(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl p-8 text-center shadow-2xl min-w-64 max-w-sm"
+            onClick={e => e.stopPropagation()}
+          >
             <h3 className="font-display text-lg font-semibold text-gray-900 dark:text-gray-100">
               {qrModal.common_name}
             </h3>
             <p className="text-xs text-gray-400 mt-1 mb-4">Tree ID: {qrModal.tree_id}</p>
-            <img src={qrModal.qr} alt="QR Code" className="w-48 h-48 mx-auto rounded-lg" />
+            <img src={qrModal.qr} alt="QR Code" className="w-48 h-48 mx-auto rounded-lg shadow-sm" />
             <div className="flex gap-3 justify-center mt-6">
               <a href={qrModal.qr} download={`${qrModal.tree_id}-qr.png`}>
                 <Btn color="primary">Download</Btn>
               </a>
-              <Btn color="gray" onClick={() => setQrModal(null)}>Close</Btn>
+              <Btn color="gray" onClick={() => setQrModal(null)}>
+                Close
+              </Btn>
             </div>
           </div>
         </div>
