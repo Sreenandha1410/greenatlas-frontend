@@ -161,19 +161,39 @@ export const exportPDF = async (params = {}) => {
 };
 
 export const exportTable = async (tableName, format = 'csv') => {
-  const response = await api.get(`/trees/export/table/${encodeURIComponent(tableName)}`, {
-    params: { format },
-    responseType: 'blob'
-  });
-  const mimeType = format === 'json' ? 'application/json' : 'text/csv';
-  const url = window.URL.createObjectURL(new Blob([response.data], { type: mimeType }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', `green_atlas_${tableName}.${format}`);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.get(`/trees/export/table/${encodeURIComponent(tableName)}`, {
+      params: { format },
+      headers: {
+        Authorization: token ? `Bearer ${token}` : ''
+      },
+      responseType: 'blob'
+    });
+
+    const mimeType = format === 'json' ? 'application/json' : 'text/csv';
+    const blob = new Blob([response.data], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `green_atlas_${tableName}.${format}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    // If the error response is a Blob, convert to text to read the real backend error message
+    if (err.response && err.response.data instanceof Blob) {
+      const errorText = await err.response.data.text();
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || 'Export failed');
+      } catch {
+        throw new Error(errorText || 'Export failed');
+      }
+    }
+    throw err;
+  }
 };
 
 
