@@ -133,10 +133,10 @@ const ClusterLayer = memo(function ClusterLayer({ trees, selectedTreeId, onSelec
         }}
         eventHandlers={{ click: () => onSelect(tree) }}
       >
-          <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
-            <span className="font-mono font-bold text-xs">{tree.tree_id}</span>
-            {' '}<span className="text-xs text-gray-600">{tree.common_name}</span>
-          </Tooltip>
+        <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
+          <span className="font-mono font-bold text-xs">{tree.tree_id}</span>
+          {' '}<span className="text-xs">{tree.common_name}</span>
+        </Tooltip>
         <Popup>
           <div className="text-xs">
             <strong>{tree.tree_id}</strong><br />
@@ -652,7 +652,7 @@ export default function LocationEditorPage() {
 
         {/* Maximized Map Canvas */}
         <main className="flex-1 min-w-0 h-full relative">
-          {/* Mini Legend */}
+          {/* Mini pin legend */}
           <div style={{
             position: 'absolute', top: 10, left: 10, zIndex: 1000,
             background: 'rgba(255,255,255,0.93)', borderRadius: 8,
@@ -662,11 +662,11 @@ export default function LocationEditorPage() {
             display: 'flex', gap: 12, alignItems: 'center'
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#16a34a', display: 'inline-block' }}/>
+              <span style={{ width: 11, height: 11, borderRadius: 2, background: '#16a34a', display: 'inline-block' }}/>
               🌳 Trees
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#84cc16', display: 'inline-block' }}/>
+              <span style={{ width: 11, height: 11, borderRadius: 2, background: '#84cc16', display: 'inline-block' }}/>
               🌿 Plants
             </span>
           </div>
@@ -681,7 +681,7 @@ export default function LocationEditorPage() {
             className="h-full w-full"
             style={{ height: '100%', width: '100%' }}
           >
-            <LayersControl position="topright">
+            <LayersControl position="topright" style={{ zIndex: 1100 }}>
               <LayersControl.BaseLayer checked name="Satellite">
                 <TileLayer
                   url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
