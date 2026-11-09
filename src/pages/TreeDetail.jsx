@@ -570,25 +570,50 @@ export default function TreeDetail() {
                     </Popup>
                   </Marker>
 
-                  {sameSpecies.map(t =>
-                    t.latitude && t.longitude ? (
+                  {/* Same species trees on campus */}
+                  {sameSpeciesTrees
+                    .filter(t => t.tree_id !== tree.tree_id && t.latitude && t.longitude)
+                    .map(t => (
                       <Marker
                         key={t.tree_id}
-                        position={[t.latitude, t.longitude]}
-                        icon={sameSpeciesIcon}
+                        position={[parseFloat(t.latitude), parseFloat(t.longitude)]}
+                        icon={createStylizedPin({
+                          color: '#2563eb', // Royal Sapphire for other campus instances
+                          label: getBotanicalMonogram(t.botanical_name, t.common_name),
+                          isPlant: (t.flora_type || 'tree') === 'plant'
+                        })}
                       >
                         <Popup>
-                          <Link
-                            to={`/trees/${t.tree_id}`}
-                            style={{ color: '#2d5a27', fontWeight: 600 }}
-                          >
-                            {t.common_name}
-                          </Link>
-                          <br />
-                          {t.tree_id}
+                          <div className="text-xs p-1">
+                            <p className="font-bold">{t.common_name}</p>
+                            <p className="font-mono text-gray-400">{t.tree_id}</p>
+                            <p className="text-gray-500 mb-1">Area: {t.area}</p>
+                            <Link to={`/trees/${t.tree_id}`} className="text-forest-600 font-semibold hover:underline">
+                              View This Tree →
+                            </Link>
+                          </div>
                         </Popup>
                       </Marker>
-                    ) : null
+                  ))}
+                  
+                  {/* Primary Selected Tree */}
+                  {tree.latitude && tree.longitude && (
+                    <Marker
+                      position={[parseFloat(tree.latitude), parseFloat(tree.longitude)]}
+                      icon={createStylizedPin({
+                        color: '#16a34a', // Emerald Green
+                        label: getBotanicalMonogram(tree.botanical_name, tree.common_name),
+                        isPlant: (tree.flora_type || 'tree') === 'plant',
+                        isSelected: true
+                      })}
+                    >
+                      <Popup>
+                        <div className="text-xs p-1">
+                          <p className="font-bold text-forest-700">{tree.common_name} (Current Tree)</p>
+                          <p className="font-mono font-bold">{tree.tree_id}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
                   )}
                 </MapContainer>
               </div>
@@ -603,7 +628,7 @@ export default function TreeDetail() {
           </RevealSection>
         )}
 
-        {/* Nearby */}
+        {/* Nearby */}{/*
         {nearby.length > 0 && (
           <RevealSection>
             <div className="card p-5">
@@ -638,7 +663,7 @@ export default function TreeDetail() {
               </div>
             </div>
           </RevealSection>
-        )}
+        )} */}
 
         {/* Ecology & Uses */}
         {ecologyItems.length > 0 && (
