@@ -1,47 +1,68 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getTrees, getAreas } from '../api';
-import { useDarkMode } from '../context/DarkModeContext';
-import TreeCard from '../components/TreeCard';
-
+import { useState, useEffect } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { getTrees, getAreas } from '../api'
+import { useDarkMode } from '../context/DarkModeContext'
+import TreeCard from '../components/TreeCard'
+{/*
+function TreeCard({ tree }) {
+  return (
+    <Link to={`/trees/${tree.tree_id}`}>
+      <motion.div
+        whileHover={{ y: -4, scale: 1.02 }}
+        transition={{ duration: 0.2 }}
+        className="card overflow-hidden group cursor-pointer h-full flex flex-col">
+        <div className="h-44 overflow-hidden relative"
+          style={{ background: 'linear-gradient(135deg, #d9edcf, #f0f7ee)' }}>
+          {tree.image_link || tree.image_url
+            ? <img src={tree.image_link || tree.image_url} alt={tree.common_name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            : <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <span className="absolute bottom-2 left-2 badge text-white text-xs"
+            style={{ background: 'rgba(45,90,39,0.75)', backdropFilter: 'blur(8px)' }}>
+            {tree.area}
+          </span>
+        </div>
+        <div className="p-4 flex flex-col gap-1 flex-1">
+          <p className="font-semibold text-gray-900 truncate text-sm">{tree.common_name}</p>
+          <p className="text-xs italic text-gray-400 truncate">{tree.botanical_name}</p>
+          <div className="flex items-center justify-between mt-auto pt-2">
+            <span className="text-xs text-gray-400">{tree.family}</span>
+            <span className="text-xs font-mono text-gray-300">{tree.tree_id}</span>
+          </div>
+        </div>
+      </motion.div>
+    </Link>
+  )
+}
+*/}
 function SpeciesGroupCard({ species, trees, dark }) {
-  const [expanded, setExpanded] = useState(false);
-  const representative = trees[0];
+  const [expanded, setExpanded] = useState(false)
+  const representative = trees[0]
 
   return (
-    <div
-      className="overflow-hidden rounded-2xl"
+    <div className="overflow-hidden rounded-2xl"
       style={{
         background: dark ? '#1c2128' : '#ffffff',
         border: `1px solid ${dark ? '#30363d' : '#e5e7eb'}`,
         boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
-      }}
-    >
+      }}>
       <div className="relative cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div
-          className="h-44 overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #d9edcf, #f0f7ee)' }}
-        >
-          {representative.image_link || representative.image_url ? (
-            <img
-              src={representative.image_link || representative.image_url}
-              alt={species}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>
-          )}
+        <div className="h-44 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #d9edcf, #f0f7ee)' }}>
+          {representative.image_link || representative.image_url
+            ? <img src={representative.image_link || representative.image_url} alt={species}
+                className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-6xl">🌿</div>}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
           <p className="font-semibold text-sm truncate">{species}</p>
           <p className="text-xs italic opacity-75 truncate">{representative.botanical_name}</p>
         </div>
-        <span
-          className="absolute top-2 right-2 badge text-white text-xs"
-          style={{ background: 'rgba(45,90,39,0.8)', backdropFilter: 'blur(8px)' }}
-        >
+        <span className="absolute top-2 right-2 badge text-white text-xs"
+          style={{ background: 'rgba(45,90,39,0.8)', backdropFilter: 'blur(8px)' }}>
           {trees.length} trees
         </span>
       </div>
@@ -54,19 +75,13 @@ function SpeciesGroupCard({ species, trees, dark }) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
-            style={{ borderTop: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}
-          >
-            <div
-              className="space-y-1 max-h-48 overflow-y-auto"
-              style={{ background: dark ? '#1c2128' : '#ffffff', padding: '0.75rem' }}
-            >
+            style={{ borderTop: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}>
+            <div className="space-y-1 max-h-48 overflow-y-auto"
+              style={{ background: dark ? '#1c2128' : '#ffffff', padding: '0.75rem' }}>
               {trees.map(t => (
-                <Link
-                  key={t.tree_id}
-                  to={`/trees/${t.tree_id}`}
+                <Link key={t.tree_id} to={`/trees/${t.tree_id}`}
                   className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-sm"
-                  style={{ color: dark ? '#e6edf3' : '#374151' }}
-                >
+                  style={{ color: dark ? '#e6edf3' : '#374151' }}>
                   <span className="font-medium">{t.tree_id}</span>
                   <span style={{ color: '#8b949e' }} className="text-xs">{t.area}</span>
                   <span style={{ color: 'var(--color-forest-400)' }} className="text-xs">→</span>
@@ -76,223 +91,291 @@ function SpeciesGroupCard({ species, trees, dark }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
 
-export default function TreeList() {
-  const [dark] = useDarkMode();
-  const [searchParams] = useSearchParams();
-  const [trees, setTrees] = useState([]);
-  const [areas, setAreas] = useState([]);
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [areaFilter, setAreaFilter] = useState(searchParams.get('area') || '');
-  const [familyFilter, setFamilyFilter] = useState('');
-  const [groupBy, setGroupBy] = useState('individual');
-  const [sortField, setSortField] = useState('tree_id');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [viewMode, setViewMode] = useState('tiles');
-  const [newOnly, setNewOnly] = useState(false);
-
-  useEffect(() => {
-    getTrees().then(r => setTrees(r.data));
-    getAreas().then(r => setAreas(r.data.map(a => a.area)));
-  }, []);
-
-  const families = [...new Set(trees.map(t => t.family).filter(Boolean))].sort();
-
-  let filtered = trees.filter(t => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      t.common_name?.toLowerCase().includes(q) ||
-      t.botanical_name?.toLowerCase().includes(q) ||
-      t.tree_id?.toLowerCase().includes(q);
-    const matchArea = !areaFilter || t.area === areaFilter;
-    const matchFamily = !familyFilter || t.family === familyFilter;
-    return matchSearch && matchArea && matchFamily;
-  });
-
-  if (newOnly) {
-    filtered = filtered.slice(0, 20);
-  }
-
-  filtered.sort((a, b) => {
-    let valA = (a[sortField] || '').toString().toLowerCase();
-    let valB = (b[sortField] || '').toString().toLowerCase();
-    const cmp = valA.localeCompare(valB, undefined, { numeric: true });
-    return sortOrder === 'asc' ? cmp : -cmp;
-  });
-
-  const grouped = filtered.reduce((acc, t) => {
-    const key = t.common_name || 'Unknown';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(t);
-    return acc;
-  }, {});
-
-  const iStyle = {
-    background: dark ? '#1c2128' : '#fff',
-    color: dark ? '#e6edf3' : '#111827',
-    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="font-display text-4xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-        Campus Trees Catalog
-      </h1>
-
-      {/* Explorer Filter & Sorting Bar */}
-      <div className="card p-4 mb-6 space-y-3">
-        <div className="flex flex-wrap gap-3 items-center">
-          <input
-            className="input flex-1 min-w-48 text-sm"
-            placeholder="Search by name, ID or botanical..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={iStyle}
-          />
-
-          <select
-            className="input text-sm w-44"
-            value={areaFilter}
-            onChange={e => setAreaFilter(e.target.value)}
-            style={iStyle}
-          >
-            <option value="">All Areas</option>
-            {areas.map(a => <option key={a} value={a}>{a}</option>)}
-          </select>
-
-          <select
-            className="input text-sm w-44"
-            value={familyFilter}
-            onChange={e => setFamilyFilter(e.target.value)}
-            style={iStyle}
-          >
-            <option value="">All Families</option>
-            {families.map(f => <option key={f} value={f}>{f}</option>)}
-          </select>
-
-          {(search || areaFilter || familyFilter || newOnly) && (
-            <button
-              className="text-xs text-red-500 hover:text-red-700 font-medium"
-              onClick={() => {
-                setSearch('');
-                setAreaFilter('');
-                setFamilyFilter('');
-                setNewOnly(false);
-              }}
-            >
-              ✕ Clear
-            </button>
-          )}
-        </div>
-
-        {/* Windows Explorer Style Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-500">Sort by:</span>
-              <select
-                className="input text-xs py-1 px-2 rounded-lg"
-                style={iStyle}
-                value={sortField}
-                onChange={e => setSortField(e.target.value)}
-              >
-                <option value="tree_id">Tree ID (Recent)</option>
-                <option value="common_name">Common Name</option>
-                <option value="botanical_name">Botanical Name</option>
-                <option value="area">Campus Area</option>
-                <option value="family">Family</option>
-              </select>
-
-              <button
-                onClick={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
-                className="px-2 py-1 rounded-lg border border-gray-300 dark:border-[#30363d] font-semibold"
-              >
-                {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
-              </button>
-            </div>
-
-            <button
-              onClick={() => setNewOnly(!newOnly)}
-              className={`px-2.5 py-1 rounded-lg font-semibold border transition-colors ${
-                newOnly
-                  ? 'bg-emerald-600 text-white border-emerald-600'
-                  : 'bg-white dark:bg-[#1c2128] text-gray-700 dark:text-gray-300 border-gray-300 dark:border-[#30363d]'
-              }`}
-            >
-              ✨ New Additions
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center border border-gray-300 dark:border-[#30363d] rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode('tiles')}
-                className={`px-2.5 py-1 font-medium ${
-                  viewMode === 'tiles' ? 'bg-forest-600 text-white' : 'bg-transparent text-gray-500'
-                }`}
-              >
-                🔲 Tiles
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-2.5 py-1 font-medium ${
-                  viewMode === 'list' ? 'bg-forest-600 text-white' : 'bg-transparent text-gray-500'
-                }`}
-              >
-                📋 List
-              </button>
-            </div>
-
-            <span className="text-gray-400">
-              Showing {filtered.length} trees
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Results View */}
-      {viewMode === 'tiles' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {filtered.map(tree => (
-            <TreeCard key={tree.tree_id} tree={tree} />
-          ))}
-        </div>
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ background: 'var(--color-forest-500)' }}>
-                {['Tree ID', 'Common Name', 'Botanical Name', 'Area', 'Family'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filtered.map(t => (
-                <tr
-                  key={t.tree_id}
-                  className="transition-colors hover:bg-forest-50/50 dark:hover:bg-[#21262d]"
-                  style={{ background: dark ? '#1c2128' : '#fff' }}
-                >
-                  <td className="px-4 py-3 font-mono font-bold text-xs text-forest-600 dark:text-forest-400">
-                    <Link to={`/trees/${t.tree_id}`}>{t.tree_id}</Link>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
-                    <Link to={`/trees/${t.tree_id}`}>{t.common_name}</Link>
-                  </td>
-                  <td className="px-4 py-3 italic text-gray-500">{t.botanical_name}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{t.area}</td>
-                  <td className="px-4 py-3 text-gray-500">{t.family}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {!expanded && (
+        <div className="px-4 py-3" style={{ borderTop: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}>
+          <button onClick={() => setExpanded(true)}
+            className="text-xs font-medium w-full text-center"
+            style={{ color: 'var(--color-forest-400)' }}>
+            Show all {trees.length} locations ↓
+          </button>
         </div>
       )}
     </div>
-  );
+  )
+}
+
+export default function TreeList() {
+  const [dark] = useDarkMode()
+  const [trees, setTrees]               = useState([])
+  const [areas, setAreas]               = useState([])
+  const [search, setSearch]             = useState('')
+  const [areaFilter, setAreaFilter]     = useState('')
+  const [familyFilter, setFamilyFilter] = useState('')
+  const [floraFilter, setFloraFilter]   = useState('all')
+  const [groupBySpecies, setGroupBySpecies] = useState(true)
+  const [page, setPage]                 = useState(1)
+  const [loading, setLoading]           = useState(true)
+  const [searchParams]                  = useSearchParams()
+  const PER_PAGE = 24
+
+  useEffect(() => {
+    const q = searchParams.get('area') || ''
+    const s = searchParams.get('search') || ''
+    if (q) setAreaFilter(q)
+    if (s) setSearch(s)
+  }, [])
+
+  useEffect(() => {
+    Promise.all([getTrees(), getAreas()])
+      .then(([t, a]) => { setTrees(t.data); setAreas(a.data.map(a => a.area)) })
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, areaFilter, familyFilter, floraFilter, groupBySpecies])
+
+  // FIX: availableAreas and availableFamilies — cross-filtered
+  const availableAreas = [...new Set(
+    trees
+      .filter(t => !familyFilter || t.family === familyFilter)
+      .filter(t => floraFilter === 'all' || t.flora_type === floraFilter)
+      .map(t => t.area)
+      .filter(Boolean)
+  )].sort()
+
+  const availableFamilies = [...new Set(
+    trees
+      .filter(t => !areaFilter || t.area === areaFilter)
+      .filter(t => floraFilter === 'all' || t.flora_type === floraFilter)
+      .map(t => t.family)
+      .filter(Boolean)
+  )].sort()
+
+  // FIX: single filtered declaration, includes all filters
+  const filtered = trees.filter(t => {
+    const q = search.toLowerCase()
+    const matchSearch = !q || [t.common_name, t.botanical_name, t.area, t.family, t.tree_id, t.tamil_name]
+      .some(v => v?.toLowerCase().includes(q))
+    const matchArea   = !areaFilter   || t.area   === areaFilter
+    const matchFamily = !familyFilter || t.family === familyFilter
+    const matchFlora  = floraFilter === 'all' || t.flora_type === floraFilter
+    return matchSearch && matchArea && matchFamily && matchFlora
+  })
+
+  const grouped = filtered.reduce((acc, t) => {
+    const key = t.common_name || t.botanical_name
+    if (!acc[key]) acc[key] = []
+    acc[key].push(t)
+    return acc
+  }, {})
+
+  const groupedEntries = Object.entries(grouped)
+  const totalPages = Math.ceil((groupBySpecies ? groupedEntries.length : filtered.length) / PER_PAGE)
+  const paginated  = groupBySpecies
+    ? groupedEntries.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+    : filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+  const pageNumbers = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) pageNumbers.push(i)
+    else if (pageNumbers[pageNumbers.length - 1] !== '...') pageNumbers.push('...')
+  }
+
+  const hasFilters = search || areaFilter || familyFilter || floraFilter !== 'all'
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="flex gap-8">
+
+        {/* ── Left filter sidebar ── */}
+        <aside className="hidden lg:block w-56 flex-shrink-0 space-y-5">
+          <div className="card-clay p-4 sticky top-24">
+            <h3 className="font-semibold mb-4 text-sm tracking-wide uppercase"
+              style={{ color: dark ? '#8b949e' : '#374151' }}>Filters</h3>
+            <div className="space-y-4">
+
+              <div>
+                <label className="text-xs font-medium block mb-1.5"
+                  style={{ color: dark ? '#8b949e' : '#6b7280' }}>Area</label>
+                <select className="input text-sm" value={areaFilter}
+                  style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+                  onChange={e => setAreaFilter(e.target.value)}>
+                  <option value="">All Areas</option>
+                  {availableAreas.map(a => <option key={a}>{a}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium block mb-1.5"
+                  style={{ color: dark ? '#8b949e' : '#6b7280' }}>Family</label>
+                <select className="input text-sm" value={familyFilter}
+                  style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+                  onChange={e => setFamilyFilter(e.target.value)}>
+                  <option value="">All Families</option>
+                  {availableFamilies.map(f => <option key={f}>{f}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium block mb-1.5"
+                  style={{ color: dark ? '#8b949e' : '#6b7280' }}>Type</label>
+                <div className="flex flex-col gap-2">
+                  {[['tree','Trees'],['plant','Plants'],['all','Both']].map(([v, l]) => (
+                    <label key={v} className="flex items-center gap-2 cursor-pointer text-sm"
+                      style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                      <input type="radio" checked={floraFilter === v}
+                        onChange={() => setFloraFilter(v)} className="accent-green-700" />
+                      {l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2" style={{ borderTop: `1px solid ${dark ? '#30363d' : '#f3f4f6'}` }}>
+                <label className="text-xs font-medium block mb-2"
+                  style={{ color: dark ? '#8b949e' : '#6b7280' }}>View mode</label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm"
+                    style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                    <input type="radio" checked={groupBySpecies}
+                      onChange={() => setGroupBySpecies(true)} className="accent-green-700" />
+                    Group by species
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm"
+                    style={{ color: dark ? '#e6edf3' : '#374151' }}>
+                    <input type="radio" checked={!groupBySpecies}
+                      onChange={() => setGroupBySpecies(false)} className="accent-green-700" />
+                    Show all individually
+                  </label>
+                </div>
+              </div>
+
+              {/* FIX: proper JSX button with children inside */}
+              {hasFilters && (
+                <button
+                  className="w-full text-xs text-red-500 hover:text-red-700 pt-2"
+                  onClick={() => { setSearch(''); setAreaFilter(''); setFamilyFilter(''); setFloraFilter('all') }}>
+                  &times; Clear all filters
+                </button>
+              )}
+
+            </div>
+          </div>
+        </aside>
+
+        {/* ── Main content ── */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="font-display text-3xl font-bold"
+                style={{ color: dark ? '#e6edf3' : '#111827' }}>All Trees</h1>
+              <p className="text-sm mt-0.5" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                {groupBySpecies
+                  ? `${groupedEntries.length} species · ${filtered.length} entries`
+                  : `${filtered.length} entries`}
+              </p>
+            </div>
+            <input className="input w-64 text-sm" placeholder="Search trees…"
+              value={search} onChange={e => setSearch(e.target.value)}
+              style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
+          </div>
+
+          {/* Mobile filters */}
+          <div className="lg:hidden space-y-3 mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <select className="input text-sm min-w-[140px]" value={areaFilter}
+                style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+                onChange={e => setAreaFilter(e.target.value)}>
+                <option value="">All Areas</option>
+                {availableAreas.map(a => <option key={a}>{a}</option>)}
+              </select>
+              <select className="input text-sm min-w-[140px]" value={familyFilter}
+                style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
+                onChange={e => setFamilyFilter(e.target.value)}>
+                <option value="">All Families</option>
+                {availableFamilies.map(f => <option key={f}>{f}</option>)}
+              </select>
+            </div>
+
+            <div className="flex gap-1">
+              {[['all','All'],['tree','Trees'],['plant','Plants']].map(([v, l]) => (
+                <button key={v} onClick={() => setFloraFilter(v)}
+                  className="text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+                  style={{
+                    background: floraFilter === v ? '#2d5a27' : (dark ? '#21262d' : '#f3f4f6'),
+                    color: floraFilter === v ? 'white' : (dark ? '#e6edf3' : '#374151'),
+                  }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            <div className="rounded-xl p-3"
+              style={{ background: dark ? '#1c2128' : '#fff', border: `1px solid ${dark ? '#30363d' : '#e5e7eb'}` }}>
+              <p className="text-xs font-semibold mb-2" style={{ color: dark ? '#8b949e' : '#6b7280' }}>View Mode</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setGroupBySpecies(true)}
+                  className="rounded-lg py-2 text-sm font-medium transition"
+                  style={{ background: groupBySpecies ? '#2d5a27' : (dark ? '#21262d' : '#f3f4f6'), color: groupBySpecies ? 'white' : (dark ? '#e6edf3' : '#374151') }}>
+                  Group by Species
+                </button>
+                <button onClick={() => setGroupBySpecies(false)}
+                  className="rounded-lg py-2 text-sm font-medium transition"
+                  style={{ background: !groupBySpecies ? '#2d5a27' : (dark ? '#21262d' : '#f3f4f6'), color: !groupBySpecies ? 'white' : (dark ? '#e6edf3' : '#374151') }}>
+                  Individual
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-32 text-gray-400">Loading…</div>
+          ) : paginated.length === 0 ? (
+            <div className="text-center py-32 text-gray-400">No entries match your filters.</div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${search}-${areaFilter}-${familyFilter}-${floraFilter}-${page}-${groupBySpecies}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                {groupBySpecies
+                  ? paginated.map(([species, trees]) =>
+                      trees.length === 1
+                        ? <TreeCard key={trees[0].tree_id} tree={trees[0]} />
+                        : <SpeciesGroupCard key={species} species={species} trees={trees} dark={dark} />
+                    )
+                  : paginated.map(tree => <TreeCard key={tree.tree_id} tree={tree} />)
+                }
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 mt-10">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="btn-secondary px-3 py-1.5 text-sm">←</button>
+              {pageNumbers.map((p, i) =>
+                p === '...'
+                  ? <span key={i} className="px-2 text-gray-400">…</span>
+                  : <button key={p} onClick={() => setPage(p)}
+                      className="w-9 h-9 rounded-lg text-sm font-medium transition-colors"
+                      style={page === p
+                        ? { background: 'var(--color-forest-500)', color: 'white' }
+                        : { color: dark ? '#e6edf3' : '#4b5563', background: dark ? '#1c2128' : 'transparent' }}>
+                      {p}
+                    </button>
+              )}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="btn-secondary px-3 py-1.5 text-sm">→</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
