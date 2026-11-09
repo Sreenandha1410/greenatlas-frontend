@@ -79,7 +79,7 @@ const ClusterMarkerLayer = memo(function ClusterMarkerLayer({ trees, matchedIds,
 
   const features = useMemo(() => view ? index.getClusters(view.bbox, view.zoom) : [], [index, view]);
 
-  return features.map(feature => {
+  return <>{features.map(feature => {
     const [lng, lat] = feature.geometry.coordinates;
 
     if (feature.properties.cluster) {
@@ -139,7 +139,7 @@ const ClusterMarkerLayer = memo(function ClusterMarkerLayer({ trees, matchedIds,
         </Popup>
       </Marker>
     );
-  });
+  })}</>;
 });
 
 export default function MapPage() {
@@ -316,6 +316,8 @@ export default function MapPage() {
           </div>
         )}
 
+        <style>{`.map-cluster-label{background:transparent;border:0;box-shadow:none;color:white;font-weight:700;font-size:11px;padding:0}.map-cluster-label:before{display:none}`}</style>
+
         <MapErrorBoundary>
           {trees.length > 0 && (
             <MapContainer
@@ -327,7 +329,6 @@ export default function MapPage() {
               maxZoom={22}
               style={{ height: '100%', width: '100%' }}
             >
-              <style>{`.map-cluster-label{background:transparent;border:0;box-shadow:none;color:white;font-weight:700;font-size:11px;padding:0}.map-cluster-label:before{display:none}`}</style>
               <FlyTo target={flyTarget} />
 
               <LayersControl position="topright">
