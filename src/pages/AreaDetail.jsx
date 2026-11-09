@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import L from 'leaflet';
 import { getTrees, getAreaInfo, updateAreaInfo } from '../api';
 import ImageUpload from '../components/ImageUpload';
-import { useDarkMode } from '../context/DarkModeContext'
+import { useDarkMode } from '../context/DarkModeContext';
+import { createStylizedPin, getSpeciesColor, getBotanicalMonogram } from '../utils/mapPins';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -14,374 +15,312 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const SPECIES_COLORS = [
-  '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
-  '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
-  '#ff5722','#607d8b','#795548','#ff9800','#673ab7',
-  '#009688','#f44336','#2196f3','#4caf50','#ffc107',
-  '#3f51b5','#cddc39','#9c27b0','#03a9f4','#ffeb3b',
-];
-
-const speciesColorMap = {};
-let speciesColorIndex = 0;
-
-const colorForSpecies = (botanicalName) => {
-  if (!speciesColorMap[botanicalName]) {
-    speciesColorMap[botanicalName] = SPECIES_COLORS[speciesColorIndex % SPECIES_COLORS.length];
-    speciesColorIndex++;
-  }
-  return speciesColorMap[botanicalName];
-};
-
-const floraIcon = (tree) => {
-  const color = colorForSpecies(tree.botanical_name);
-  const parts = (tree.botanical_name || '').split(' ');
-  const label = ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
-  if (tree.flora_type === 'plant') {
-    return L.divIcon({
-      className: '',
-      html: `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="14" cy="12" rx="12" ry="9" fill="${color}" stroke="white" stroke-width="1.5"/>
-        <rect x="12" y="20" width="4" height="7" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
-        <text x="14" y="15" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
-      </svg>`,
-      iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30],
-    });
-  }
-  return L.divIcon({
-    className: '',
-    html: `<svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="12,1 0,20 24,20" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-      <rect x="10" y="19" width="4" height="10" rx="1.5" fill="${color}" stroke="white" stroke-width="1"/>
-      <text x="12" y="14" text-anchor="middle" fill="white" font-size="6.5" font-weight="700" font-family="sans-serif">${label}</text>
-    </svg>`,
-    iconSize: [24, 30], iconAnchor: [12, 30], popupAnchor: [0, -32],
-  });
-};
-
 export default function AreaDetail() {
-  const [dark] = useDarkMode()
+  const [dark] = useDarkMode();
   const { area } = useParams();
   const navigate = useNavigate();
-  const areaName = decodeURIComponent(area);
-  const isAdmin  = localStorage.getItem('role') === 'admin';
 
-  const [trees, setTrees]       = useState([]);
-  const [areaInfo, setAreaInfo] = useState({});
-  const [loading, setLoading]   = useState(true);
-  const [editing, setEditing]   = useState(false);
-  const [editForm, setEditForm] = useState({ image_url: '', description: '', navigation_notes: '' });
-  const [saving, setSaving]     = useState(false);
-  const [treeSearch, setTreeSearch] = useState('');
-  const [floraFilter, setFloraFilter] = useState('all');
+  const [trees, setTrees] = useState([]);
+  const [areaInfo, setAreaInfo] = useState({ description: '', navigation_notes: '', image_url: '', area_code: '' });
+  const [loading, setLoading] = useState(true);
+  const [selectedTree, setSelectedTree] = useState(null);
+  const [search, setSearch] = useState('');
+  const [floraFilter, setFloraFilter] = useState('all'); // 'all' | 'tree' | 'plant'
+
+  // Edit area modal
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ description: '', navigation_notes: '', image_url: '' });
+  const [saving, setSaving] = useState(false);
+  const [editMsg, setEditMsg] = useState('');
+
+  const isAdmin = localStorage.getItem('role') === 'admin';
 
   useEffect(() => {
     Promise.all([
-      getTrees({ area: areaName }),
-      getAreaInfo(areaName).catch(() => ({ data: {} })),
-    ]).then(([t, a]) => {
-      setTrees(t.data);
-      setAreaInfo(a.data || {});
-      setEditForm({
-        image_url:        a.data?.image_url        || '',
-        description:      a.data?.description      || '',
-        navigation_notes: a.data?.navigation_notes || '',
-      });
+      getTrees({ area }),
+      getAreaInfo(area).catch(() => ({ data: {} }))
+    ]).then(([treesRes, infoRes]) => {
+      setTrees(treesRes.data);
+      if (infoRes.data) {
+        setAreaInfo(infoRes.data);
+        setEditForm({
+          description: infoRes.data.description || '',
+          navigation_notes: infoRes.data.navigation_notes || '',
+          image_url: infoRes.data.image_url || '',
+        });
+      }
     }).finally(() => setLoading(false));
-  }, [areaName]);
+  }, [area]);
 
-  const handleSave = async () => {
+  const handleSaveInfo = async () => {
     setSaving(true);
+    setEditMsg('');
     try {
-      await updateAreaInfo(areaName, editForm);
-      setAreaInfo(editForm);
-      setEditing(false);
-    } catch { alert('Failed to save'); }
-    finally { setSaving(false); }
+      await updateAreaInfo(area, editForm);
+      setAreaInfo(prev => ({ ...prev, ...editForm }));
+      setEditMsg('✅ Area information updated');
+      setTimeout(() => { setEditing(false); setEditMsg(''); }, 1500);
+    } catch {
+      setEditMsg('❌ Failed to update');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const center   = trees.length > 0 ? [trees[0].latitude, trees[0].longitude] : [11.678, 78.125];
-  const families = [...new Set(trees.map(t => t.family).filter(Boolean))];
+  // Filter trees by search and flora_type
   const filteredTrees = trees.filter(t => {
-    const matchSearch = !treeSearch ||
-      t.common_name?.toLowerCase().includes(treeSearch.toLowerCase()) ||
-      t.botanical_name?.toLowerCase().includes(treeSearch.toLowerCase());
-    const matchFlora = floraFilter === 'all' || t.flora_type === floraFilter;
+    const q = search.toLowerCase();
+    const matchSearch = !q ||
+      t.common_name?.toLowerCase().includes(q) ||
+      t.botanical_name?.toLowerCase().includes(q) ||
+      t.tree_id?.toLowerCase().includes(q) ||
+      t.family?.toLowerCase().includes(q);
+    const matchFlora = floraFilter === 'all' || (t.flora_type || 'tree') === floraFilter;
     return matchSearch && matchFlora;
   });
 
-  return (
-    <div>
-      {/* ── Hero ── */}
-      <div className="relative h-64 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1a3618, #2d5a27)' }}>
-        {areaInfo.image_url && (
-          <img src={areaInfo.image_url} alt={areaName}
-            className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.2))' }} />
+  const validTrees = filteredTrees.filter(t =>
+    t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude)
+  );
 
-        <button onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5
-                     rounded-lg text-sm font-medium text-white transition-all"
-          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                   border: '1px solid rgba(255,255,255,0.25)' }}>
-          ← Back
-        </button>
+  const center = validTrees.length > 0
+    ? [
+        validTrees.reduce((s, t) => s + parseFloat(t.latitude), 0) / validTrees.length,
+        validTrees.reduce((s, t) => s + parseFloat(t.longitude), 0) / validTrees.length,
+      ]
+    : [13.0827, 80.2707];
 
-        {isAdmin && (
-          <button onClick={() => setEditing(!editing)}
-            className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-lg text-sm font-medium text-white"
-            style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                     border: '1px solid rgba(255,255,255,0.25)' }}>
-            {editing ? '✕ Cancel' : '✏️ Edit Area'}
-          </button>
-        )}
+  const speciesCount = new Set(trees.map(t => t.botanical_name).filter(Boolean)).size;
 
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 z-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            className="font-display text-4xl font-bold text-white mb-1">
-            {areaName}
-          </motion.h1>
-          <p className="text-gray-300 text-sm">
-            {trees.length} trees · {families.length} families
-          </p>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="text-4xl mb-2 animate-bounce">🌿</div>
+          <p className="text-gray-500 dark:text-gray-400">Loading {area}...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <button
+            onClick={() => navigate('/areas')}
+            className="text-xs font-semibold text-forest-600 dark:text-forest-400 hover:underline flex items-center gap-1 mb-1"
+          >
+            ← Back to All Areas
+          </button>
+          <h1 className="font-display text-3xl font-extrabold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+            <span>📍</span> {area}
+            {areaInfo.area_code && (
+              <span className="text-sm font-mono font-bold px-2 py-0.5 rounded bg-forest-100 dark:bg-forest-900/40 text-forest-700 dark:text-forest-300">
+                {areaInfo.area_code}
+              </span>
+            )}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {trees.length} total flora ({speciesCount} distinct species)
+          </p>
+        </div>
 
-        {/* ── Admin edit panel ── */}
-        {isAdmin && editing && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-            className="card p-6 space-y-4"
-            style={{ borderLeft: '4px solid var(--color-forest-500)' }}>
-            <h3 className="font-semibold text-gray-800">Edit Area Info</h3>
+        {isAdmin && (
+          <button onClick={() => setEditing(!editing)} className="btn-primary text-xs px-3 py-2">
+            {editing ? 'Close Editor' : '✏️ Edit Area Info'}
+          </button>
+        )}
+      </div>
 
+      {/* Admin Edit Area Metadata Panel */}
+      {editing && (
+        <div className="card p-5 border border-forest-500 space-y-4">
+          <h3 className="font-semibold text-sm text-forest-700 dark:text-forest-300">Edit Area Information</h3>
+          {editMsg && <div className="text-xs font-semibold">{editMsg}</div>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Area Image</label>
-              <ImageUpload label="Upload area photo" onUploaded={url => setEditForm(f => ({ ...f, image_url: url }))} />
-              {editForm.image_url && (
-                <img src={editForm.image_url} alt=""
-                  className="w-40 h-24 object-cover rounded-lg mt-2" />
-              )}
-              <input className="input mt-2 text-sm" placeholder="…or paste image URL"
+              <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Area Image URL</label>
+              <input
+                className="input text-xs"
                 value={editForm.image_url}
                 onChange={e => setEditForm(f => ({ ...f, image_url: e.target.value }))}
-                style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
+                placeholder="https://..."
+              />
+              <div className="mt-2">
+                <ImageUpload label="Upload New Area Photo" onUploaded={url => setEditForm(f => ({ ...f, image_url: url }))} />
+              </div>
             </div>
-
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Description</label>
-              <textarea className="input resize-y text-sm" style={{ height: 80, background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-                placeholder="Brief description of this campus area…"
-                value={editForm.description}
-                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Navigation / How to reach</label>
-              <textarea className="input resize-y text-sm" style={{ height: 72, background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-                placeholder="e.g. Located near the main gate, turn left at the library…"
+              <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Directions & Navigation Notes</label>
+              <textarea
+                className="input text-xs h-24 resize-y"
                 value={editForm.navigation_notes}
-                onChange={e => setEditForm(f => ({ ...f, navigation_notes: e.target.value }))} />
+                onChange={e => setEditForm(f => ({ ...f, navigation_notes: e.target.value }))}
+                placeholder="Directions from main gates or nearby buildings..."
+              />
             </div>
-
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-              {saving ? 'Saving…' : '✓ Save Changes'}
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Area Description</label>
+            <textarea
+              className="input text-xs h-20 resize-y"
+              value={editForm.description}
+              onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="Ecology, canopy, surroundings..."
+            />
+          </div>
+          <div className="flex gap-2">
+            <button disabled={saving} onClick={handleSaveInfo} className="btn-primary text-xs px-4 py-2">
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
-          </motion.div>
-        )}
+            <button onClick={() => setEditing(false)} className="px-3 py-2 text-xs rounded-lg border text-gray-600">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-24 text-gray-400">Loading…</div>
-        )}
+      {/* Filter and Search Bar for Map + List */}
+      <div className="card p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <input
+          className="input flex-1 min-w-48 text-xs py-1.5"
+          placeholder="Filter trees in this area..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
 
-        {!loading && (
-          <>
-            {/* Description */}
-            {areaInfo.description && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                className="card p-6"
-                style={{
-                  background: dark ? '#1c2128' : '#ffffff',
-                  borderColor: dark ? '#30363d' : '#e5e7eb'
+        {/* Tree / Plant Filter Toggle */}
+        <div className="flex gap-1 p-1 rounded-lg bg-gray-100 dark:bg-gray-800">
+          {[
+            ['all', 'All'],
+            ['tree', '🌳 Trees'],
+            ['plant', '🌿 Plants']
+          ].map(([val, label]) => (
+            <button
+              key={val}
+              onClick={() => setFloraFilter(val)}
+              className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                floraFilter === val
+                  ? 'bg-forest-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <span className="text-gray-400">
+          Showing {validTrees.length} mapped markers
+        </span>
+      </div>
+
+      {/* Map Section */}
+      <div className="card overflow-hidden h-[420px] relative rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+        <MapContainer
+          center={center}
+          zoom={18}
+          zoomSnap={0.5}
+          zoomDelta={0.5}
+          wheelPxPerZoomLevel={120}
+          className="w-full h-full"
+        >
+          <LayersControl position="topright">
+            <LayersControl.BaseLayer checked name="🗺️ Street Map">
+              <TileLayer
+                attribution="&copy; OpenStreetMap"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="🛰️ Satellite View">
+              <TileLayer
+                attribution="&copy; Esri World Imagery"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              />
+            </LayersControl.BaseLayer>
+          </LayersControl>
+
+          {validTrees.map(tree => {
+            const isPlant = (tree.flora_type || 'tree') === 'plant';
+            const color = getSpeciesColor(tree.botanical_name || tree.common_name);
+            const monogram = getBotanicalMonogram(tree.botanical_name, tree.common_name);
+            const isSelected = selectedTree?.tree_id === tree.tree_id;
+
+            return (
+              <Marker
+                key={tree.tree_id}
+                position={[parseFloat(tree.latitude), parseFloat(tree.longitude)]}
+                icon={createStylizedPin({
+                  color,
+                  label: monogram,
+                  isPlant,
+                  isSelected
+                })}
+                eventHandlers={{
+                  click: () => setSelectedTree(tree)
                 }}
               >
-                <p
-                  className="leading-relaxed"
-                  style={{
-                    fontFamily: 'Cormorant Garamond, serif',
-                    fontSize: '1.15rem',
-                    color: dark ? '#e6edf3' : '#374151'
-                  }}
-                >
-                  {areaInfo.description}
-                </p>
-              </motion.div>
-            )}
-
-            {/* Navigation notes */}
-            {areaInfo.navigation_notes && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="rounded-2xl p-5 flex gap-4"
-                style={{
-                  background: dark
-                    ? 'linear-gradient(135deg, #161b22, #1c2128)'
-                    : 'linear-gradient(135deg, #f0f7ee, #e8f5e9)',
-                  border: `1px solid ${dark ? '#30363d' : 'rgba(45,90,39,0.15)'}`,
-                  boxShadow: dark ? '0 4px 20px rgba(0,0,0,0.3)' : 'none'
-                }}
-              >
-                <span className="text-2xl flex-shrink-0">🧭</span>
-                <div>
-                  <p
-                    className="font-semibold text-sm mb-1"
-                    style={{ color: dark ? '#81c784' : 'var(--color-forest-600)' }}
-                  >
-                    How to reach
-                  </p>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: dark ? '#8b949e' : '#4b5563' }}
-                  >
-                    {areaInfo.navigation_notes}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-            
-            {/* Map */}
-            {trees.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="card overflow-hidden">
-                <div style={{ height: 340, position: 'relative', zIndex: 0 }}>
-                  <MapContainer center={center} zoom={18} style={{ height: '100%', width: '100%' }} maxZoom={22}>
-                    <LayersControl position="topright">
-                      <LayersControl.BaseLayer checked name="Map">
-                        <TileLayer
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          maxZoom={22} maxNativeZoom={19}
-                          attribution="© OpenStreetMap contributors"
-                        />
-                      </LayersControl.BaseLayer>
-                      <LayersControl.BaseLayer name="Satellite">
-                        <TileLayer
-                          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                          maxZoom={22} maxNativeZoom={19}
-                          attribution="© Esri, Maxar, Earthstar Geographics"
-                        />
-                      </LayersControl.BaseLayer>
-                    </LayersControl>
-                    {trees.map(t => t.latitude && t.longitude && (
-                      <Marker
-                        key={t.tree_id}
-                        position={[t.latitude, t.longitude]}
-                        icon={floraIcon(t)}
-                      >
-                        <Popup>
-                          <strong style={{ fontSize: '0.88rem' }}>{t.common_name}</strong><br />
-                          <em style={{ fontSize: '0.78rem', color: '#888' }}>{t.botanical_name}</em><br />
-                          <Link to={`/trees/${t.tree_id}`}
-                            style={{ color: '#2d5a27', fontWeight: 600, fontSize: '0.82rem' }}>
-                            View →
-                          </Link>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  </MapContainer>
-                  {/* Species color legend */}
-                  <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
-                    {[...new Map(trees.map(t => [t.botanical_name, t])).values()].map(t => (
-                      <div key={t.botanical_name}
-                        className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                        <div style={{
-                          width: 18, height: 18, borderRadius: '50%',
-                          background: colorForSpecies(t.botanical_name),
-                          border: '2px solid white',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'white', fontSize: 8, fontWeight: 700,
-                        }}>
-                          {((t.botanical_name?.split(' ')[0]?.[0] || '') + (t.botanical_name?.split(' ')[1]?.[0] || '')).toUpperCase()}
-                        </div>
-                        <span className="italic">{t.botanical_name}</span>
-                      </div>
-                    ))}
+                <Popup>
+                  <div className="p-1 min-w-[160px] text-xs">
+                    <p className="font-bold text-gray-900">{tree.common_name}</p>
+                    <p className="italic text-gray-500 mb-1">{tree.botanical_name}</p>
+                    <p className="font-mono text-forest-600 font-semibold mb-2">ID: {tree.tree_id}</p>
+                    <Link
+                      to={`/trees/${tree.tree_id}`}
+                      className="inline-block px-2.5 py-1 rounded bg-forest-600 text-white font-semibold hover:bg-forest-700"
+                    >
+                      View Details →
+                    </Link>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+      </div>
 
-            {/* Tree list */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="card overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2">
-                <h2 className="font-semibold text-sm flex-shrink-0"
-                  style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                  Trees in this area
-                </h2>
-                <div className="flex gap-1 ml-auto">
-                  {[['all','All'],['tree','🌳'],['plant','🌿']].map(([v, l]) => (
-                    <button key={v} onClick={() => setFloraFilter(v)}
-                      className="text-xs px-2.5 py-1 rounded-md font-medium transition-colors"
-                      title={v === 'all' ? 'All' : v === 'tree' ? 'Trees only' : 'Plants only'}
-                      style={{
-                        background: floraFilter === v ? 'var(--color-forest-500)' : (dark ? '#21262d' : '#f3f4f6'),
-                        color: floraFilter === v ? 'white' : (dark ? '#8b949e' : '#6b7280'),
-                      }}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
-                <input className="input text-sm w-40"
-                  placeholder="Search…"
-                  value={treeSearch}
-                  onChange={e => setTreeSearch(e.target.value)}
-                  style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }} />
-              </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-96 overflow-y-auto">
-                {filteredTrees.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-gray-400 text-sm">No trees match.</p>
-                ) : filteredTrees.map(t => (
-                  <Link key={t.tree_id} to={`/trees/${t.tree_id}`}
-                    className="flex items-center gap-3 px-5 py-3
-                               hover:bg-forest-50 dark:hover:bg-forest-950 transition-colors group">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0"
-                      style={{ background: '#f0f7ee' }}>
-                      {(t.image_link || t.species_image_url)
-                        ? <img src={t.image_link || t.species_image_url} alt="" className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-sm">🌿</div>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                        {t.common_name}
-                      </p>
-                      <p className="text-xs italic text-gray-400 truncate">{t.botanical_name}</p>
-                    </div>
-                    <span className="text-xs text-gray-300 group-hover:text-forest-500 transition-colors">
-                      {t.tree_id} →
-                    </span>
+      {/* Trees Grid / Table */}
+      <div className="card overflow-x-auto">
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-800 dark:text-gray-200">
+          Flora in {area} ({filteredTrees.length})
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ background: 'var(--color-forest-500)' }}>
+              {['Tree ID', 'Common Name', 'Botanical Name', 'Type', 'Family', 'Details'].map(h => (
+                <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {filteredTrees.map(t => (
+              <tr
+                key={t.tree_id}
+                className="hover:bg-forest-50/50 dark:hover:bg-[#21262d] transition-colors"
+                style={{ background: dark ? '#1c2128' : '#fff' }}
+              >
+                <td className="px-4 py-3 font-mono font-bold text-xs text-forest-600 dark:text-forest-400">
+                  {t.tree_id}
+                </td>
+                <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">{t.common_name}</td>
+                <td className="px-4 py-3 italic text-gray-500">{t.botanical_name}</td>
+                <td className="px-4 py-3 text-xs">
+                  <span className="px-2 py-0.5 rounded-full bg-forest-100 dark:bg-forest-900/40 text-forest-700 dark:text-forest-300">
+                    {(t.flora_type || 'tree') === 'plant' ? '🌿 Plant' : '🌳 Tree'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500">{t.family}</td>
+                <td className="px-4 py-3">
+                  <Link to={`/trees/${t.tree_id}`} className="text-xs font-semibold text-forest-600 hover:underline">
+                    View →
                   </Link>
-                ))}
-              </div>
-            </motion.div>
-
-            {trees.length === 0 && (
-              <div className="text-center py-24 text-gray-400">No trees found in this area.</div>
-            )}
-          </>
-        )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
