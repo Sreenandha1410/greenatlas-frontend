@@ -166,6 +166,7 @@ export default function LocationEditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [treeListScrollTop, setTreeListScrollTop] = useState(0);
   const treeListRef = useRef(null);
+  const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'street'
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -650,11 +651,12 @@ export default function LocationEditorPage() {
           )}
         </aside>
 
-        {/* Maximized Map Canvas */}
-        <main className="flex-1 min-w-0 h-full relative">
-          {/* Mini pin legend */}
+        {/* Maximized Map Canvas — isolation:isolate keeps Leaflet z-indexes contained */}
+        <main className="flex-1 min-w-0 h-full relative" style={{ isolation: 'isolate' }}>
+
+          {/* Mini pin-type legend (bottom-left of map) */}
           <div style={{
-            position: 'absolute', top: 10, left: 10, zIndex: 1000,
+            position: 'absolute', bottom: 54, left: 10, zIndex: 1000,
             background: 'rgba(255,255,255,0.93)', borderRadius: 8,
             padding: '5px 10px', fontSize: 11, fontWeight: 600,
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -670,6 +672,35 @@ export default function LocationEditorPage() {
               🌿 Plants
             </span>
           </div>
+
+          {/* Custom layer toggle — replaces LayersControl to avoid event-capture bug with draggable markers */}
+          <div style={{
+            position: 'absolute', top: 10, right: 10, zIndex: 1000,
+            display: 'flex', borderRadius: 8, overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            border: '1px solid #d1d5db', fontSize: 12, fontWeight: 600
+          }}>
+            <button
+              onClick={() => setMapLayer('satellite')}
+              style={{
+                padding: '6px 12px', cursor: 'pointer', border: 'none',
+                background: mapLayer === 'satellite' ? '#15803d' : '#ffffff',
+                color: mapLayer === 'satellite' ? '#ffffff' : '#374151',
+                transition: 'all 0.15s'
+              }}
+            >🛰️ Satellite</button>
+            <button
+              onClick={() => setMapLayer('street')}
+              style={{
+                padding: '6px 12px', cursor: 'pointer', border: 'none',
+                borderLeft: '1px solid #d1d5db',
+                background: mapLayer === 'street' ? '#15803d' : '#ffffff',
+                color: mapLayer === 'street' ? '#ffffff' : '#374151',
+                transition: 'all 0.15s'
+              }}
+            >🗺️ Street</button>
+          </div>
+
           <MapContainer
             center={DEFAULT_CENTER}
             zoom={DEFAULT_ZOOM}
@@ -681,23 +712,18 @@ export default function LocationEditorPage() {
             className="h-full w-full"
             style={{ height: '100%', width: '100%' }}
           >
-            <LayersControl position="topright" style={{ zIndex: 1100 }}>
-              <LayersControl.BaseLayer checked name="Satellite">
-                <TileLayer
+            {mapLayer === 'satellite'
+              ? <TileLayer
                   url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                   attribution="Tiles © Esri"
-                  maxNativeZoom={19}
-                  maxZoom={22}
+                  maxNativeZoom={19} maxZoom={22}
                 />
-              </LayersControl.BaseLayer>
-              <LayersControl.BaseLayer name="Street">
-                <TileLayer
+              : <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="© OpenStreetMap"
-                  maxZoom={19}
+                  maxNativeZoom={19} maxZoom={22}
                 />
-              </LayersControl.BaseLayer>
-            </LayersControl>
+            }
 
             <MapResizeHandler sidebarOpen={sidebarOpen} />
             <ClickPlacement enabled={Boolean(selectedTree && mode === 'place')} onPlace={applyPosition} />
