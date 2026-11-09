@@ -193,9 +193,10 @@ export default function SpeciesDetail() {
           </div>
 
           {/* Map with LayersControl */}
-          <div style={{ height: 280 }}>
-            <MapContainer center={mapCenter} zoom={16}
+          <div style={{ height: 280, isolation: 'isolate' }}>
+            <MapContainer center={mapCenter} zoom={18}
               zoomSnap={0.5} zoomDelta={0.5}
+              style={{ height: '100%', width: '100%' }} maxZoom={22}>
               style={{ height: '100%', width: '100%' }} maxZoom={22}>
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="🗺️ Street Map">
