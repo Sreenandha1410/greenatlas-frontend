@@ -59,7 +59,7 @@ const ClusterMarkerLayer = memo(function ClusterMarkerLayer({ trees, matchedIds,
         properties: { tree: t },
         geometry: { type: 'Point', coordinates: [Number(t.longitude), Number(t.latitude)] }
       }));
-    return new Supercluster({ radius: 55, maxZoom: 17, minPoints: 3 }).load(features);
+    return new Supercluster({ radius: 80, maxZoom: 20, minPoints: 2 }).load(features);
   }, [trees]);
 
   const refresh = useCallback(() => {
@@ -280,24 +280,25 @@ export default function MapPage() {
 
                   {/* Tree pin preview */}
                   <div className="flex items-center gap-2 text-[11px] text-gray-700 dark:text-gray-300">
-                    <svg width="18" height="22" viewBox="0 0 34 58" fill="none">
-                      <path d="M17 57C17 57 30 42 30 28C30 20 24.3 14 17 14C9.7 14 4 20 4 28C4 42 17 57 17 57Z" fill="#15803d"/>
-                      <circle cx="17" cy="28" r="10.5" fill="white"/>
-                      <polygon points="17,0 5,15 29,15" fill="#15803d"/>
+                    <svg width="14" height="18" viewBox="0 0 34 58" fill="none">
+                      <path d="M17 57C17 57 30 44 30 31C30 23 24.3 17 17 17C9.7 17 4 23 4 31C4 44 17 57 17 57Z" fill="#15803d"/>
+                      <circle cx="17" cy="31" r="9" fill="white"/>
+                      <polygon points="17,3 10,12 24,12" fill="#15803d"/>
+                      <polygon points="17,8 5,17 29,17" fill="#15803d"/>
                     </svg>
-                    <span><strong>Tree</strong> — pointed canopy top</span>
+                    <span><strong>Tree</strong> — layered pine canopy</span>
                   </div>
 
                   {/* Plant pin preview */}
                   <div className="flex items-center gap-2 text-[11px] text-gray-700 dark:text-gray-300">
-                    <svg width="18" height="22" viewBox="0 0 34 58" fill="none">
-                      <path d="M17 57C17 57 30 42 30 28C30 20 24.3 14 17 14C9.7 14 4 20 4 28C4 42 17 57 17 57Z" fill="#16a34a"/>
-                      <circle cx="17" cy="28" r="10.5" fill="white"/>
-                      <circle cx="17" cy="8"  r="8"  fill="#16a34a"/>
-                      <circle cx="9"  cy="15" r="7"  fill="#16a34a"/>
-                      <circle cx="25" cy="15" r="7"  fill="#16a34a"/>
+                    <svg width="14" height="18" viewBox="0 0 34 58" fill="none">
+                      <path d="M17 57C17 57 30 44 30 31C30 23 24.3 17 17 17C9.7 17 4 23 4 31C4 44 17 57 17 57Z" fill="#16a34a"/>
+                      <circle cx="17" cy="31" r="9" fill="white"/>
+                      <circle cx="17" cy="10" r="8" fill="#16a34a"/>
+                      <circle cx="9"  cy="17" r="7" fill="#16a34a"/>
+                      <circle cx="25" cy="17" r="7" fill="#16a34a"/>
                     </svg>
-                    <span><strong>Plant</strong> — round bush top</span>
+                    <span><strong>Plant</strong> — round bush cluster</span>
                   </div>
 
                   {/* Cluster preview */}
