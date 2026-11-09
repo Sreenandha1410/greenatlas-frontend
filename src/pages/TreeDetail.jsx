@@ -12,6 +12,7 @@ import TaxonomyTree from '../components/TaxonomyTree'
 import { useDarkMode } from '../context/DarkModeContext'
 import QRScanAnimation from '../components/QRScanAnimation'
 import ComplaintDashboard from '../components/ComplaintDashboard';
+import { createStylizedPin, getBotanicalMonogram } from '../utils/mapPins';
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -530,16 +531,22 @@ export default function TreeDetail() {
         {tree.latitude && tree.longitude && (
           <RevealSection>
             <div id="campus-map" className="card overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100">
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <h2 className="font-semibold" style={{ color: dark ? '#e6edf3' : '#1f2937' }}>
                   📍 Location on Campus
                 </h2>
+                <span className="text-xs text-gray-400">
+                  🟢 Current tree &nbsp;|&nbsp; 🔵 Other campus occurrences
+                </span>
               </div>
-
-              <div style={{ height: 320, position: 'relative', zIndex: 0 }}>
+        
+              <div style={{ height: 340, position: 'relative', zIndex: 0 }}>
                 <MapContainer
-                  center={[tree.latitude, tree.longitude]}
+                  center={[parseFloat(tree.latitude), parseFloat(tree.longitude)]}
                   zoom={19}
+                  zoomSnap={0.5}
+                  zoomDelta={0.5}
+                  wheelPxPerZoomLevel={120}
                   style={{ height: '100%', width: '100%' }}
                   maxZoom={22}
                 >
@@ -552,7 +559,7 @@ export default function TreeDetail() {
                         maxZoom={22}
                       />
                     </LayersControl.BaseLayer>
-
+        
                     <LayersControl.BaseLayer checked name="Satellite">
                       <TileLayer
                         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -562,30 +569,23 @@ export default function TreeDetail() {
                       />
                     </LayersControl.BaseLayer>
                   </LayersControl>
-
-                  <Marker position={[tree.latitude, tree.longitude]} icon={primaryIcon}>
-                    <Popup>
-                      <strong>{tree.common_name}</strong><br />
-                      {tree.tree_id}
-                    </Popup>
-                  </Marker>
-
-                  {/* Same species trees on campus */}
-                  {sameSpeciesTrees
-                    .filter(t => t.tree_id !== tree.tree_id && t.latitude && t.longitude)
+        
+                  {/* Same species trees on campus (Royal Sapphire Blue) */}
+                  {sameSpecies
+                    .filter(t => t.tree_id !== tree.tree_id && t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude))
                     .map(t => (
                       <Marker
                         key={t.tree_id}
                         position={[parseFloat(t.latitude), parseFloat(t.longitude)]}
                         icon={createStylizedPin({
-                          color: '#2563eb', // Royal Sapphire for other campus instances
+                          color: '#2563eb', // Royal Sapphire
                           label: getBotanicalMonogram(t.botanical_name, t.common_name),
                           isPlant: (t.flora_type || 'tree') === 'plant'
                         })}
                       >
                         <Popup>
                           <div className="text-xs p-1">
-                            <p className="font-bold">{t.common_name}</p>
+                            <p className="font-bold text-gray-900">{t.common_name}</p>
                             <p className="font-mono text-gray-400">{t.tree_id}</p>
                             <p className="text-gray-500 mb-1">Area: {t.area}</p>
                             <Link to={`/trees/${t.tree_id}`} className="text-forest-600 font-semibold hover:underline">
@@ -595,34 +595,33 @@ export default function TreeDetail() {
                         </Popup>
                       </Marker>
                   ))}
-                  
-                  {/* Primary Selected Tree */}
-                  {tree.latitude && tree.longitude && (
-                    <Marker
-                      position={[parseFloat(tree.latitude), parseFloat(tree.longitude)]}
-                      icon={createStylizedPin({
-                        color: '#16a34a', // Emerald Green
-                        label: getBotanicalMonogram(tree.botanical_name, tree.common_name),
-                        isPlant: (tree.flora_type || 'tree') === 'plant',
-                        isSelected: true
-                      })}
-                    >
-                      <Popup>
-                        <div className="text-xs p-1">
-                          <p className="font-bold text-forest-700">{tree.common_name} (Current Tree)</p>
-                          <p className="font-mono font-bold">{tree.tree_id}</p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  )}
+        
+                  {/* Primary Current Tree (Emerald Green + Pulse Aura) */}
+                  <Marker
+                    position={[parseFloat(tree.latitude), parseFloat(tree.longitude)]}
+                    icon={createStylizedPin({
+                      color: '#16a34a', // Emerald Green
+                      label: getBotanicalMonogram(tree.botanical_name, tree.common_name),
+                      isPlant: (tree.flora_type || 'tree') === 'plant',
+                      isSelected: true
+                    })}
+                  >
+                    <Popup>
+                      <div className="text-xs p-1">
+                        <p className="font-bold text-forest-700">{tree.common_name} (Current Tree)</p>
+                        <p className="font-mono font-bold">{tree.tree_id}</p>
+                        <p className="text-gray-500">Area: {tree.area}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
                 </MapContainer>
               </div>
-
+        
               <div
-                className="px-5 py-2 text-xs border-t border-gray-100"
-                style={{ color: dark ? '#6e7681' : '#9ca3af' }}
+                className="px-5 py-2 text-xs border-t border-gray-100 dark:border-gray-800"
+                style={{ color: dark ? '#8b949e' : '#6b7280' }}
               >
-                🔴 This tree &nbsp;|&nbsp; 🟢 Same species ({sameSpecies.length + 1} of this species on campus)
+                🟢 <strong>Current Tree</strong> &nbsp;|&nbsp; 🔵 <strong>Same Species ({sameSpecies.length} others recorded on campus)</strong>
               </div>
             </div>
           </RevealSection>
