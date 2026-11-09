@@ -207,7 +207,7 @@ function TreeForm({
       {/* Step 1: Area & Botanical Name Selection */}
       <div className="bg-forest-50/50 dark:bg-forest-950/20 p-4 rounded-xl border border-forest-100 dark:border-forest-900/50 mb-5">
         <p className="text-xs font-semibold text-forest-700 dark:text-forest-400 mb-3 uppercase tracking-wider">
-          Step 1: Select Botanical Name & Campus Area (Auto-assigns ID, Family & Common Name)
+          Choose Basic Info...
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
