@@ -1,6 +1,6 @@
 import L from 'leaflet';
 
-// Fixed botanical palette
+// Fixed botanical palette — professional, distinct colors
 const PALETTE = [
   '#1b5e20', // Forest Emerald
   '#00796b', // Teal Jade
@@ -14,7 +14,7 @@ const PALETTE = [
   '#0284c7'  // Sky Cyan
 ];
 
-// Deterministic color generator based on species string
+// Deterministic color by species string
 export const getSpeciesColor = (str = '') => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -23,23 +23,18 @@ export const getSpeciesColor = (str = '') => {
   return PALETTE[Math.abs(hash) % PALETTE.length];
 };
 
-// Monogram generator: 2 uppercase letters (Genus 1st letter + Species 1st letter)
+// 2-letter monogram from botanical name
 export const getBotanicalMonogram = (botanicalName = '', commonName = '') => {
   const parts = (botanicalName || commonName || 'TR').trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return parts[0].slice(0, 2).toUpperCase();
 };
 
 /**
- * Creates a stylized teardrop / leaf pin
- * @param {Object} options
- * @param {string} options.color - Background pin color
- * @param {string} options.label - 2-character monogram
- * @param {boolean} options.isPlant - If true, displays plant contour
- * @param {boolean} options.isSelected - Highlighted selection state
- * @param {boolean} options.isDimmed - Search mismatch dimmed state
+ * Creates a stylized pin with strong tree vs. plant shape differentiation.
+ *
+ * TREE:  Inverted teardrop + large filled TRIANGLE canopy above the head (like a tree silhouette)
+ * PLANT: Inverted teardrop + 3 overlapping circles above the head (like a bush cluster)
  */
 export const createStylizedPin = ({
   color = '#1b5e20',
@@ -48,42 +43,44 @@ export const createStylizedPin = ({
   isSelected = false,
   isDimmed = false
 }) => {
-  const width = isSelected ? 36 : 30;
-  const height = isSelected ? 44 : 38;
-  const pinFill = isSelected ? '#15803d' : color;
-  const strokeColor = isSelected ? '#ffffff' : 'rgba(255,255,255,0.9)';
-  const strokeWidth = isSelected ? 2.5 : 1.5;
-  const opacity = isDimmed ? 0.25 : 1;
-  const haloAnimation = isSelected ? 'filter: drop-shadow(0 0 8px rgba(34,197,94,0.8));' : '';
+  const scale = isSelected ? 1.2 : 1;
+  const W = Math.round(34 * scale);
+  const H = Math.round(50 * scale);
+  const pinFill   = isSelected ? '#15803d' : color;
+  const stroke    = isSelected ? '#ffffff' : 'rgba(255,255,255,0.9)';
+  const sw        = isSelected ? 2.5 : 1.5;
+  const opacity   = isDimmed ? 0.22 : 1;
+  const glow      = isSelected ? 'filter:drop-shadow(0 0 8px rgba(34,197,94,0.85));' : '';
 
-  // SVG for Tree Pin (Sharp anchor teardrop)
-  const treeSvg = `
-    <svg width="${width}" height="${height}" viewBox="0 0 30 38" fill="none" xmlns="http://www.w3.org/2000/svg" style="${haloAnimation}">
-      <path d="M15 37C15 37 27 22.5 27 13.5C27 6.87258 21.6274 1.5 15 1.5C8.37258 1.5 3 6.87258 3 13.5C3 22.5 15 37 15 37Z" 
-            fill="${pinFill}" stroke="${strokeColor}" stroke-width="${strokeWidth}" />
-      <circle cx="15" cy="13.5" r="8.5" fill="#ffffff" />
-      <text x="15" y="17" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="7.5" font-weight="800" fill="${pinFill}">${label}</text>
-      <circle cx="15" cy="36.5" r="1.5" fill="${pinFill}" />
-    </svg>
-  `;
+  // The teardrop body (bottom anchor)
+  const body = `<path d="M17 48C17 48 31 32 31 20C31 11.7 24.7 5 17 5C9.3 5 3 11.7 3 20C3 32 17 48 17 48Z"
+        fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
+      <circle cx="17" cy="20" r="10" fill="#ffffff"/>
+      <text x="17" y="23.5" text-anchor="middle"
+            font-family="system-ui,-apple-system,sans-serif"
+            font-size="8" font-weight="800" fill="${pinFill}">${label}</text>`;
 
-  // SVG for Plant / Shrub Pin (Rounded leaf shield with sprout)
-  const plantSvg = `
-    <svg width="${width}" height="${height}" viewBox="0 0 30 38" fill="none" xmlns="http://www.w3.org/2000/svg" style="${haloAnimation}">
-      <path d="M15 36.5C15 36.5 26.5 22 26.5 14C26.5 7.6 21.3 2.5 15 2.5C8.7 2.5 3.5 7.6 3.5 14C3.5 22 15 36.5 15 36.5Z" 
-            fill="${pinFill}" stroke="${strokeColor}" stroke-width="${strokeWidth}" />
-      <path d="M15 2.5C15 2.5 13 -0.5 10 0.5C10 0.5 11 3.5 15 2.5Z" fill="${pinFill}" />
-      <circle cx="15" cy="14" r="8" fill="#ffffff" />
-      <text x="15" y="17.2" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="7" font-weight="800" fill="${pinFill}">${label}</text>
-      <circle cx="15" cy="36.5" r="1.5" fill="${pinFill}" />
-    </svg>
-  `;
+  // TREE top: solid triangle canopy (tall, clearly tree-shaped)
+  const treeTop = `
+      <polygon points="17,0 9,13 25,13" fill="${pinFill}" stroke="${stroke}" stroke-width="1" stroke-linejoin="round"/>`;
+
+  // PLANT top: 3 overlapping circles forming a bush cluster
+  const plantTop = `
+      <circle cx="17" cy="8"  r="6"   fill="${pinFill}" stroke="${stroke}" stroke-width="1"/>
+      <circle cx="11" cy="11" r="5.5" fill="${pinFill}" stroke="${stroke}" stroke-width="1"/>
+      <circle cx="23" cy="11" r="5.5" fill="${pinFill}" stroke="${stroke}" stroke-width="1"/>`;
+
+  const svg = `<svg width="${W}" height="${H}" viewBox="0 0 34 50"
+       fill="none" xmlns="http://www.w3.org/2000/svg" style="${glow}">
+    ${isPlant ? plantTop : treeTop}
+    ${body}
+  </svg>`;
 
   return L.divIcon({
     className: 'custom-tree-pin',
-    html: `<div style="opacity: ${opacity}; transition: all 0.2s ease;">${isPlant ? plantSvg : treeSvg}</div>`,
-    iconSize: [width, height],
-    iconAnchor: [width / 2, height],
-    popupAnchor: [0, -height + 4]
+    html: `<div style="opacity:${opacity};transition:opacity 0.2s ease;">${svg}</div>`,
+    iconSize:    [W, H],
+    iconAnchor:  [W / 2, H],
+    popupAnchor: [0, -H + 4]
   });
 };
