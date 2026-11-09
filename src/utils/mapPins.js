@@ -18,15 +18,19 @@ export const getBotanicalMonogram = (botanicalName = '', commonName = '') => {
 };
 
 /**
- * Pin design (viewBox 0 0 34 58):
+ * Coordinate space: viewBox "0 0 34 58"  (unchanged — only rendered W/H shrunk)
+ * Rendered size:    W=24 H=42  (compact, was 34×58)
  *
- * TREE:  Teardrop (y=15–57) + white circle (cy=28) + text,
- *        THEN triangle canopy (apex y=0, base y=15) painted on top → clearly visible spike
+ * SVG painter order (later = on top):
+ *   1. Teardrop body  (green, tip at y=57)
+ *   2. White overlay circle  (cx=17 cy=31 r=9) — shifted lower → more top space
+ *   3. Monogram text  (y=35)
+ *   4. Shape indicator — LAST so always visible above body
  *
- * PLANT: Teardrop (y=15–57) + white circle (cy=28) + text,
- *        THEN 3 circles (top y≈1, bottom y≈21) painted on top → clearly visible bush cluster
+ * TREE:  two-layer pine canopy (narrow upper + wide lower triangle sharing apex)
+ * PLANT: three overlapping circles forming a bush cluster
  *
- * Key: body rendered FIRST, shape rendered LAST (SVG painter order = later = on top).
+ * Both shapes have their lower edge at y=17 = teardrop top → seamless colour merge.
  */
 export const createStylizedPin = ({
   color = '#1b5e20',
@@ -35,37 +39,44 @@ export const createStylizedPin = ({
   isSelected = false,
   isDimmed = false
 }) => {
-  const scale   = isSelected ? 1.2 : 1;
-  const W       = Math.round(34 * scale);
-  const H       = Math.round(58 * scale);
+  const scale   = isSelected ? 1.15 : 1;
+  const W       = Math.round(24 * scale);   // compact
+  const H       = Math.round(42 * scale);   // compact
   const pinFill = isSelected ? '#15803d' : color;
-  const stroke  = isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)';
-  const sw      = isSelected ? 2.5 : 1.5;
+  const stroke  = isSelected ? '#ffffff' : 'rgba(255,255,255,0.8)';
+  const sw      = isSelected ? 2 : 1.5;
   const opacity = isDimmed ? 0.22 : 1;
-  const glow    = isSelected ? 'filter:drop-shadow(0 0 8px rgba(34,197,94,0.85));' : '';
+  const glow    = isSelected ? 'filter:drop-shadow(0 0 6px rgba(34,197,94,0.9));' : '';
 
-  // ── Step 1: Teardrop body (rendered first = behind shape) ──────────────
-  // Top of head at y≈15, circle center cy=28, tip at y=57
+  // ── Body (rendered FIRST = behind shape) ─────────────────────────────────────────
+  // Circle center shifted to cy=31 (was 28) → teardrop top now at y=17 (was y=14)
+  // This gives y=0–17 of clear space for the shape indicator above the green body
   const body = `
-    <path d="M17 57C17 57 30 42 30 28C30 20 24.3 14 17 14C9.7 14 4 20 4 28C4 42 17 57 17 57Z"
+    <path d="M17 57C17 57 30 44 30 31C30 23 24.3 17 17 17C9.7 17 4 23 4 31C4 44 17 57 17 57Z"
           fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
-    <circle cx="17" cy="28" r="10.5" fill="#ffffff"/>
-    <text x="17" y="32" text-anchor="middle"
+    <circle cx="17" cy="31" r="9" fill="#ffffff"/>
+    <text x="17" y="35" text-anchor="middle"
           font-family="system-ui,-apple-system,sans-serif"
-          font-size="8.5" font-weight="800" fill="${pinFill}">${label}</text>`;
+          font-size="7" font-weight="800" fill="${pinFill}">${label}</text>`;
 
-  // ── Step 2a: TREE — triangle canopy (rendered last = on top of body) ───
-  // Apex (17,0), base corners (5,15) & (29,15) — base aligns with teardrop top → seamless join
+  // ── TREE: double-layer pine canopy (rendered LAST = on top) ──────────────────────
+  // Upper narrow canopy: shared apex (17,3) → base (10,12)–(24,12), width=14
+  // Lower wide  canopy:  shared apex (17,8) → base  (5,17)–(29,17), width=24
+  //   • Base of lower canopy at y=17 = teardrop top → colours merge perfectly
+  //   • The two triangles create a layered pine silhouette, immediately recognisable
   const treeTop = `
-    <polygon points="17,0 5,15 29,15"
+    <polygon points="17,3 10,12 24,12"
+             fill="${pinFill}" stroke="${stroke}" stroke-width="1" stroke-linejoin="round"/>
+    <polygon points="17,8 5,17 29,17"
              fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
 
-  // ── Step 2b: PLANT — 3-bubble bush (rendered last = on top of body) ────
-  // Central bubble top at y≈0.5, side-bubble bottoms at y≈21 — overlap teardrop top seamlessly
+  // ── PLANT: 3-bubble bush cluster (rendered LAST = on top) ────────────────────────
+  // Central top bubble: cx=17 cy=10 r=8  (top at y=2 — prominent crown)
+  // Side base bubbles:  cx=9/25 cy=17 r=7 (bottom at y=24, extending into body → seamless)
   const plantTop = `
-    <circle cx="17" cy="8"  r="8"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
-    <circle cx="9"  cy="15" r="7"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
-    <circle cx="25" cy="15" r="7"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+    <circle cx="17" cy="10" r="8"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
+    <circle cx="9"  cy="17" r="7"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>
+    <circle cx="25" cy="17" r="7"   fill="${pinFill}" stroke="${stroke}" stroke-width="${sw}"/>`;
 
   const svg = `<svg width="${W}" height="${H}" viewBox="0 0 34 58"
      fill="none" xmlns="http://www.w3.org/2000/svg" style="${glow}">
