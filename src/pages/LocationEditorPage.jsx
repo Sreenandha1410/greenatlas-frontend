@@ -133,9 +133,10 @@ const ClusterLayer = memo(function ClusterLayer({ trees, selectedTreeId, onSelec
         }}
         eventHandlers={{ click: () => onSelect(tree) }}
       >
-        <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
-          <span className="font-mono font-bold text-xs">{tree.tree_id}</span> ({monogram})
-        </Tooltip>
+          <Tooltip direction="top" offset={[0, -6]} opacity={0.9}>
+            <span className="font-mono font-bold text-xs">{tree.tree_id}</span>
+            {' '}<span className="text-xs text-gray-600">{tree.common_name}</span>
+          </Tooltip>
         <Popup>
           <div className="text-xs">
             <strong>{tree.tree_id}</strong><br />
@@ -402,11 +403,6 @@ export default function LocationEditorPage() {
           <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-800 font-medium">
             {located.length} Located
           </span>
-          {trees.length - located.length > 0 && (
-            <span className="text-xs px-2.5 py-1 rounded-full bg-orange-100 text-orange-800 font-medium">
-              {trees.length - located.length} Missing
-            </span>
-          )}
         </div>
 
         {/* Integrated Edit Actions in Top Bar */}
@@ -656,6 +652,24 @@ export default function LocationEditorPage() {
 
         {/* Maximized Map Canvas */}
         <main className="flex-1 min-w-0 h-full relative">
+          {/* Mini Legend */}
+          <div style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 1000,
+            background: 'rgba(255,255,255,0.93)', borderRadius: 8,
+            padding: '5px 10px', fontSize: 11, fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            border: '1px solid #e5e7eb', pointerEvents: 'none',
+            display: 'flex', gap: 12, alignItems: 'center'
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#16a34a', display: 'inline-block' }}/>
+              🌳 Trees
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: '#84cc16', display: 'inline-block' }}/>
+              🌿 Plants
+            </span>
+          </div>
           <MapContainer
             center={DEFAULT_CENTER}
             zoom={DEFAULT_ZOOM}
@@ -744,13 +758,7 @@ export default function LocationEditorPage() {
                   placeholder="Reason (optional)..."
                   className="input text-xs py-1 px-2 w-36 dark:bg-gray-800 dark:border-gray-700"
                 />
-                <button
-                  disabled={!changed || saving}
-                  onClick={save}
-                  className="btn-primary text-xs px-3 py-1 font-semibold disabled:opacity-40"
-                >
-                  {saving ? 'Saving...' : 'Apply'}
-                </button>
+                
               </div>
             </div>
           )}
