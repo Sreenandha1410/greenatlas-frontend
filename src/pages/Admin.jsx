@@ -103,7 +103,120 @@ const Flash = ({ msg }) => {
   );
 };
 
-/* ── TreeForm (With Auto-ID, Family & Common Name Assignment) ── */
+/* ── Explorer Toolbar Component ── */
+function ExplorerToolbar({
+  search,
+  onSearchChange,
+  sortField,
+  onSortFieldChange,
+  sortOrder,
+  onToggleSortOrder,
+  viewMode,
+  onViewModeChange,
+  sortOptions = [],
+  newOnly,
+  onToggleNewOnly,
+  count,
+  dark
+}) {
+  const iStyle = {
+    background: dark ? '#1c2128' : '#fff',
+    color: dark ? '#e6edf3' : '#111827',
+    border: `1px solid ${dark ? '#30363d' : '#d1d5db'}`
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-[#30363d] rounded-t-xl">
+      <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-sm">
+        <input
+          className="input text-sm w-full py-1.5"
+          placeholder="Filter items..."
+          value={search}
+          onChange={e => onSearchChange(e.target.value)}
+          style={iStyle}
+        />
+        {search && (
+          <button
+            onClick={() => onSearchChange('')}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Sort By Dropdown */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <span>Sort:</span>
+          <select
+            className="input text-xs py-1.5 px-2 rounded-lg"
+            style={iStyle}
+            value={sortField}
+            onChange={e => onSortFieldChange(e.target.value)}
+          >
+            {sortOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={onToggleSortOrder}
+            title={sortOrder === 'asc' ? 'Ascending (Click for Descending)' : 'Descending (Click for Ascending)'}
+            className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#1c2128] text-xs font-semibold hover:bg-gray-100 dark:hover:bg-[#21262d] transition-colors"
+          >
+            {sortOrder === 'asc' ? '▲ Asc' : '▼ Desc'}
+          </button>
+        </div>
+
+        {/* Highlight / Filter New Additions */}
+        {onToggleNewOnly && (
+          <button
+            onClick={onToggleNewOnly}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              newOnly
+                ? 'bg-emerald-600 text-white border-emerald-600'
+                : 'bg-white dark:bg-[#1c2128] text-gray-700 dark:text-gray-300 border-gray-300 dark:border-[#30363d] hover:bg-gray-100 dark:hover:bg-[#21262d]'
+            }`}
+          >
+            ✨ Newest Only
+          </button>
+        )}
+
+        {/* View as Tiles / List */}
+        <div className="flex items-center border border-gray-300 dark:border-[#30363d] rounded-lg overflow-hidden">
+          <button
+            onClick={() => onViewModeChange('list')}
+            title="List view"
+            className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              viewMode === 'list'
+                ? 'bg-forest-600 text-white'
+                : 'bg-white dark:bg-[#1c2128] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#21262d]'
+            }`}
+          >
+            📋 List
+          </button>
+          <button
+            onClick={() => onViewModeChange('tiles')}
+            title="Tiles view"
+            className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              viewMode === 'tiles'
+                ? 'bg-forest-600 text-white'
+                : 'bg-white dark:bg-[#1c2128] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#21262d]'
+            }`}
+          >
+            🔲 Tiles
+          </button>
+        </div>
+
+        <span className="text-xs text-gray-400 ml-1">
+          {count} items
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ── TreeForm ── */
 function TreeForm({
   initial = EMPTY,
   onSubmit,
@@ -127,7 +240,6 @@ function TreeForm({
   };
   const lStyle = { color: dark ? '#8b949e' : '#6b7280' };
 
-  // Calculate botanical name options from species table
   const botanicalOptions = speciesList.map(s => {
     const bot = `${s.genus || ''} ${s.species || ''}`.trim();
     return {
@@ -139,7 +251,6 @@ function TreeForm({
     };
   });
 
-  // Auto-generation logic when botanical_name or area changes in "Add" mode
   const handleBotanicalChange = (selectedBotName) => {
     const matched = botanicalOptions.find(b => b.botanical_name === selectedBotName);
     const newCommonName = matched ? matched.common_name : form.common_name;
@@ -178,11 +289,9 @@ function TreeForm({
   const computeAutoTreeId = (botName, areaName, specId) => {
     if (!areaName || !botName) return '';
 
-    // 1. Get Area Code
     const areaObj = areas.find(a => a.area === areaName);
     const areaCode = (areaObj?.area_code || areaName.substring(0, 3)).toUpperCase().trim();
 
-    // 2. Get Species ID
     let speciesCode = specId;
     if (!speciesCode) {
       const sp = speciesList.find(s => {
@@ -193,7 +302,6 @@ function TreeForm({
     }
     speciesCode = (speciesCode || 'X').trim();
 
-    // 3. Count existing trees for this botanical name in this area
     const count = trees.filter(
       t => t.area === areaName && t.botanical_name === botName
     ).length;
@@ -204,14 +312,20 @@ function TreeForm({
 
   return (
     <div>
-      {/* Step 1: Area & Botanical Name Selection */}
-      <div className="bg-forest-50/50 dark:bg-forest-950/20 p-4 rounded-xl border border-forest-100 dark:border-forest-900/50 mb-5">
-        <p className="text-xs font-semibold text-forest-700 dark:text-forest-400 mb-3 uppercase tracking-wider">
-          Choose Basic Info...
+      {/* Step 1: Dark Mode Hardened */}
+      <div
+        className="p-4 rounded-xl border mb-5 transition-colors"
+        style={{
+          background: dark ? '#161b22' : '#f0fdf4',
+          borderColor: dark ? '#30363d' : '#bbf7d0'
+        }}
+      >
+        <p className="text-xs font-bold uppercase tracking-wider mb-3 text-forest-700 dark:text-forest-300">
+          Step 1: Select Botanical Name & Campus Area (Auto-assigns ID, Family & Common Name)
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium mb-1" style={lStyle}>
+            <label className="block text-xs font-semibold mb-1" style={lStyle}>
               Botanical Name <span className="text-red-500">*</span>
             </label>
             <select
@@ -230,7 +344,7 @@ function TreeForm({
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={lStyle}>
+            <label className="block text-xs font-semibold mb-1" style={lStyle}>
               Campus Area <span className="text-red-500">*</span>
             </label>
             <select
@@ -250,7 +364,7 @@ function TreeForm({
         </div>
       </div>
 
-      {/* Step 2: Auto-Assigned & Details */}
+      {/* Step 2: Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <div>
           <div className="flex items-center justify-between mb-1">
@@ -271,7 +385,7 @@ function TreeForm({
             className="input mb-3 font-mono font-semibold"
             style={{
               ...iStyle,
-              background: !manualIdEdit && !isEditing ? (dark ? '#161b22' : '#f0fdf4') : iStyle.background
+              background: !manualIdEdit && !isEditing ? (dark ? '#0d1117' : '#f0fdf4') : iStyle.background
             }}
             value={form.tree_id ?? ''}
             onChange={e => {
@@ -279,7 +393,7 @@ function TreeForm({
               set('tree_id', e.target.value);
             }}
             readOnly={!manualIdEdit && !isEditing}
-            placeholder=" "
+            placeholder="e.g. CAIA9001"
           />
         </div>
 
@@ -534,13 +648,16 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
   );
 }
 
-/* ── AreaPanel (Subpage to Manage & Add Campus Areas) ── */
+/* ── AreaPanel (Subpage to Manage & Add Campus Areas with Explorer View) ── */
 function AreaPanel({ areas = [], onRefresh, dark = false }) {
   const [form, setForm] = useState(AREA_EMPTY);
   const [adding, setAdding] = useState(false);
   const [editingArea, setEditingArea] = useState(null);
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState('area');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [viewMode, setViewMode] = useState('list');
 
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
@@ -591,25 +708,28 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
     }
   };
 
-  const filtered = areas.filter(a =>
+  let processed = areas.filter(a =>
     !search ||
     a.area?.toLowerCase().includes(search.toLowerCase()) ||
     a.area_code?.toLowerCase().includes(search.toLowerCase()) ||
     a.description?.toLowerCase().includes(search.toLowerCase())
   );
 
+  processed.sort((a, b) => {
+    let valA = (a[sortField] || '').toString().toLowerCase();
+    let valB = (b[sortField] || '').toString().toLowerCase();
+    const cmp = valA.localeCompare(valB);
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
   return (
     <div>
       <Flash msg={msg} />
 
-      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <input
-          className="input max-w-xs"
-          placeholder="Search campus areas…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={iStyle}
-        />
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+          Campus Areas Management
+        </h2>
         <Btn color="primary" onClick={() => { setAdding(!adding); setEditingArea(null); }}>
           {adding ? 'Cancel' : '+ Add New Area'}
         </Btn>
@@ -623,7 +743,7 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs font-medium mb-1" style={lStyle}>
-                Area Name <span className="text-red-500">*</span>
+                Area Name (e.g. Canteen) <span className="text-red-500">*</span>
               </label>
               <input
                 className="input"
@@ -635,15 +755,15 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={lStyle}>
-                Area Code <span className="text-red-500">*</span>
+                Area Code (e.g. CAI) <span className="text-red-500">*</span>
               </label>
               <input
                 className="input font-mono uppercase"
                 style={iStyle}
                 value={form.area_code}
                 onChange={e => setForm(f => ({ ...f, area_code: e.target.value.toUpperCase() }))}
-                placeholder="eg. CAI"
-                maxLength={3}
+                placeholder="e.g. CAI"
+                maxLength={6}
               />
             </div>
           </div>
@@ -689,124 +809,179 @@ function AreaPanel({ areas = [], onRefresh, dark = false }) {
         </div>
       )}
 
-      {/* Areas Table */}
-      <div className="card overflow-x-auto">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-700 dark:text-gray-200">
-          Campus Areas ({filtered.length})
-        </div>
-        <table className="w-full text-sm min-w-[650px]">
-          <thead>
-            <tr style={{ background: 'var(--color-forest-500)' }}>
-              {['Area Name', 'Code', 'Photo', 'Description', 'Actions'].map(h => (
-                <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {filtered.map(a => (
-              <Fragment key={a.area}>
-                <tr
-                  className="transition-colors"
-                  style={{
-                    background: dark ? '#1c2128' : '#fff',
-                    borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
-                  onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
-                >
-                  <td className="px-4 py-3 font-semibold" style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                    {a.area}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs font-bold text-forest-600 dark:text-forest-400">
-                    {a.area_code || '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {a.image_url ? (
-                      <img src={a.image_url} alt={a.area} className="w-12 h-8 object-cover rounded" />
-                    ) : (
-                      <span className="text-xs text-gray-400">No image</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs max-w-xs truncate" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-                    {a.description || '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Btn
-                        color="primary"
-                        onClick={() => setEditingArea(editingArea?.area === a.area ? null : { ...a })}
-                      >
-                        {editingArea?.area === a.area ? 'Close' : 'Edit'}
-                      </Btn>
-                      <Btn color="danger" onClick={() => handleDelete(a.area)}>Delete</Btn>
-                    </div>
-                  </td>
-                </tr>
+      {/* Explorer Controls */}
+      <div className="card overflow-hidden">
+        <ExplorerToolbar
+          search={search}
+          onSearchChange={setSearch}
+          sortField={sortField}
+          onSortFieldChange={setSortField}
+          sortOrder={sortOrder}
+          onToggleSortOrder={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          sortOptions={[
+            { value: 'area', label: 'Area Name' },
+            { value: 'area_code', label: 'Area Code' }
+          ]}
+          count={processed.length}
+          dark={dark}
+        />
 
-                {editingArea?.area === a.area && (
-                  <tr key={`edit-area-${a.area}`}>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-4"
+        {viewMode === 'list' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[650px]">
+              <thead>
+                <tr style={{ background: 'var(--color-forest-500)' }}>
+                  {['Area Name', 'Code', 'Photo', 'Description', 'Actions'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {processed.map(a => (
+                  <Fragment key={a.area}>
+                    <tr
+                      className="transition-colors"
                       style={{
-                        background: dark ? '#161b22' : '#f9fdf9',
-                        borderLeft: '4px solid var(--color-forest-500)',
-                        borderBottom: '2px solid var(--color-forest-500)'
+                        background: dark ? '#1c2128' : '#fff',
+                        borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
                       }}
+                      onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
                     >
-                      <h4 className="font-semibold mb-3 text-forest-700 dark:text-forest-300">
-                        Edit Metadata: {a.area}
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <label className="block text-xs font-medium mb-1" style={lStyle}>Image URL</label>
-                          <input
-                            className="input"
-                            style={iStyle}
-                            value={editingArea.image_url || ''}
-                            onChange={e => setEditingArea({ ...editingArea, image_url: e.target.value })}
-                          />
+                      <td className="px-4 py-3 font-semibold" style={{ color: dark ? '#e6edf3' : '#111827' }}>
+                        {a.area}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-forest-600 dark:text-forest-400">
+                        {a.area_code || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {a.image_url ? (
+                          <img src={a.image_url} alt={a.area} className="w-12 h-8 object-cover rounded" />
+                        ) : (
+                          <span className="text-xs text-gray-400">No image</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs max-w-xs truncate" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                        {a.description || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <Btn
+                            color="primary"
+                            onClick={() => setEditingArea(editingArea?.area === a.area ? null : { ...a })}
+                          >
+                            {editingArea?.area === a.area ? 'Close' : 'Edit'}
+                          </Btn>
+                          <Btn color="danger" onClick={() => handleDelete(a.area)}>Delete</Btn>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium mb-1" style={lStyle}>Navigation Notes</label>
-                          <input
-                            className="input"
-                            style={iStyle}
-                            value={editingArea.navigation_notes || ''}
-                            onChange={e => setEditingArea({ ...editingArea, navigation_notes: e.target.value })}
+                      </td>
+                    </tr>
+
+                    {editingArea?.area === a.area && (
+                      <tr key={`edit-area-${a.area}`}>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-4"
+                          style={{
+                            background: dark ? '#161b22' : '#f9fdf9',
+                            borderLeft: '4px solid var(--color-forest-500)',
+                            borderBottom: '2px solid var(--color-forest-500)'
+                          }}
+                        >
+                          <h4 className="font-semibold mb-3 text-forest-700 dark:text-forest-300">
+                            Edit Metadata: {a.area}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <label className="block text-xs font-medium mb-1" style={lStyle}>Image URL</label>
+                              <input
+                                className="input"
+                                style={iStyle}
+                                value={editingArea.image_url || ''}
+                                onChange={e => setEditingArea({ ...editingArea, image_url: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium mb-1" style={lStyle}>Navigation Notes</label>
+                              <input
+                                className="input"
+                                style={iStyle}
+                                value={editingArea.navigation_notes || ''}
+                                onChange={e => setEditingArea({ ...editingArea, navigation_notes: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          <label className="block text-xs font-medium mb-1" style={lStyle}>Description</label>
+                          <textarea
+                            className="input mb-3 resize-y"
+                            style={{ ...iStyle, height: 60 }}
+                            value={editingArea.description || ''}
+                            onChange={e => setEditingArea({ ...editingArea, description: e.target.value })}
                           />
-                        </div>
-                      </div>
-                      <label className="block text-xs font-medium mb-1" style={lStyle}>Description</label>
-                      <textarea
-                        className="input mb-3 resize-y"
-                        style={{ ...iStyle, height: 60 }}
-                        value={editingArea.description || ''}
-                        onChange={e => setEditingArea({ ...editingArea, description: e.target.value })}
-                      />
-                      <div className="flex gap-3">
-                        <Btn color="primary" onClick={handleUpdate}>Save Changes</Btn>
-                        <Btn color="gray" onClick={() => setEditingArea(null)}>Cancel</Btn>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+                          <div className="flex gap-3">
+                            <Btn color="primary" onClick={handleUpdate}>Save Changes</Btn>
+                            <Btn color="gray" onClick={() => setEditingArea(null)}>Cancel</Btn>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Tiles View */
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {processed.map(a => (
+              <div
+                key={a.area}
+                className="p-4 rounded-xl border flex flex-col justify-between"
+                style={{
+                  background: dark ? '#1c2128' : '#ffffff',
+                  borderColor: dark ? '#30363d' : '#e5e7eb'
+                }}
+              >
+                <div>
+                  <div className="h-28 overflow-hidden rounded-lg mb-3 relative bg-forest-900/10">
+                    {a.image_url ? (
+                      <img src={a.image_url} alt={a.area} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-4xl">📍</div>
+                    )}
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-mono font-bold bg-black/60 text-white">
+                      {a.area_code || '—'}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 dark:text-gray-100">{a.area}</h4>
+                  <p className="text-xs text-gray-500 line-clamp-2 mt-1">{a.description || 'No description'}</p>
+                </div>
+                <div className="flex gap-2 mt-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <Btn color="primary" onClick={() => setEditingArea(a)}>Edit</Btn>
+                  <Btn color="danger" onClick={() => handleDelete(a.area)}>Delete</Btn>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-/* ── SpeciesPanel ── */
+/* ── SpeciesPanel (With Explorer View) ── */
 function SpeciesPanel({ dark = false }) {
   const [species, setSpecies] = useState([]);
   const [editId, setEditId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState('common_name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [viewMode, setViewMode] = useState('list');
+
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
   useEffect(() => {
@@ -846,7 +1021,7 @@ function SpeciesPanel({ dark = false }) {
     }
   };
 
-  const filtered = species.filter(s =>
+  let processed = species.filter(s =>
     !search ||
     s.common_name?.toLowerCase().includes(search.toLowerCase()) ||
     s.species?.toLowerCase().includes(search.toLowerCase()) ||
@@ -855,17 +1030,20 @@ function SpeciesPanel({ dark = false }) {
     s.genus?.toLowerCase().includes(search.toLowerCase())
   );
 
+  processed.sort((a, b) => {
+    let valA = (a[sortField] || '').toString().toLowerCase();
+    let valB = (b[sortField] || '').toString().toLowerCase();
+    const cmp = valA.localeCompare(valB);
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
   return (
     <div>
       <Flash msg={msg} />
       <div className="flex items-center justify-between mb-4 gap-3">
-        <input
-          className="input max-w-xs"
-          placeholder="Search species…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-        />
+        <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+          Manage Botanical Species
+        </h2>
         <Btn color="primary" onClick={() => setAdding(!adding)}>
           {adding ? 'Cancel' : '+ Add Species'}
         </Btn>
@@ -883,72 +1061,303 @@ function SpeciesPanel({ dark = false }) {
         </div>
       )}
 
-      <div className="card overflow-x-auto">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 font-semibold text-gray-700 dark:text-gray-200">
-          All Species ({filtered.length})
-        </div>
-        <table className="w-full text-sm min-w-[600px]">
-          <thead>
-            <tr style={{ background: 'var(--color-forest-500)' }}>
-              {['ID', 'Common Name', 'Botanical Name', 'Family', 'Actions'].map(h => (
-                <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {filtered.map(s => (
-              <Fragment key={s.species_id}>
-                <tr
-                  key={s.species_id}
-                  className="transition-colors"
-                  style={{
-                    background: dark ? '#1c2128' : '#fff',
-                    borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
-                  onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
-                >
-                  <td className="px-4 py-3 text-xs" style={{ color: '#8b949e' }}>{s.species_id}</td>
-                  <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>{s.common_name}</td>
-                  <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>{s.genus} {s.species}</td>
-                  <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>{s.family}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Btn color="primary" onClick={() => setEditId(editId === s.species_id ? null : s.species_id)}>
-                        {editId === s.species_id ? 'Close' : 'Edit'}
-                      </Btn>
-                      <Btn color="danger" onClick={() => handleDelete(s.species_id)}>Delete</Btn>
-                    </div>
-                  </td>
+      <div className="card overflow-hidden">
+        <ExplorerToolbar
+          search={search}
+          onSearchChange={setSearch}
+          sortField={sortField}
+          onSortFieldChange={setSortField}
+          sortOrder={sortOrder}
+          onToggleSortOrder={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          sortOptions={[
+            { value: 'common_name', label: 'Common Name' },
+            { value: 'species_id', label: 'Species ID' },
+            { value: 'family', label: 'Family' },
+            { value: 'genus', label: 'Genus' },
+            { value: 'native_exotic', label: 'Native / Exotic' }
+          ]}
+          count={processed.length}
+          dark={dark}
+        />
+
+        {viewMode === 'list' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead>
+                <tr style={{ background: 'var(--color-forest-500)' }}>
+                  {['ID', 'Common Name', 'Botanical Name', 'Family', 'Type', 'Actions'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">{h}</th>
+                  ))}
                 </tr>
-                {editId === s.species_id && (
-                  <tr key={`edit-${s.species_id}`}>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-4"
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {processed.map(s => (
+                  <Fragment key={s.species_id}>
+                    <tr
+                      key={s.species_id}
+                      className="transition-colors"
                       style={{
-                        background: dark ? '#161b22' : '#f9fdf9',
-                        borderLeft: '4px solid var(--color-forest-500)',
-                        borderBottom: '2px solid var(--color-forest-500)'
+                        background: dark ? '#1c2128' : '#fff',
+                        borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`
                       }}
+                      onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#fff'}
                     >
-                      <h3 className="font-semibold mb-4" style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
-                        Edit: {s.common_name}
-                      </h3>
-                      <SpeciesForm
-                        initial={s}
-                        submitLabel="Save Changes"
-                        onSubmit={handleEdit}
-                        onCancel={() => setEditId(null)}
-                        dark={dark}
-                      />
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
+                      <td className="px-4 py-3 text-xs font-mono font-bold" style={{ color: '#8b949e' }}>{s.species_id}</td>
+                      <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>{s.common_name}</td>
+                      <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>{s.genus} {s.species}</td>
+                      <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>{s.family}</td>
+                      <td className="px-4 py-3 text-xs">
+                        <span className="badge px-2 py-0.5 rounded-full bg-forest-100 dark:bg-forest-900/40 text-forest-700 dark:text-forest-300">
+                          {s.flora_type === 'plant' ? '🌿 Plant' : '🌳 Tree'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <Btn color="primary" onClick={() => setEditId(editId === s.species_id ? null : s.species_id)}>
+                            {editId === s.species_id ? 'Close' : 'Edit'}
+                          </Btn>
+                          <Btn color="danger" onClick={() => handleDelete(s.species_id)}>Delete</Btn>
+                        </div>
+                      </td>
+                    </tr>
+                    {editId === s.species_id && (
+                      <tr key={`edit-${s.species_id}`}>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-4"
+                          style={{
+                            background: dark ? '#161b22' : '#f9fdf9',
+                            borderLeft: '4px solid var(--color-forest-500)',
+                            borderBottom: '2px solid var(--color-forest-500)'
+                          }}
+                        >
+                          <h3 className="font-semibold mb-4" style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}>
+                            Edit: {s.common_name}
+                          </h3>
+                          <SpeciesForm
+                            initial={s}
+                            submitLabel="Save Changes"
+                            onSubmit={handleEdit}
+                            onCancel={() => setEditId(null)}
+                            dark={dark}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Tiles View */
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {processed.map(s => (
+              <div
+                key={s.species_id}
+                className="p-4 rounded-xl border flex flex-col justify-between"
+                style={{
+                  background: dark ? '#1c2128' : '#ffffff',
+                  borderColor: dark ? '#30363d' : '#e5e7eb'
+                }}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-bold text-forest-600 dark:text-forest-400">
+                      {s.species_id}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+                      {s.native_exotic || 'Native'}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 dark:text-gray-100">{s.common_name}</h4>
+                  <p className="text-xs italic text-gray-500">{s.genus} {s.species}</p>
+                  <p className="text-xs text-gray-400 mt-2">Family: {s.family}</p>
+                </div>
+                <div className="flex gap-2 mt-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <Btn color="primary" onClick={() => setEditId(s.species_id)}>Edit</Btn>
+                  <Btn color="danger" onClick={() => handleDelete(s.species_id)}>Delete</Btn>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── ExportPanel (Dedicated Subpage to Select and Export DB Tables) ── */
+function ExportPanel({ trees = [], speciesList = [], areas = [], dark }) {
+  const [targetTable, setTargetTable] = useState('trees');
+  const [format, setFormat] = useState('csv');
+  const [downloading, setDownloading] = useState(false);
+
+  const tableOptions = [
+    { key: 'trees', name: 'Campus Trees', count: trees.length, desc: 'All tree inventory, coordinates, area codes, age, and notes.' },
+    { key: 'species', name: 'Species Taxonomy', count: speciesList.length, desc: 'Botanical names, families, origins, ecological facts, and medical uses.' },
+    { key: 'areas', name: 'Campus Areas', count: areas.length, desc: 'Campus zone names, area codes, descriptions, and navigation notes.' }
+  ];
+
+  const exportTableData = async () => {
+    setDownloading(true);
+    try {
+      if (targetTable === 'trees' && format === 'pdf') {
+        await exportPDF();
+        setDownloading(false);
+        return;
+      }
+
+      let dataToExport = [];
+      let filename = `green_atlas_${targetTable}_${new Date().toISOString().slice(0, 10)}`;
+
+      if (targetTable === 'trees') dataToExport = trees;
+      else if (targetTable === 'species') dataToExport = speciesList;
+      else if (targetTable === 'areas') dataToExport = areas;
+
+      if (format === 'json') {
+        const jsonStr = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // CSV Conversion
+        if (dataToExport.length === 0) {
+          alert('No records available to export.');
+          setDownloading(false);
+          return;
+        }
+
+        const headers = Object.keys(dataToExport[0]);
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+
+        for (const row of dataToExport) {
+          const values = headers.map(header => {
+            const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+            const escaped = val.replace(/"/g, '""');
+            return `"${escaped}"`;
+          });
+          csvRows.push(values.join(','));
+        }
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export data.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="card p-6 max-w-3xl space-y-6">
+      <div>
+        <h2 className="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <span>📁</span> Database Export Center
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Select any database table and export format to generate backups or reporting spreadsheets.
+        </p>
+      </div>
+
+      {/* 1. Select Table */}
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">
+          Step 1: Select Database Table
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {tableOptions.map(t => (
+            <div
+              key={t.key}
+              onClick={() => setTargetTable(t.key)}
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                targetTable === t.key
+                  ? 'border-forest-500 bg-forest-50/50 dark:bg-forest-950/30 ring-2 ring-forest-500/20'
+                  : 'border-gray-200 dark:border-[#30363d] hover:border-gray-300 dark:hover:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{t.name}</span>
+                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                  {t.count}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Select Format */}
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">
+          Step 2: Choose File Format
+        </label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
+            <input
+              type="radio"
+              name="format"
+              value="csv"
+              checked={format === 'csv'}
+              onChange={() => setFormat('csv')}
+              className="accent-forest-600"
+            />
+            <span>CSV (Excel / Spreadsheets)</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
+            <input
+              type="radio"
+              name="format"
+              value="json"
+              checked={format === 'json'}
+              onChange={() => setFormat('json')}
+              className="accent-forest-600"
+            />
+            <span>JSON (Structured Data)</span>
+          </label>
+          {targetTable === 'trees' && (
+            <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
+              <input
+                type="radio"
+                name="format"
+                value="pdf"
+                checked={format === 'pdf'}
+                onChange={() => setFormat('pdf')}
+                className="accent-forest-600"
+              />
+              <span>PDF Document</span>
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <span className="text-xs text-gray-400">
+          Selected: <strong className="text-forest-600 dark:text-forest-400 uppercase">{targetTable}</strong> as <strong className="text-forest-600 dark:text-forest-400 uppercase">{format}</strong>
+        </span>
+        <button
+          disabled={downloading}
+          onClick={exportTableData}
+          className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm font-semibold"
+        >
+          {downloading ? 'Generating...' : `⬇ Download ${targetTable.toUpperCase()} (${format.toUpperCase()})`}
+        </button>
       </div>
     </div>
   );
@@ -1261,7 +1670,7 @@ function ChangePassword({ dark = false }) {
   );
 }
 
-/* ── Dashboard Overview Component (Modern Dashboard Landing) ── */
+/* ── Dashboard Overview (No Redundant Quick Actions) ── */
 function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTab, dark }) {
   const pendingComplaints = complaints.filter(c => c.status === 'Pending').length;
 
@@ -1271,24 +1680,21 @@ function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTa
       count: trees.length,
       icon: '🌳',
       desc: 'Catalogued on campus',
-      actionTab: 'list',
-      color: 'forest'
+      actionTab: 'list'
     },
     {
       title: 'Botanical Species',
       count: speciesList.length,
       icon: '🍃',
       desc: 'Registered taxonomy',
-      actionTab: 'species',
-      color: 'blue'
+      actionTab: 'species'
     },
     {
       title: 'Campus Areas',
       count: areas.length,
       icon: '📍',
       desc: 'Mapped zones',
-      actionTab: 'areas',
-      color: 'amber'
+      actionTab: 'areas'
     },
     {
       title: 'Reports & Issues',
@@ -1296,8 +1702,7 @@ function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTa
       badge: pendingComplaints > 0 ? `${pendingComplaints} Pending` : null,
       icon: '⚠️',
       desc: 'Maintenance inquiries',
-      actionTab: 'complaints',
-      color: 'rose'
+      actionTab: 'complaints'
     }
   ];
 
@@ -1326,45 +1731,6 @@ function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTa
         ))}
       </div>
 
-      {/* Quick Actions Bar */}
-      <div className="card p-6">
-        <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-          <span>⚡</span> Quick Management Actions
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => onNavigateTab('add')}
-            className="btn-primary flex items-center gap-2 text-sm px-4 py-2"
-          >
-            ➕ Add New Tree
-          </button>
-          <button
-            onClick={() => onNavigateTab('areas')}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-forest-100 text-forest-800 dark:bg-forest-900/40 dark:text-forest-200 hover:bg-forest-200 transition-colors"
-          >
-            📍 Add / Manage Areas
-          </button>
-          <button
-            onClick={() => onNavigateTab('species')}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 hover:bg-emerald-200 transition-colors"
-          >
-            🍃 Manage Species
-          </button>
-          <button
-            onClick={exportCSV}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-sky-700 hover:bg-sky-800 transition-colors"
-          >
-            ⬇ Export CSV
-          </button>
-          <button
-            onClick={exportPDF}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-rose-700 hover:bg-rose-800 transition-colors"
-          >
-            ⬇ Export PDF
-          </button>
-        </div>
-      </div>
-
       {/* Embedded High-Level Visual Statistics */}
       <div>
         <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
@@ -1378,13 +1744,14 @@ function DashboardOverview({ trees, speciesList, areas, complaints, onNavigateTa
 
 /* ── Admin (Main Dashboard Component) ── */
 const TABS = [
-  { key: 'dashboard',   label: '📊 Dashboard', desc: 'Overview & Analytics' },
-  { key: 'list',        label: '🌳 Manage Trees', desc: 'Catalog & QR' },
-  { key: 'add',         label: '➕ Add Tree', desc: 'Auto ID generator' },
-  { key: 'species',     label: '🍃 Species', desc: 'Botanical database' },
-  { key: 'areas',       label: '📍 Areas', desc: 'Campus zones' },
-  { key: 'complaints',  label: '🌿 Reports', desc: 'Issue tracker' },
-  { key: 'password',    label: '🔐 Security', desc: 'Password change' }
+  { key: 'dashboard',   label: '📊 Dashboard' },
+  { key: 'list',        label: '🌳 Manage Trees' },
+  { key: 'add',         label: '➕ Add Tree' },
+  { key: 'species',     label: '🍃 Species' },
+  { key: 'areas',       label: '📍 Areas' },
+  { key: 'export',      label: '📁 Export Data' },
+  { key: 'complaints',  label: '🌿 Reports' },
+  { key: 'password',    label: '🔐 Security' }
 ];
 
 export default function Admin() {
@@ -1401,7 +1768,13 @@ export default function Admin() {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [qrModal, setQrModal] = useState(null);
+
+  // Manage Trees Explorer State
   const [treeSearch, setTreeSearch] = useState('');
+  const [treeSortField, setTreeSortField] = useState('tree_id');
+  const [treeSortOrder, setTreeSortOrder] = useState('desc');
+  const [treeViewMode, setTreeViewMode] = useState('list');
+  const [treeNewOnly, setTreeNewOnly] = useState(false);
 
   const loadData = () => {
     return Promise.all([
@@ -1440,7 +1813,7 @@ export default function Admin() {
   const handleAddTree = async (form) => {
     try {
       const res = await addTree(form);
-      setTrees(prev => [...prev, res.data]);
+      setTrees(prev => [res.data, ...prev]);
       setTab('list');
       flash('✅ Tree added successfully');
     } catch {
@@ -1479,19 +1852,28 @@ export default function Admin() {
     }
   };
 
-  const filteredTrees = trees.filter(t => {
+  // Trees Explorer Filter & Sort
+  let processedTrees = trees.filter(t => {
     const q = treeSearch.toLowerCase();
-    return (
-      !q ||
-      [t.common_name, t.botanical_name, t.area, t.tree_id].some(v =>
-        v?.toLowerCase().includes(q)
-      )
-    );
+    const match = !q || [t.common_name, t.botanical_name, t.area, t.tree_id]
+      .some(v => v?.toLowerCase().includes(q));
+    return match;
+  });
+
+  if (treeNewOnly) {
+    processedTrees = processedTrees.slice(0, 15);
+  }
+
+  processedTrees.sort((a, b) => {
+    let valA = (a[treeSortField] || '').toString().toLowerCase();
+    let valB = (b[treeSortField] || '').toString().toLowerCase();
+    const cmp = valA.localeCompare(valB, undefined, { numeric: true });
+    return treeSortOrder === 'asc' ? cmp : -cmp;
   });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Dashboard Top Header */}
+      {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-gray-900 dark:text-gray-100 flex items-center gap-3">
@@ -1512,7 +1894,7 @@ export default function Admin() {
 
       <Flash msg={msg} />
 
-      {/* Navigation Subpage Bar (Pill Tabs) */}
+      {/* Pill Navigation Bar */}
       <div className="flex gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/80 rounded-xl mb-8 overflow-x-auto">
         {TABS.map(({ key, label }) => {
           const active = tab === key;
@@ -1558,139 +1940,168 @@ export default function Admin() {
             />
           )}
 
-          {/* 2. MANAGE TREES */}
+          {/* 2. MANAGE TREES WITH EXPLORER CONTROLS */}
           {!loading && tab === 'list' && (
             <div className="card overflow-hidden">
-              <div
-                className="p-4 border-b flex items-center justify-between flex-wrap gap-3"
-                style={{ borderColor: dark ? '#30363d' : '#f3f4f6' }}
-              >
-                <div>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    All Trees ({filteredTrees.length})
-                  </span>
-                  <span className="text-xs text-gray-400 ml-2">
-                    Click 'Edit' to alter tree info or generate QR
-                  </span>
-                </div>
-                <div className="flex gap-2 flex-wrap items-center">
-                  <input
-                    className="input text-sm w-56"
-                    placeholder="Search trees…"
-                    value={treeSearch}
-                    onChange={e => setTreeSearch(e.target.value)}
-                    style={{ background: dark ? '#1c2128' : '#fff', color: dark ? '#e6edf3' : '#111827' }}
-                  />
-                  <button
-                    onClick={exportCSV}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-sm"
-                    style={{ background: '#0369a1' }}
-                  >
-                    ⬇ CSV
-                  </button>
-                  <button
-                    onClick={exportPDF}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-sm"
-                    style={{ background: '#be123c' }}
-                  >
-                    ⬇ PDF
-                  </button>
-                </div>
-              </div>
+              <ExplorerToolbar
+                search={treeSearch}
+                onSearchChange={setTreeSearch}
+                sortField={treeSortField}
+                onSortFieldChange={setTreeSortField}
+                sortOrder={treeSortOrder}
+                onToggleSortOrder={() => setTreeSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
+                viewMode={treeViewMode}
+                onViewModeChange={setTreeViewMode}
+                newOnly={treeNewOnly}
+                onToggleNewOnly={() => setTreeNewOnly(n => !n)}
+                sortOptions={[
+                  { value: 'tree_id', label: 'Tree ID (Newest First)' },
+                  { value: 'common_name', label: 'Common Name' },
+                  { value: 'botanical_name', label: 'Botanical Name' },
+                  { value: 'area', label: 'Campus Area' },
+                  { value: 'family', label: 'Family' },
+                  { value: 'age', label: 'Age' }
+                ]}
+                count={processedTrees.length}
+                dark={dark}
+              />
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{ background: 'var(--color-forest-500)' }}>
-                      {['Tree ID', 'Common Name', 'Botanical Name', 'Area', 'Actions'].map(h => (
-                        <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {filteredTrees.map(tree => (
-                      <Fragment key={tree.tree_id}>
-                        <tr
-                          key={tree.tree_id}
-                          className="transition-colors"
-                          style={{
-                            borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
-                            background: dark ? '#1c2128' : '#ffffff'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
-                          onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#ffffff'}
-                        >
-                          <td className="px-4 py-3 text-xs font-mono font-bold" style={{ color: '#8b949e' }}>
-                            {tree.tree_id}
-                          </td>
-                          <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>
-                            {tree.common_name}
-                          </td>
-                          <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>
-                            {tree.botanical_name}
-                          </td>
-                          <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
-                            {tree.area}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Btn
-                                color="primary"
-                                onClick={() => setEditId(editId === tree.tree_id ? null : tree.tree_id)}
-                              >
-                                {editId === tree.tree_id ? 'Close' : 'Edit'}
-                              </Btn>
-                              <Btn color="danger" onClick={() => handleDeleteTree(tree.tree_id)}>
-                                Delete
-                              </Btn>
-                              <button
-                                onClick={() => previewQR(tree.tree_id, tree.common_name)}
-                                className="px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors"
-                                style={{ background: '#0369a1' }}
-                              >
-                                QR
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {editId === tree.tree_id && (
-                          <tr key={`edit-${tree.tree_id}`}>
-                            <td
-                              colSpan={5}
-                              className="px-6 py-4"
-                              style={{
-                                background: dark ? '#161b22' : '#f9fdf9',
-                                borderLeft: '4px solid var(--color-forest-500)',
-                                borderBottom: '2px solid var(--color-forest-500)'
-                              }}
-                            >
-                              <h3
-                                className="font-semibold mb-4"
-                                style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}
-                              >
-                                Edit Tree: {tree.common_name} ({tree.tree_id})
-                              </h3>
-                              <TreeForm
-                                initial={tree}
-                                submitLabel="Save Changes"
-                                onSubmit={handleEditTree}
-                                onCancel={() => setEditId(null)}
-                                areas={areas}
-                                speciesList={speciesList}
-                                trees={trees}
-                                dark={dark}
-                              />
+              {treeViewMode === 'list' ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ background: 'var(--color-forest-500)' }}>
+                        {['Tree ID', 'Common Name', 'Botanical Name', 'Area', 'Actions'].map(h => (
+                          <th key={h} className="text-left px-4 py-3 font-medium text-white text-sm">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {processedTrees.map(tree => (
+                        <Fragment key={tree.tree_id}>
+                          <tr
+                            key={tree.tree_id}
+                            className="transition-colors"
+                            style={{
+                              borderBottom: `1px solid ${dark ? '#30363d' : '#f3f4f6'}`,
+                              background: dark ? '#1c2128' : '#ffffff'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#21262d' : '#f9fafb'}
+                            onMouseLeave={e => e.currentTarget.style.background = dark ? '#1c2128' : '#ffffff'}
+                          >
+                            <td className="px-4 py-3 text-xs font-mono font-bold" style={{ color: '#8b949e' }}>
+                              {tree.tree_id}
+                            </td>
+                            <td className="px-4 py-3 font-medium" style={{ color: dark ? '#e6edf3' : '#111827' }}>
+                              {tree.common_name}
+                            </td>
+                            <td className="px-4 py-3 italic" style={{ color: '#8b949e' }}>
+                              {tree.botanical_name}
+                            </td>
+                            <td className="px-4 py-3" style={{ color: dark ? '#8b949e' : '#6b7280' }}>
+                              {tree.area}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Btn
+                                  color="primary"
+                                  onClick={() => setEditId(editId === tree.tree_id ? null : tree.tree_id)}
+                                >
+                                  {editId === tree.tree_id ? 'Close' : 'Edit'}
+                                </Btn>
+                                <Btn color="danger" onClick={() => handleDeleteTree(tree.tree_id)}>
+                                  Delete
+                                </Btn>
+                                <button
+                                  onClick={() => previewQR(tree.tree_id, tree.common_name)}
+                                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors"
+                                  style={{ background: '#0369a1' }}
+                                >
+                                  QR
+                                </button>
+                              </div>
                             </td>
                           </tr>
-                        )}
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+                          {editId === tree.tree_id && (
+                            <tr key={`edit-${tree.tree_id}`}>
+                              <td
+                                colSpan={5}
+                                className="px-6 py-4"
+                                style={{
+                                  background: dark ? '#161b22' : '#f9fdf9',
+                                  borderLeft: '4px solid var(--color-forest-500)',
+                                  borderBottom: '2px solid var(--color-forest-500)'
+                                }}
+                              >
+                                <h3
+                                  className="font-semibold mb-4"
+                                  style={{ color: dark ? '#7dc070' : 'var(--color-forest-600)' }}
+                                >
+                                  Edit Tree: {tree.common_name} ({tree.tree_id})
+                                </h3>
+                                <TreeForm
+                                  initial={tree}
+                                  submitLabel="Save Changes"
+                                  onSubmit={handleEditTree}
+                                  onCancel={() => setEditId(null)}
+                                  areas={areas}
+                                  speciesList={speciesList}
+                                  trees={trees}
+                                  dark={dark}
+                                />
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                /* Tiles View */
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {processedTrees.map(tree => (
+                    <div
+                      key={tree.tree_id}
+                      className="p-4 rounded-xl border flex flex-col justify-between"
+                      style={{
+                        background: dark ? '#1c2128' : '#ffffff',
+                        borderColor: dark ? '#30363d' : '#e5e7eb'
+                      }}
+                    >
+                      <div>
+                        <div className="h-32 overflow-hidden rounded-lg mb-3 relative bg-forest-900/10">
+                          {tree.image_link ? (
+                            <img src={tree.image_link} alt={tree.common_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-5xl">🌿</div>
+                          )}
+                          <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-mono font-bold bg-black/60 text-white">
+                            {tree.tree_id}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-gray-900 dark:text-gray-100">{tree.common_name}</h4>
+                        <p className="text-xs italic text-gray-500">{tree.botanical_name}</p>
+                        <p className="text-xs text-gray-400 mt-2">Area: <strong>{tree.area}</strong></p>
+                      </div>
+                      <div className="flex gap-2 mt-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <Btn color="primary" onClick={() => setEditId(tree.tree_id)}>Edit</Btn>
+                        <Btn color="danger" onClick={() => handleDeleteTree(tree.tree_id)}>Delete</Btn>
+                        <button
+                          onClick={() => previewQR(tree.tree_id, tree.common_name)}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-white"
+                          style={{ background: '#0369a1' }}
+                        >
+                          QR
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1704,7 +2115,7 @@ export default function Admin() {
                 Add New Tree
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
-                Select the botanical name and campus area. Tree ID, family and common name will be automatically calculated.
+                Select botanical name and campus area. Tree ID, family, and common name are automatically calculated.
               </p>
               <TreeForm
                 submitLabel="Add Tree"
@@ -1725,10 +2136,15 @@ export default function Admin() {
             <AreaPanel areas={areas} onRefresh={loadData} dark={dark} />
           )}
 
-          {/* 6. REPORTS & COMPLAINTS */}
+          {/* 6. EXPORT DATA (Dedicated Subpage) */}
+          {!loading && tab === 'export' && (
+            <ExportPanel trees={trees} speciesList={speciesList} areas={areas} dark={dark} />
+          )}
+
+          {/* 7. REPORTS & COMPLAINTS */}
           {!loading && tab === 'complaints' && <ComplaintPanel dark={dark} />}
 
-          {/* 7. PASSWORD CHANGE */}
+          {/* 8. PASSWORD CHANGE */}
           {!loading && tab === 'password' && (
             <div className="card p-6">
               <h2
