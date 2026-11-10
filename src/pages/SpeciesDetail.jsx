@@ -197,7 +197,6 @@ export default function SpeciesDetail() {
             <MapContainer center={mapCenter} zoom={18}
               zoomSnap={0.5} zoomDelta={0.5}
               style={{ height: '100%', width: '100%' }} maxZoom={22}>
-              style={{ height: '100%', width: '100%' }} maxZoom={22}>
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name="🗺️ Street Map">
                   <TileLayer
