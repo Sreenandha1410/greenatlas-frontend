@@ -630,7 +630,7 @@ export default function LocationEditorPage() {
                           <span className="text-[10px] text-gray-400">{dateText(h.created_at)}</span>
                         </div>
                         <p className="font-mono text-[10px] text-gray-500">
-                          {Number(h.new_latitude).toFixed(6)}, {Number(h.new_longitude).toFixed(6)}
+                          {Number(h.new_latitude).toFixed(7)}, {Number(h.new_longitude).toFixed(7)}
                         </p>
                         {h.reason && <p className="text-[10px] text-gray-400 italic">"{h.reason}"</p>}
                       </div>
@@ -772,7 +772,7 @@ export default function LocationEditorPage() {
                   {selectedTree.tree_id}
                 </span>: <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedTree.common_name}</span>
                 <div className="text-[11px] text-gray-400 font-mono mt-0.5 flex gap-3">
-                  <span>GPS: {shown ? `${shown.lat.toFixed(6)}, ${shown.lng.toFixed(6)}` : 'Not set'}</span>
+                  <span>GPS: {shown ? `${Number(shown.lat).toFixed(7)}, ${Number(shown.lng).toFixed(7)}` : 'Not set'}</span>
                   {changed && moved > 0 && <span className="text-amber-600 font-semibold">Moved: {moved.toFixed(1)}m</span>}
                 </div>
               </div>
