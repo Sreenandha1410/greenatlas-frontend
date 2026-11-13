@@ -19,6 +19,23 @@ api.interceptors.request.use((cfg) => {
   return cfg;
 });
 
+// Automatically handle expired tokens
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clear invalid/expired credentials
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      // If currently on an admin page, redirect to login
+      if (window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ==================== TREES ====================
 
 export const getTrees = (params) =>
