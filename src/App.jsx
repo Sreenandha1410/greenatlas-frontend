@@ -49,8 +49,7 @@ export default function App() {
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
           <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-          <Route path="/admin/map-editor" element={<LocationEditorPage />}
-/>
+          <Route path="/admin/map-editor" element={<LocationEditorPage />}/>
         </Routes>
       </AnimatePresence>
       <GoToTop /> 
