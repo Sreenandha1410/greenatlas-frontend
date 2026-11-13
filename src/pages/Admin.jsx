@@ -40,7 +40,7 @@ const SPECIES_EMPTY = {
   kingdom: 'Plantae',
   division: '',
   class: '',
-  order: '',
+  order_name: '',
   family: '',
   genus: '',
   species: '',
@@ -572,7 +572,7 @@ function SpeciesForm({ initial = SPECIES_EMPTY, onSubmit, submitLabel, onCancel,
 
         {field('division', 'Division')}
         {field('class', 'Class')}
-        {field('order', 'Order')}
+        {field('order_name', 'Order')}
         {field('origin', 'Origin')}
 
         <div>
