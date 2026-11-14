@@ -1198,6 +1198,7 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
   const [downloading, setDownloading] = useState(false);
   const [exportError, setExportError] = useState('');
 
+  // Find tableOptions in ExportPanel and add tree_boards:
   const tableOptions = [
     {
       key: 'trees',
@@ -1218,6 +1219,11 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
       desc: 'Campus zone names, area codes, descriptions, and directions/navigation notes.'
     },
     {
+      key: 'tree_boards',
+      name: 'Tree Identification Boards',
+      desc: 'Physical aluminum identification boards, status (Fixed / Need to Fix), group counts, and QR mappings.'
+    },
+    {
       key: 'complaints',
       name: 'Maintenance Reports',
       count: complaints.length,
@@ -1235,8 +1241,8 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
     },
     {
       key: 'page_views',
-      name: 'Page Views Analytics',
-      desc: 'Aggregated website traffic timestamps, routes, and visitor analytics.'
+      name: 'Website Traffic Analytics',
+      desc: 'Unique visitor sessions, QR scans vs direct visits, devices, and browser statistics.'
     },
     {
       key: 'users',
@@ -1274,7 +1280,7 @@ function ExportPanel({ trees = [], speciesList = [], areas = [], complaints = []
           <span>📁</span> Database Export Center
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Select any of the 8 database tables and export format to generate instant backups or reporting spreadsheets.
+          Select any database table and export format to generate instant backups or reporting spreadsheets.
         </p>
       </div>
 
