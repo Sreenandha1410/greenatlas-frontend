@@ -216,8 +216,8 @@ export const exportTable = async (tableName, format = 'csv') => {
 
 // ==================== VIEWS ====================
 
-export const recordView = (path) =>
-  api.post('/trees/views', { path });
+export const recordView = (payload) =>
+  api.post('/trees/views', typeof payload === 'string' ? { path: payload } : payload);
 
 export const getViewCount = () =>
   api.get('/trees/views');
