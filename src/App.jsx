@@ -20,13 +20,60 @@ import About from './pages/About';
 import GoToTop from './components/GoToTop'
 import LocationEditorPage from './pages/LocationEditorPage';
 
+function getSafeDeviceInfo() {
+  const ua = navigator.userAgent || '';
+  let device_type = 'desktop';
+  if (/tablet|ipad|playbook|silk/i.test(ua)) {
+    device_type = 'tablet';
+  } else if (/mobile|iphone|ipod|android|blackberry|opera mini|windows phone/i.test(ua)) {
+    device_type = 'mobile';
+  }
+
+  let os = 'Unknown';
+  if (/windows/i.test(ua)) os = 'Windows';
+  else if (/android/i.test(ua)) os = 'Android';
+  else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+  else if (/mac os x|macintosh/i.test(ua)) os = 'macOS';
+  else if (/linux/i.test(ua)) os = 'Linux';
+
+  let browser = 'Unknown';
+  if (/edg/i.test(ua)) browser = 'Edge';
+  else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+  else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
+
+  return { device_type, os, browser };
+}
+
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname } = useLocation();
+
+  // Scroll to top on every navigation
   useEffect(() => {
-    window.scrollTo(0, 0)
-    recordView(pathname).catch(() => {})
-  }, [pathname])
-  return null
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  // Record 1 visit per visitor session (NOT on every internal route click)
+  useEffect(() => {
+    const sessionKey = 'ga_visit_logged';
+    if (!sessionStorage.getItem(sessionKey)) {
+      sessionStorage.setItem(sessionKey, '1');
+
+      const isQR = pathname.startsWith('/trees/') || window.location.search.includes('qr');
+      const source = isQR ? 'qr' : 'web';
+      const { device_type, os, browser } = getSafeDeviceInfo();
+
+      recordView({
+        path: pathname,
+        source,
+        device_type,
+        os,
+        browser,
+      }).catch(() => {});
+    }
+  }, []);
+
+  return null;
 }
 
 export default function App() {
