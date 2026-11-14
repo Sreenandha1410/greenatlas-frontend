@@ -242,9 +242,11 @@ export const exportLocationHistory = () =>
 export const getBoards = (params) => api.get('/boards', { params });
 export const getBoardStats = () => api.get('/boards/stats');
 export const getMissingBoards = () => api.get('/boards/missing');
+export const bulkAddBoards = (treeIds) => api.post('/boards/bulk', { treeIds });
 export const addBoard = (data) => api.post('/boards', data);
 export const updateBoard = (id, data) => api.put(`/boards/${id}`, data);
 export const updateBoardStatus = (id, status) => api.patch(`/boards/${id}/status`, { status });
+export const updateBoardDates = (id, dates) => api.patch(`/boards/${id}/dates`, dates);
 export const deleteBoard = (id) => api.delete(`/boards/${id}`);
 export const exportBoards = async () => {
   const response = await api.get('/boards/export/csv', { responseType: 'blob' });
@@ -257,7 +259,6 @@ export const exportBoards = async () => {
   a.remove();
   window.URL.revokeObjectURL(url);
 };
-
 
 
 export default api;
