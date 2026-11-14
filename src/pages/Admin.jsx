@@ -4,8 +4,11 @@ import {
   getTrees, getAreas, addTree, updateTree, deleteTree, changePassword,
   getTreeQR, exportCSV, exportPDF, getDetailedStats, getSpecies,
   addSpecies, updateSpecies, deleteSpecies, getComplaints, updateComplaintStatus,
-  addArea, deleteArea, updateAreaInfo, exportTable
+  addArea, deleteArea, updateAreaInfo, exportTable,
+  getBoards, getBoardStats, getMissingBoards,
+  addBoard, updateBoard, updateBoardStatus, deleteBoard, exportBoards
 } from '../api';
+import BoardsPanel from '../components/BoardsPanel';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell,
   ResponsiveContainer, Legend
@@ -1766,6 +1769,7 @@ const TABS = [
   { key: 'add',         label: '➕ Add Tree' },
   { key: 'species',     label: '🍃 Species' },
   { key: 'areas',       label: '📍 Areas' },
+  { key: 'boards',      label: '🪧 Boards' },
   { key: 'export',      label: '📁 Export Data' },
   { key: 'complaints',  label: '🌿 Reports' },
   { key: 'password',    label: '🔐 Security' }
@@ -2153,6 +2157,11 @@ export default function Admin() {
             <AreaPanel areas={areas} onRefresh={loadData} dark={dark} />
           )}
 
+          {/* 5.5. BOARD MANAGEMENT */}
+          {!loading && tab === 'boards' && (
+            <BoardsPanel trees={trees} dark={dark} />
+          )}
+          
           {/* 6. EXPORT DATA (Dedicated Subpage for All 8 Tables) */}
           {!loading && tab === 'export' && (
             <ExportPanel
