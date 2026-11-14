@@ -238,5 +238,26 @@ export const exportLocationHistory = () =>
   api.get('/trees/location-history/export/csv', { responseType: 'blob' });
 
 
+// ==================== BOARDS ====================
+export const getBoards = (params) => api.get('/boards', { params });
+export const getBoardStats = () => api.get('/boards/stats');
+export const getMissingBoards = () => api.get('/boards/missing');
+export const addBoard = (data) => api.post('/boards', data);
+export const updateBoard = (id, data) => api.put(`/boards/${id}`, data);
+export const updateBoardStatus = (id, status) => api.patch(`/boards/${id}/status`, { status });
+export const deleteBoard = (id) => api.delete(`/boards/${id}`);
+export const exportBoards = async () => {
+  const response = await api.get('/boards/export/csv', { responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.setAttribute('download', 'green_atlas_boards.csv');
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+
 
 export default api;
