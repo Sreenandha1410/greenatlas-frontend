@@ -180,6 +180,14 @@ export default function LocationEditorPage() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Auto-dismiss success message after 3.5 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(''), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   useEffect(() => {
     const handle = window.setTimeout(() => setSearch(searchText.trim().toLowerCase()), 150);
     return () => window.clearTimeout(handle);
@@ -471,10 +479,24 @@ export default function LocationEditorPage() {
         </div>
       </header>
 
-      {/* Status Messages */}
+      {/* Floating Status Message Toast Overlay (Does not push or jerk the map) */}
       {(error || message) && (
-        <div className={`px-4 py-1.5 text-xs font-semibold ${error ? 'bg-red-100 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
-          {error || message}
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[2000] pointer-events-none transition-all duration-200">
+          <div className={`pointer-events-auto flex items-center gap-2.5 px-4 py-2 rounded-full shadow-2xl text-xs font-semibold backdrop-blur-md border ${
+            error 
+              ? 'bg-red-600/95 text-white border-red-400 shadow-red-950/40' 
+              : 'bg-emerald-600/95 text-white border-emerald-400 shadow-emerald-950/40'
+          }`}>
+            <span>{error ? '⚠️' : '✅'}</span>
+            <span>{error || message}</span>
+            <button
+              onClick={() => { setError(''); setMessage(''); }}
+              className="ml-2 hover:opacity-75 p-0.5"
+              title="Close"
+            >
+              <X size={13} />
+            </button>
+          </div>
         </div>
       )}
 
