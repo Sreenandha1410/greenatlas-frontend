@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import {
   getBoards, getBoardStats, getMissingBoards, bulkAddBoards,
   addBoard, updateBoard, updateBoardStatus, updateBoardDates,
   deleteBoard, exportBoards
 } from '../api';
+
+const DEFAULT_CENTER = [11.678, 78.125];
+const DEFAULT_ZOOM = 18;
+const DOMAIN = 'https://sonagreenatlas.in';
 
 const STATUS_OPTIONS = ['Need to Fix', 'Board Fixed', 'Requires Maintenance'];
 const STATUS_COLOR = {
@@ -16,8 +22,6 @@ const STATUS_DOT = {
   'Board Fixed':          '🟢',
   'Requires Maintenance': '🔴',
 };
-
-const DOMAIN = 'https://sonagreenatlas.in';
 
 const EMPTY_FORM = {
   primary_tree_id: '',
@@ -56,6 +60,17 @@ function TrashIcon({ className = 'w-4 h-4' }) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   );
+}
+
+/* ── Leaflet View Controller ── */
+function MapRecenter({ target }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target && target[0] && target[1]) {
+      map.flyTo(target, 19, { duration: 1 });
+    }
+  }, [target, map]);
+  return null;
 }
 
 /* ── Stat Card ── */
@@ -193,13 +208,13 @@ function BulkModal({ onClose, onBulkImport, dark }) {
           </span>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          Paste your 150+ Tree IDs below (separated by newlines, commas, or spaces). All boards will be created with status <strong>Need to Fix</strong> and empty dates. Existing boards will be safely skipped.
+          Paste Tree IDs (separated by newlines, commas, or spaces). Boards will be created with status <strong>Need to Fix</strong>. Existing boards are safely skipped.
         </p>
 
         <textarea
           rows={8}
           className={inpClass}
-          placeholder="e.g.&#10;T-001&#10;T-002&#10;T-003&#10;or: T-001, T-002, T-003"
+          placeholder="e.g.&#10;1YBB3001&#10;1YBB3002&#10;or: 1YBB3001, 1YBB3002"
           value={input}
           onChange={e => setInput(e.target.value)}
         />
@@ -244,7 +259,6 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
   const [msg, setMsg] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Available trees for dropdown: exclude trees that already have a board (unless currently editing this board)
   const availableTrees = useMemo(() => {
     return trees.filter(t => {
       if (board && t.tree_id === board.primary_tree_id) return true;
@@ -322,9 +336,6 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            {form.board_type === 'group' ? 'One board covers multiple trees of the same species.' : 'One board for one tree.'}
-          </p>
         </div>
 
         {/* Primary Tree Search */}
@@ -357,7 +368,7 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
           )}
         </div>
 
-        {/* Group tree selection */}
+        {/* Group selection */}
         {form.board_type === 'group' && selectedTree && (
           <div className="mb-4">
             <label className="block text-xs font-medium mb-1" style={lStyle}>
@@ -380,7 +391,7 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
           </div>
         )}
 
-        {/* Fields Grid */}
+        {/* Form fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-xs font-medium mb-1" style={lStyle}>Status</label>
@@ -414,11 +425,11 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
 
         <div className="mb-4">
           <label className="block text-xs font-medium mb-1" style={lStyle}>Location Description</label>
-          <textarea rows={2} className={inp} value={form.location_description} onChange={e => set('location_description', e.target.value)} placeholder="e.g. Near main gate, left side walkway" />
+          <textarea rows={2} className={inp} value={form.location_description} onChange={e => set('location_description', e.target.value)} placeholder="e.g. Near main gate, left walkway" />
         </div>
         <div className="mb-4">
           <label className="block text-xs font-medium mb-1" style={lStyle}>Notes</label>
-          <textarea rows={2} className={inp} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Condition, screws replaced, etc." />
+          <textarea rows={2} className={inp} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Condition, maintenance notes..." />
         </div>
 
         {msg && <p className="text-sm text-red-500 mb-3">{msg}</p>}
@@ -435,98 +446,401 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
   );
 }
 
-/* ── Missing Boards Section with Tree/Plant Filter ── */
-function MissingBoards({ missing, onAddBoard, dark }) {
-  const [search, setSearch] = useState('');
-  const [floraFilter, setFloraFilter] = useState('tree'); // Default to 'tree' since boards are mainly for trees
+/* ── Interactive Map View Component ── */
+function BoardsMapView({
+  trees = [],
+  boards = [],
+  onSelectTree,
+  selectedTree,
+  onQuickStatusChange,
+  onOpenAdd,
+  onOpenEdit,
+  onOpenPrint,
+  dark
+}) {
+  const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'street'
+  const [floraFilter, setFloraFilter] = useState(''); // '' | 'tree' | 'plant'
+  const [statusFilter, setStatusFilter] = useState('');
+  const [mapSearch, setMapSearch] = useState('');
+  const [recenterTarget, setRecenterTarget] = useState(null);
 
-  const filtered = useMemo(() => {
-    return missing.filter(t => {
-      const q = search.toLowerCase();
-      const matchSearch = !q || t.tree_id.toLowerCase().includes(q) || (t.common_name || '').toLowerCase().includes(q) || (t.area || '').toLowerCase().includes(q);
-      const matchFlora = !floraFilter || (t.flora_type || 'tree') === floraFilter;
-      return matchSearch && matchFlora;
+  // Quick lookup dictionary for boards by tree_id
+  const { boardMapByPrimary, boardMapByMember } = useMemo(() => {
+    const primary = {};
+    const member = {};
+    boards.forEach(b => {
+      if (b.primary_tree_id) primary[b.primary_tree_id] = b;
+      if (Array.isArray(b.group_tree_ids)) {
+        b.group_tree_ids.forEach(id => { member[id] = b; });
+      }
     });
-  }, [missing, search, floraFilter]);
+    return { boardMapByPrimary: primary, boardMapByMember: member };
+  }, [boards]);
+
+  // Trees lookup by ID
+  const treesMap = useMemo(() => {
+    const map = {};
+    trees.forEach(t => { map[t.tree_id] = t; });
+    return map;
+  }, [trees]);
+
+  // Filtered trees on the map
+  const displayTrees = useMemo(() => {
+    const q = mapSearch.toLowerCase().trim();
+    return trees.filter(t => {
+      const lat = Number(t.latitude);
+      const lng = Number(t.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+
+      // Flora filter
+      if (floraFilter && (t.flora_type || 'tree') !== floraFilter) return false;
+
+      // Board Status filter
+      const b = boardMapByPrimary[t.tree_id] || boardMapByMember[t.tree_id];
+      const boardStatus = b ? b.status : 'None';
+      if (statusFilter && boardStatus !== statusFilter) return false;
+
+      // Search match
+      if (q) {
+        const match =
+          t.tree_id.toLowerCase().includes(q) ||
+          (t.common_name || '').toLowerCase().includes(q) ||
+          (t.botanical_name || '').toLowerCase().includes(q) ||
+          (t.area || '').toLowerCase().includes(q) ||
+          (b?.board_id || '').toLowerCase().includes(q);
+        if (!match) return false;
+      }
+
+      return true;
+    });
+  }, [trees, floraFilter, statusFilter, mapSearch, boardMapByPrimary, boardMapByMember]);
+
+  // Group Board Polylines (Graph links connecting primary tree to its group member trees)
+  const groupLines = useMemo(() => {
+    const lines = [];
+    boards.forEach(b => {
+      if (b.board_type === 'group' && Array.isArray(b.group_tree_ids) && b.group_tree_ids.length > 0) {
+        const pTree = treesMap[b.primary_tree_id];
+        if (pTree && Number.isFinite(Number(pTree.latitude)) && Number.isFinite(Number(pTree.longitude))) {
+          const pPos = [Number(pTree.latitude), Number(pTree.longitude)];
+          b.group_tree_ids.forEach(mId => {
+            const mTree = treesMap[mId];
+            if (mTree && Number.isFinite(Number(mTree.latitude)) && Number.isFinite(Number(mTree.longitude))) {
+              const mPos = [Number(mTree.latitude), Number(mTree.longitude)];
+              lines.push({
+                key: `${b.id}-${pTree.tree_id}-${mTree.tree_id}`,
+                positions: [pPos, mPos],
+                board: b,
+              });
+            }
+          });
+        }
+      }
+    });
+    return lines;
+  }, [boards, treesMap]);
+
+  // Selected tree's associated board
+  const selectedBoard = selectedTree
+    ? (boardMapByPrimary[selectedTree.tree_id] || boardMapByMember[selectedTree.tree_id] || null)
+    : null;
+
+  const isPrimary = selectedBoard && selectedBoard.primary_tree_id === selectedTree?.tree_id;
+
+  const handleSelect = (tree) => {
+    onSelectTree(tree);
+    if (tree && Number.isFinite(Number(tree.latitude)) && Number.isFinite(Number(tree.longitude))) {
+      setRecenterTarget([Number(tree.latitude), Number(tree.longitude)]);
+    }
+  };
 
   return (
-    <div className={`mt-6 rounded-xl border p-4 ${dark ? 'bg-gray-800/50 border-gray-700' : 'bg-amber-50/70 border-amber-200'}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <h3 className="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
-          ⚠️ Trees Without Boards
-          <span className="text-xs font-semibold bg-amber-200 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full">
-            {filtered.length} of {missing.length}
-          </span>
-        </h3>
+    <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md">
+      {/* ── Floating Map Header Controls ── */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap gap-2 items-center pointer-events-none">
+        {/* Search Bar */}
+        <div className="pointer-events-auto flex-1 min-w-[200px] max-w-sm">
+          <input
+            className="w-full px-3.5 py-2 rounded-xl text-xs font-medium bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="🔍 Search Area, Tree ID, Species, Common Name…"
+            value={mapSearch}
+            onChange={e => setMapSearch(e.target.value)}
+          />
+        </div>
 
-        {/* Tree / Plant Filter Pill Toggle */}
-        <div className="flex items-center gap-1 bg-amber-100/80 dark:bg-gray-800 p-1 rounded-lg text-xs font-semibold">
+        {/* Status Filter */}
+        <div className="pointer-events-auto">
+          <select
+            className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Board Statuses</option>
+            <option value="Board Fixed">🟢 Board Fixed</option>
+            <option value="Need to Fix">🟡 Need to Fix</option>
+            <option value="Requires Maintenance">🔴 Maintenance</option>
+            <option value="None">⚪ No Board Yet</option>
+          </select>
+        </div>
+
+        {/* Flora Filter (Tree / Plant) */}
+        <div className="pointer-events-auto flex items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-xs font-semibold">
+          <button
+            onClick={() => setFloraFilter('')}
+            className={`px-2.5 py-1 rounded-lg transition-all ${floraFilter === '' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
+            All
+          </button>
           <button
             onClick={() => setFloraFilter('tree')}
-            className={`px-3 py-1 rounded-md transition-all ${floraFilter === 'tree' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>
-            🌳 Trees Only
+            className={`px-2.5 py-1 rounded-lg transition-all ${floraFilter === 'tree' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
+            🌳 Trees
           </button>
           <button
             onClick={() => setFloraFilter('plant')}
-            className={`px-3 py-1 rounded-md transition-all ${floraFilter === 'plant' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>
-            🌿 Plants Only
+            className={`px-2.5 py-1 rounded-lg transition-all ${floraFilter === 'plant' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
+            🌿 Plants
+          </button>
+        </div>
+
+        {/* Satellite vs Street Toggle */}
+        <div className="pointer-events-auto ml-auto flex items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-1 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-xs font-semibold">
+          <button
+            onClick={() => setMapLayer('street')}
+            className={`px-2.5 py-1 rounded-lg transition-all ${mapLayer === 'street' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
+            🗺️ Street
           </button>
           <button
-            onClick={() => setFloraFilter('')}
-            className={`px-3 py-1 rounded-md transition-all ${floraFilter === '' ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>
-            All Flora
+            onClick={() => setMapLayer('satellite')}
+            className={`px-2.5 py-1 rounded-lg transition-all ${mapLayer === 'satellite' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
+            🛰️ Satellite
           </button>
         </div>
       </div>
 
-      <input
-        className={`w-full max-w-xs px-3 py-1.5 rounded-lg border text-sm mb-3 ${dark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-amber-300'} focus:outline-none`}
-        placeholder="Filter by ID, name, or area…" value={search} onChange={e => setSearch(e.target.value)}
-      />
+      {/* ── Map Canvas ── */}
+      <div className="h-[600px] w-full">
+        <MapContainer
+          center={DEFAULT_CENTER}
+          zoom={DEFAULT_ZOOM}
+          minZoom={15}
+          maxZoom={22}
+          zoomSnap={0.5}
+          zoomDelta={0.5}
+          className="h-full w-full"
+        >
+          <MapRecenter target={recenterTarget} />
 
-      <div className="overflow-x-auto max-h-96 overflow-y-auto">
-        <table className="w-full text-sm min-w-[550px]">
-          <thead>
-            <tr className={`text-left text-xs font-semibold ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <th className="pb-2">Tree ID</th>
-              <th className="pb-2">Common Name</th>
-              <th className="pb-2">Botanical Name</th>
-              <th className="pb-2">Type</th>
-              <th className="pb-2">Area</th>
-              <th className="pb-2 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={6} className="py-4 text-center text-gray-400 text-xs">No unboarded trees in this filter category 🎉</td></tr>
-            ) : filtered.map(t => (
-              <tr key={t.tree_id} className={`border-t ${dark ? 'border-gray-700' : 'border-amber-100'}`}>
-                <td className="py-2 font-mono text-xs font-bold text-green-700 dark:text-green-400">{t.tree_id}</td>
-                <td className="py-2 font-medium">{t.common_name}</td>
-                <td className="py-2 italic text-xs text-gray-400">{t.botanical_name}</td>
-                <td className="py-2 text-xs">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${t.flora_type === 'plant' ? 'bg-emerald-100 text-emerald-800' : 'bg-green-100 text-green-800'}`}>
-                    {t.flora_type === 'plant' ? '🌿 Plant' : '🌳 Tree'}
-                  </span>
-                </td>
-                <td className="py-2 text-xs text-gray-500">{t.area}</td>
-                <td className="py-2 text-right">
-                  <button onClick={() => onAddBoard(t)}
-                    className="px-3 py-1 rounded-md text-xs font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm transition-all">
-                    + Add Board
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {/* Tile Layer */}
+          {mapLayer === 'satellite' ? (
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="© Esri, Maxar"
+              maxNativeZoom={19}
+              maxZoom={22}
+            />
+          ) : (
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="© OpenStreetMap"
+              maxNativeZoom={19}
+              maxZoom={22}
+            />
+          )}
+
+          {/* Group Boards Graph Lines (Connecting related trees) */}
+          {groupLines.map(line => {
+            const isLineActive = selectedBoard && selectedBoard.id === line.board.id;
+            return (
+              <Polyline
+                key={line.key}
+                positions={line.positions}
+                pathOptions={{
+                  color: isLineActive ? '#3b82f6' : (line.board.status === 'Board Fixed' ? '#10b981' : '#f59e0b'),
+                  weight: isLineActive ? 3.5 : 2,
+                  dashArray: '4, 6',
+                  opacity: isLineActive ? 0.95 : 0.7,
+                }}
+              />
+            );
+          })}
+
+          {/* Tree Markers */}
+          {displayTrees.map(t => {
+            const b = boardMapByPrimary[t.tree_id] || boardMapByMember[t.tree_id];
+            const isSelected = selectedTree?.tree_id === t.tree_id;
+
+            // Pin styling based on board status
+            let fillColor = '#94a3b8'; // Slate/Gray for no board
+            let strokeColor = '#475569';
+            let radius = 6;
+            let fillOpacity = 0.55;
+
+            if (b) {
+              radius = b.board_type === 'group' ? 8 : 7;
+              if (b.status === 'Board Fixed') {
+                fillColor = '#10b981'; // Green
+                strokeColor = '#047857';
+                fillOpacity = 0.95;
+              } else if (b.status === 'Need to Fix') {
+                fillColor = '#f59e0b'; // Amber
+                strokeColor = '#b45309';
+                fillOpacity = 0.95;
+              } else if (b.status === 'Requires Maintenance') {
+                fillColor = '#ef4444'; // Red
+                strokeColor = '#b91c1c';
+                fillOpacity = 0.95;
+              }
+            }
+
+            if (isSelected) {
+              fillColor = '#3b82f6'; // Bright Blue highlight
+              strokeColor = '#ffffff';
+              radius = 10;
+              fillOpacity = 1;
+            }
+
+            return (
+              <CircleMarker
+                key={t.tree_id}
+                center={[Number(t.latitude), Number(t.longitude)]}
+                radius={radius}
+                pathOptions={{
+                  fillColor,
+                  color: strokeColor,
+                  weight: isSelected ? 3 : 1.5,
+                  fillOpacity,
+                }}
+                eventHandlers={{
+                  click: () => handleSelect(t),
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -5]} opacity={0.9}>
+                  <div className="text-xs font-sans">
+                    <span className="font-mono font-bold text-green-700">{t.tree_id}</span>: {t.common_name}
+                    {b && <div className="text-[10px] text-gray-500">{b.board_id} • {b.status}</div>}
+                  </div>
+                </Tooltip>
+              </CircleMarker>
+            );
+          })}
+        </MapContainer>
       </div>
+
+      {/* ── Map Legend ── */}
+      <div className="absolute bottom-3 left-3 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 text-[11px] font-medium flex flex-wrap gap-3 items-center">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Fixed
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Need to Fix
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Maintenance
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block border border-dashed border-slate-600"></span> No Board
+        </span>
+        <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+          <span className="w-4 border-t-2 border-dashed border-emerald-500 inline-block"></span> Group Graph
+        </span>
+      </div>
+
+      {/* ── Interactive Detail Card (Direct Status Update with Date Autofill) ── */}
+      {selectedTree && (
+        <div className="absolute bottom-3 right-3 left-3 md:left-auto md:max-w-md z-[1000] bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 text-xs">
+          <div className="flex justify-between items-start gap-2 mb-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-sm text-green-700 dark:text-green-400">
+                  {selectedTree.tree_id}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${selectedTree.flora_type === 'plant' ? 'bg-emerald-100 text-emerald-800' : 'bg-green-100 text-green-800'}`}>
+                  {selectedTree.flora_type === 'plant' ? '🌿 Plant' : '🌳 Tree'}
+                </span>
+                {selectedBoard && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_COLOR[selectedBoard.status]}`}>
+                    {STATUS_DOT[selectedBoard.status]} {selectedBoard.status}
+                  </span>
+                )}
+              </div>
+              <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm mt-0.5">
+                {selectedTree.common_name}
+              </h4>
+              <p className="italic text-gray-500 text-[11px]">{selectedTree.botanical_name}</p>
+            </div>
+            <button
+              onClick={() => onSelectTree(null)}
+              className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="text-[11px] text-gray-500 space-y-0.5 mb-3">
+            <div>📍 Area: <strong>{selectedTree.area || '—'}</strong></div>
+            {selectedBoard && (
+              <>
+                <div>🪧 Board ID: <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{selectedBoard.board_id}</span> ({selectedBoard.board_type === 'group' ? `Group ×${selectedBoard.group_count}` : 'Individual'})</div>
+                {selectedBoard.installed_date && <div>📅 Installed: {selectedBoard.installed_date.slice(0, 10)}</div>}
+                {selectedBoard.last_checked && <div>🔍 Checked: {selectedBoard.last_checked.slice(0, 10)}</div>}
+              </>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+            {selectedBoard ? (
+              <>
+                {/* Direct One-Click Status Update with Today's Date Autofill */}
+                {selectedBoard.status !== 'Board Fixed' ? (
+                  <button
+                    onClick={() => onQuickStatusChange(selectedBoard.id, 'Board Fixed', true)}
+                    className="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-1 transition-all"
+                  >
+                    <span>✅</span> Mark as Fixed (Autofill Today)
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onQuickStatusChange(selectedBoard.id, 'Requires Maintenance', false)}
+                    className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 transition-all"
+                  >
+                    <span>⚠️</span> Flag Maintenance
+                  </button>
+                )}
+
+                <button
+                  onClick={() => onOpenPrint(selectedBoard)}
+                  title="Print Preview"
+                  className="p-1.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <PrintIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onOpenEdit(selectedBoard)}
+                  title="Edit Board"
+                  className="p-1.5 rounded-lg text-white bg-amber-500 hover:bg-amber-600"
+                >
+                  <EditIcon className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => onOpenAdd(selectedTree)}
+                className="w-full px-3 py-2 rounded-lg text-xs font-bold text-white bg-green-600 hover:bg-green-700 shadow-sm transition-all"
+              >
+                ➕ Create Board for this Tree
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── BoardsPanel (Main) ── */
 export default function BoardsPanel({ trees = [], dark = false }) {
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'map'
   const [boards, setBoards] = useState([]);
   const [stats, setStats] = useState(null);
   const [missing, setMissing] = useState([]);
@@ -534,15 +848,16 @@ export default function BoardsPanel({ trees = [], dark = false }) {
   const [msg, setMsg] = useState('');
   const [showMissing, setShowMissing] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [mapSelectedTree, setMapSelectedTree] = useState(null);
 
-  // Filters
+  // Filters for Table
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterFlora, setFilterFlora] = useState('');
 
   // Modal
-  const [modal, setModal] = useState(null); // null | { mode: 'add'|'edit', board?: {} }
+  const [modal, setModal] = useState(null);
 
   // Set of all tree IDs that already have a board
   const existingBoardTreeIds = useMemo(() => {
@@ -606,7 +921,6 @@ export default function BoardsPanel({ trees = [], dark = false }) {
 
   const handleDelete = async (board) => {
     if (!confirm(`Delete board ${board.board_id}?`)) return;
-    // Optimistic removal
     setBoards(bs => bs.filter(b => b.id !== board.id));
     try {
       await deleteBoard(board.id);
@@ -618,13 +932,23 @@ export default function BoardsPanel({ trees = [], dark = false }) {
     }
   };
 
-  // Instant smooth status change (NO RELOAD / NO FLICKER)
-  const handleQuickStatus = async (id, status) => {
-    // 1. Optimistic UI update instantly
-    setBoards(bs => bs.map(b => b.id === id ? { ...b, status } : b));
+  // Instant smooth status change with optional Date Autofill
+  const handleQuickStatus = async (id, status, autoDate = false) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const updates = { status };
+    if (autoDate && status === 'Board Fixed') {
+      updates.installed_date = today;
+      updates.last_checked = today;
+    }
+
+    // Optimistic UI update
+    setBoards(bs => bs.map(b => b.id === id ? { ...b, ...updates } : b));
     try {
-      await updateBoardStatus(id, status);
-      // 2. Background stats sync without full page reload
+      if (autoDate) {
+        await updateBoard(id, updates);
+      } else {
+        await updateBoardStatus(id, status);
+      }
       const sRes = await getBoardStats();
       setStats(sRes.data);
     } catch {
@@ -633,9 +957,7 @@ export default function BoardsPanel({ trees = [], dark = false }) {
     }
   };
 
-  // Instant smooth inline date change (NO RELOAD / NO FLICKER)
   const handleQuickDate = async (id, field, value) => {
-    // 1. Optimistic UI update
     setBoards(bs => bs.map(b => b.id === id ? { ...b, [field]: value } : b));
     try {
       await updateBoardDates(id, { [field]: value });
@@ -682,7 +1004,7 @@ export default function BoardsPanel({ trees = [], dark = false }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Table / Map View Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-bold text-xl" style={lStyle}>🪧 Board Management</h2>
@@ -690,7 +1012,24 @@ export default function BoardsPanel({ trees = [], dark = false }) {
             Maintain physical aluminum identification boards and field status.
           </p>
         </div>
+
         <div className="flex gap-2 flex-wrap items-center">
+          {/* Table / Map View Toggle Buttons */}
+          <div className="flex items-center p-1 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-white dark:bg-gray-900 text-forest-700 dark:text-forest-300 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              📋 Table View
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white dark:bg-gray-900 text-forest-700 dark:text-forest-300 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              🗺️ Map View
+            </button>
+          </div>
+
           <button onClick={() => setBulkOpen(true)}
             className="px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5 transition-all">
             <span>⚡</span> Bulk Add
@@ -728,140 +1067,200 @@ export default function BoardsPanel({ trees = [], dark = false }) {
         </div>
       )}
 
-      {/* Filter Bar with Flora Type */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <input className={`${inp} flex-1 min-w-48`} placeholder="🔍 Search board ID, tree ID, name, area…"
-          value={search} onChange={e => setSearch(e.target.value)} />
-        <select className={inp} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_DOT[s]} {s}</option>)}
-        </select>
-        <select className={inp} value={filterType} onChange={e => setFilterType(e.target.value)}>
-          <option value="">All Types</option>
-          <option value="individual">🪵 Individual</option>
-          <option value="group">🌳 Group</option>
-        </select>
-        <select className={inp} value={filterFlora} onChange={e => setFilterFlora(e.target.value)}>
-          <option value="">All Flora</option>
-          <option value="tree">🌳 Trees Only</option>
-          <option value="plant">🌿 Plants Only</option>
-        </select>
-      </div>
+      {/* ── VIEW SWITCH: MAP VIEW vs TABLE VIEW ── */}
+      {viewMode === 'map' ? (
+        <BoardsMapView
+          trees={trees}
+          boards={boards}
+          selectedTree={mapSelectedTree}
+          onSelectTree={setMapSelectedTree}
+          onQuickStatusChange={handleQuickStatus}
+          onOpenAdd={openAdd}
+          onOpenEdit={openEdit}
+          onOpenPrint={openPrintPreview}
+          dark={dark}
+        />
+      ) : (
+        <>
+          {/* Filter Bar with Flora Type */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <input className={`${inp} flex-1 min-w-48`} placeholder="🔍 Search board ID, tree ID, name, area…"
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <select className={inp} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+              <option value="">All Statuses</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_DOT[s]} {s}</option>)}
+            </select>
+            <select className={inp} value={filterType} onChange={e => setFilterType(e.target.value)}>
+              <option value="">All Types</option>
+              <option value="individual">🪵 Individual</option>
+              <option value="group">🌳 Group</option>
+            </select>
+            <select className={inp} value={filterFlora} onChange={e => setFilterFlora(e.target.value)}>
+              <option value="">All Flora</option>
+              <option value="tree">🌳 Trees Only</option>
+              <option value="plant">🌿 Plants Only</option>
+            </select>
+          </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-10 text-center text-gray-400 text-sm">Loading boards…</div>
-          ) : boards.length === 0 ? (
-            <div className="p-10 text-center text-gray-400 text-sm">
-              No boards found. <button onClick={() => openAdd()} className="text-green-600 font-semibold hover:underline">Add the first one →</button>
+          {/* Table */}
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-10 text-center text-gray-400 text-sm">Loading boards…</div>
+              ) : boards.length === 0 ? (
+                <div className="p-10 text-center text-gray-400 text-sm">
+                  No boards found. <button onClick={() => openAdd()} className="text-green-600 font-semibold hover:underline">Add the first one →</button>
+                </div>
+              ) : (
+                <table className="w-full text-sm min-w-[950px]">
+                  <thead>
+                    <tr className={`text-left text-xs font-semibold uppercase tracking-wide ${dark ? 'bg-gray-800/80 text-gray-400' : 'bg-gray-50 text-gray-500'}`}>
+                      <th className="px-4 py-3">Board ID</th>
+                      <th className="px-4 py-3">Tree ID</th>
+                      <th className="px-4 py-3">Common Name</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Area</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Installed Date</th>
+                      <th className="px-4 py-3">Last Checked</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {boards.map(b => (
+                      <tr key={b.id} className={`border-t transition-colors ${dark ? 'border-gray-800 hover:bg-gray-800/40' : 'border-gray-100 hover:bg-gray-50'}`}>
+                        <td className="px-4 py-3 font-mono text-xs font-bold text-green-700 dark:text-green-400 whitespace-nowrap">{b.board_id}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{b.primary_tree_id}</td>
+                        <td className="px-4 py-3 font-medium whitespace-nowrap">{b.common_name || '—'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${b.board_type === 'group' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300'}`}>
+                            {b.board_type === 'group' ? `🌳 Group ×${b.group_count}` : '🪵 Individual'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{b.area || '—'}</td>
+                        
+                        {/* Status Dropdown */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <select
+                            value={b.status}
+                            onChange={e => handleQuickStatus(b.id, e.target.value)}
+                            className={`text-xs font-semibold rounded-full px-2.5 py-1 cursor-pointer focus:outline-none transition-colors ${STATUS_COLOR[b.status]}`}
+                          >
+                            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_DOT[s]} {s}</option>)}
+                          </select>
+                        </td>
+
+                        {/* Inline Installed Date */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <input
+                            type="date"
+                            className={`text-xs px-2 py-1 rounded border ${dark ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'} focus:outline-none focus:ring-1 focus:ring-green-500`}
+                            value={b.installed_date ? b.installed_date.slice(0, 10) : ''}
+                            onChange={e => handleQuickDate(b.id, 'installed_date', e.target.value)}
+                          />
+                        </td>
+
+                        {/* Inline Last Checked Date */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <input
+                            type="date"
+                            className={`text-xs px-2 py-1 rounded border ${dark ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'} focus:outline-none focus:ring-1 focus:ring-green-500`}
+                            value={b.last_checked ? b.last_checked.slice(0, 10) : ''}
+                            onChange={e => handleQuickDate(b.id, 'last_checked', e.target.value)}
+                          />
+                        </td>
+
+                        {/* Action Buttons */}
+                        <td className="px-4 py-3 whitespace-nowrap min-w-[130px] text-right">
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => openPrintPreview(b)}
+                              title="Print Board Preview"
+                              className="p-1.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all"
+                            >
+                              <PrintIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => openEdit(b)}
+                              title="Edit Board Details"
+                              className="p-1.5 rounded-lg text-white bg-amber-500 hover:bg-amber-600 shadow-sm transition-all"
+                            >
+                              <EditIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(b)}
+                              title="Delete Board"
+                              className="p-1.5 rounded-lg text-white bg-rose-500 hover:bg-rose-600 shadow-sm transition-all"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
-          ) : (
-            <table className="w-full text-sm min-w-[950px]">
+            {!loading && boards.length > 0 && (
+              <div className={`px-4 py-2 text-xs text-gray-400 border-t ${dark ? 'border-gray-800' : 'border-gray-100'}`}>
+                Showing {boards.length} board{boards.length !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Missing Boards Explorer */}
+      {showMissing && (
+        <div className={`mt-6 rounded-xl border p-4 ${dark ? 'bg-gray-800/50 border-gray-700' : 'bg-amber-50/70 border-amber-200'}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h3 className="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
+              ⚠️ Trees Without Boards
+              <span className="text-xs font-semibold bg-amber-200 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full">
+                {missing.length} unboarded
+              </span>
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-sm min-w-[550px]">
               <thead>
-                <tr className={`text-left text-xs font-semibold uppercase tracking-wide ${dark ? 'bg-gray-800/80 text-gray-400' : 'bg-gray-50 text-gray-500'}`}>
-                  <th className="px-4 py-3">Board ID</th>
-                  <th className="px-4 py-3">Tree ID</th>
-                  <th className="px-4 py-3">Common Name</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Area</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Installed Date</th>
-                  <th className="px-4 py-3">Last Checked</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                <tr className={`text-left text-xs font-semibold ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <th className="pb-2">Tree ID</th>
+                  <th className="pb-2">Common Name</th>
+                  <th className="pb-2">Botanical Name</th>
+                  <th className="pb-2">Type</th>
+                  <th className="pb-2">Area</th>
+                  <th className="pb-2 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {boards.map(b => (
-                  <tr key={b.id} className={`border-t transition-colors ${dark ? 'border-gray-800 hover:bg-gray-800/40' : 'border-gray-100 hover:bg-gray-50'}`}>
-                    <td className="px-4 py-3 font-mono text-xs font-bold text-green-700 dark:text-green-400 whitespace-nowrap">{b.board_id}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{b.primary_tree_id}</td>
-                    <td className="px-4 py-3 font-medium whitespace-nowrap">{b.common_name || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${b.board_type === 'group' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300'}`}>
-                        {b.board_type === 'group' ? `🌳 Group ×${b.group_count}` : '🪵 Individual'}
+                {missing.length === 0 ? (
+                  <tr><td colSpan={6} className="py-4 text-center text-gray-400 text-xs">No unboarded trees 🎉</td></tr>
+                ) : missing.map(t => (
+                  <tr key={t.tree_id} className={`border-t ${dark ? 'border-gray-700' : 'border-amber-100'}`}>
+                    <td className="py-2 font-mono text-xs font-bold text-green-700 dark:text-green-400">{t.tree_id}</td>
+                    <td className="py-2 font-medium">{t.common_name}</td>
+                    <td className="py-2 italic text-xs text-gray-400">{t.botanical_name}</td>
+                    <td className="py-2 text-xs">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${t.flora_type === 'plant' ? 'bg-emerald-100 text-emerald-800' : 'bg-green-100 text-green-800'}`}>
+                        {t.flora_type === 'plant' ? '🌿 Plant' : '🌳 Tree'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{b.area || '—'}</td>
-                    
-                    {/* Status Dropdown (Smooth Instant Update) */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <select
-                        value={b.status}
-                        onChange={e => handleQuickStatus(b.id, e.target.value)}
-                        className={`text-xs font-semibold rounded-full px-2.5 py-1 cursor-pointer focus:outline-none transition-colors ${STATUS_COLOR[b.status]}`}
-                      >
-                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_DOT[s]} {s}</option>)}
-                      </select>
-                    </td>
-
-                    {/* Inline Installed Date */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <input
-                        type="date"
-                        className={`text-xs px-2 py-1 rounded border ${dark ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'} focus:outline-none focus:ring-1 focus:ring-green-500`}
-                        value={b.installed_date ? b.installed_date.slice(0, 10) : ''}
-                        onChange={e => handleQuickDate(b.id, 'installed_date', e.target.value)}
-                      />
-                    </td>
-
-                    {/* Inline Last Checked Date */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <input
-                        type="date"
-                        className={`text-xs px-2 py-1 rounded border ${dark ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'} focus:outline-none focus:ring-1 focus:ring-green-500`}
-                        value={b.last_checked ? b.last_checked.slice(0, 10) : ''}
-                        onChange={e => handleQuickDate(b.id, 'last_checked', e.target.value)}
-                      />
-                    </td>
-
-                    {/* Action Buttons: Strictly Horizontal with Modern SVG Icons */}
-                    <td className="px-4 py-3 whitespace-nowrap min-w-[130px] text-right">
-                      <div className="inline-flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => openPrintPreview(b)}
-                          title="Print Board Preview"
-                          className="p-1.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all"
-                        >
-                          <PrintIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openEdit(b)}
-                          title="Edit Board Details"
-                          className="p-1.5 rounded-lg text-white bg-amber-500 hover:bg-amber-600 shadow-sm transition-all"
-                        >
-                          <EditIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(b)}
-                          title="Delete Board"
-                          className="p-1.5 rounded-lg text-white bg-rose-500 hover:bg-rose-600 shadow-sm transition-all"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <td className="py-2 text-xs text-gray-500">{t.area}</td>
+                    <td className="py-2 text-right">
+                      <button onClick={() => openAdd(t)}
+                        className="px-3 py-1 rounded-md text-xs font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm transition-all">
+                        + Add Board
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-        {!loading && boards.length > 0 && (
-          <div className={`px-4 py-2 text-xs text-gray-400 border-t ${dark ? 'border-gray-800' : 'border-gray-100'}`}>
-            Showing {boards.length} board{boards.length !== 1 ? 's' : ''}
           </div>
-        )}
-      </div>
-
-      {/* Missing Boards Explorer */}
-      {showMissing && (
-        <MissingBoards
-          missing={missing}
-          onAddBoard={tree => openAdd(tree)}
-          dark={dark}
-        />
+        </div>
       )}
 
       {/* Add / Edit Board Modal */}
