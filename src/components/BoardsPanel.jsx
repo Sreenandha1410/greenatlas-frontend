@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import {
   getBoards, getBoardStats, getMissingBoards, bulkAddBoards,
@@ -60,17 +60,6 @@ function TrashIcon({ className = 'w-4 h-4' }) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   );
-}
-
-/* ── Leaflet View Controller ── */
-function MapRecenter({ target }) {
-  const map = useMap();
-  useEffect(() => {
-    if (target && target[0] && target[1]) {
-      map.flyTo(target, 19, { duration: 1 });
-    }
-  }, [target, map]);
-  return null;
 }
 
 /* ── Stat Card ── */
@@ -164,7 +153,7 @@ function openPrintPreview(board) {
   win.document.close();
 }
 
-/* ── Bulk Import Modal ── */
+/* ── Bulk Import Modal (z-[9999] so it stays above the map) ── */
 function BulkModal({ onClose, onBulkImport, dark }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -199,7 +188,7 @@ function BulkModal({ onClose, onBulkImport, dark }) {
   const inpClass = `w-full px-3 py-2 rounded-lg border font-mono text-sm ${dark ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-green-500`;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
       <div className={`w-full max-w-lg rounded-2xl shadow-2xl p-6 ${dark ? 'bg-gray-900' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-3">
           <h2 className="font-bold text-lg" style={lStyle}>⚡ Bulk Add Boards</h2>
@@ -239,7 +228,7 @@ function BulkModal({ onClose, onBulkImport, dark }) {
   );
 }
 
-/* ── Add / Edit Board Modal ── */
+/* ── Add / Edit Board Modal (z-[9999] so it stays above the map) ── */
 function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave, dark }) {
   const [form, setForm] = useState(board ? {
     primary_tree_id: board.primary_tree_id,
@@ -319,7 +308,7 @@ function BoardModal({ board, trees, existingTreeIds = new Set(), onClose, onSave
   const inp = `w-full px-3 py-2 rounded-lg border text-sm ${dark ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-green-500`;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center overflow-y-auto p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-[9999] flex items-start justify-center overflow-y-auto p-4" onClick={onClose}>
       <div className={`w-full max-w-2xl rounded-2xl shadow-2xl p-6 my-4 ${dark ? 'bg-gray-900' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
         <h2 className="font-bold text-lg mb-4" style={lStyle}>
           {board ? '✏️ Edit Board' : '➕ Add New Board'}
@@ -462,7 +451,6 @@ function BoardsMapView({
   const [floraFilter, setFloraFilter] = useState(''); // '' | 'tree' | 'plant'
   const [statusFilter, setStatusFilter] = useState('');
   const [mapSearch, setMapSearch] = useState('');
-  const [recenterTarget, setRecenterTarget] = useState(null);
 
   // Quick lookup dictionary for boards by tree_id
   const { boardMapByPrimary, boardMapByMember } = useMemo(() => {
@@ -547,11 +535,9 @@ function BoardsMapView({
 
   const isPrimary = selectedBoard && selectedBoard.primary_tree_id === selectedTree?.tree_id;
 
+  // Steady click selection — DOES NOT reset or jerk the map zoom/center
   const handleSelect = (tree) => {
     onSelectTree(tree);
-    if (tree && Number.isFinite(Number(tree.latitude)) && Number.isFinite(Number(tree.longitude))) {
-      setRecenterTarget([Number(tree.latitude), Number(tree.longitude)]);
-    }
   };
 
   return (
@@ -617,7 +603,7 @@ function BoardsMapView({
         </div>
       </div>
 
-      {/* ── Map Canvas ── */}
+      {/* ── Map Canvas (Rock-steady, does not jump on selection) ── */}
       <div className="h-[600px] w-full">
         <MapContainer
           center={DEFAULT_CENTER}
@@ -628,8 +614,6 @@ function BoardsMapView({
           zoomDelta={0.5}
           className="h-full w-full"
         >
-          <MapRecenter target={recenterTarget} />
-
           {/* Tile Layer */}
           {mapLayer === 'satellite' ? (
             <TileLayer
@@ -647,7 +631,7 @@ function BoardsMapView({
             />
           )}
 
-          {/* Group Boards Graph Lines (Connecting related trees) */}
+          {/* Group Boards Graph Lines */}
           {groupLines.map(line => {
             const isLineActive = selectedBoard && selectedBoard.id === line.board.id;
             return (
@@ -668,34 +652,61 @@ function BoardsMapView({
           {displayTrees.map(t => {
             const b = boardMapByPrimary[t.tree_id] || boardMapByMember[t.tree_id];
             const isSelected = selectedTree?.tree_id === t.tree_id;
+            const isGroupPrimary = b && b.board_type === 'group' && b.primary_tree_id === t.tree_id;
+            const isGroupMember = b && b.board_type === 'group' && b.primary_tree_id !== t.tree_id;
 
-            // Pin styling based on board status
-            let fillColor = '#94a3b8'; // Slate/Gray for no board
+            // Pin styling based on board status and primary role
+            let fillColor = '#94a3b8'; // Slate for unboarded
             let strokeColor = '#475569';
             let radius = 6;
             let fillOpacity = 0.55;
 
             if (b) {
-              radius = b.board_type === 'group' ? 8 : 7;
-              if (b.status === 'Board Fixed') {
-                fillColor = '#10b981'; // Green
-                strokeColor = '#047857';
-                fillOpacity = 0.95;
-              } else if (b.status === 'Need to Fix') {
-                fillColor = '#f59e0b'; // Amber
-                strokeColor = '#b45309';
-                fillOpacity = 0.95;
-              } else if (b.status === 'Requires Maintenance') {
-                fillColor = '#ef4444'; // Red
-                strokeColor = '#b91c1c';
-                fillOpacity = 0.95;
+              if (isGroupPrimary) {
+                // ⭐ Prominent Purple/Violet for the PRIMARY tree of a group board
+                fillColor = '#8b5cf6';
+                strokeColor = '#ffffff';
+                radius = 9.5;
+                fillOpacity = 1;
+              } else if (isGroupMember) {
+                // Member tree connected to group board
+                radius = 7;
+                if (b.status === 'Board Fixed') {
+                  fillColor = '#10b981';
+                  strokeColor = '#047857';
+                  fillOpacity = 0.85;
+                } else if (b.status === 'Need to Fix') {
+                  fillColor = '#f59e0b';
+                  strokeColor = '#b45309';
+                  fillOpacity = 0.85;
+                } else {
+                  fillColor = '#ef4444';
+                  strokeColor = '#b91c1c';
+                  fillOpacity = 0.85;
+                }
+              } else {
+                // Individual board tree
+                radius = 7;
+                if (b.status === 'Board Fixed') {
+                  fillColor = '#10b981';
+                  strokeColor = '#047857';
+                  fillOpacity = 0.95;
+                } else if (b.status === 'Need to Fix') {
+                  fillColor = '#f59e0b';
+                  strokeColor = '#b45309';
+                  fillOpacity = 0.95;
+                } else {
+                  fillColor = '#ef4444';
+                  strokeColor = '#b91c1c';
+                  fillOpacity = 0.95;
+                }
               }
             }
 
             if (isSelected) {
-              fillColor = '#3b82f6'; // Bright Blue highlight
+              fillColor = '#2563eb'; // Vibrant Blue highlight when selected
               strokeColor = '#ffffff';
-              radius = 10;
+              radius = 11;
               fillOpacity = 1;
             }
 
@@ -707,7 +718,7 @@ function BoardsMapView({
                 pathOptions={{
                   fillColor,
                   color: strokeColor,
-                  weight: isSelected ? 3 : 1.5,
+                  weight: (isSelected || isGroupPrimary) ? 2.5 : 1.5,
                   fillOpacity,
                 }}
                 eventHandlers={{
@@ -717,7 +728,19 @@ function BoardsMapView({
                 <Tooltip direction="top" offset={[0, -5]} opacity={0.9}>
                   <div className="text-xs font-sans">
                     <span className="font-mono font-bold text-green-700">{t.tree_id}</span>: {t.common_name}
-                    {b && <div className="text-[10px] text-gray-500">{b.board_id} • {b.status}</div>}
+                    {isGroupPrimary && (
+                      <div className="text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                        ⭐ Primary Tree (Holds Group Board ×{b.group_count})
+                      </div>
+                    )}
+                    {isGroupMember && (
+                      <div className="text-[10px] text-gray-500">
+                        Group Member of {b.primary_tree_id}
+                      </div>
+                    )}
+                    {b && !isGroupPrimary && !isGroupMember && (
+                      <div className="text-[10px] text-gray-500">{b.board_id} • {b.status}</div>
+                    )}
                   </div>
                 </Tooltip>
               </CircleMarker>
@@ -728,6 +751,9 @@ function BoardsMapView({
 
       {/* ── Map Legend ── */}
       <div className="absolute bottom-3 left-3 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 text-[11px] font-medium flex flex-wrap gap-3 items-center">
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-purple-600 inline-block border-2 border-white shadow-sm"></span> Primary Group Tree (QR Board)
+        </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Fixed
         </span>
@@ -780,7 +806,16 @@ function BoardsMapView({
             <div>📍 Area: <strong>{selectedTree.area || '—'}</strong></div>
             {selectedBoard && (
               <>
-                <div>🪧 Board ID: <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{selectedBoard.board_id}</span> ({selectedBoard.board_type === 'group' ? `Group ×${selectedBoard.group_count}` : 'Individual'})</div>
+                <div>
+                  🪧 Board ID: <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">{selectedBoard.board_id}</span>{' '}
+                  {selectedBoard.board_type === 'group' ? (
+                    <span className="font-semibold text-purple-700 dark:text-purple-400">
+                      (Group ×{selectedBoard.group_count} • {isPrimary ? 'Primary Board Carrier' : 'Member'})
+                    </span>
+                  ) : (
+                    '(Individual)'
+                  )}
+                </div>
                 {selectedBoard.installed_date && <div>📅 Installed: {selectedBoard.installed_date.slice(0, 10)}</div>}
                 {selectedBoard.last_checked && <div>🔍 Checked: {selectedBoard.last_checked.slice(0, 10)}</div>}
               </>
@@ -1263,7 +1298,7 @@ export default function BoardsPanel({ trees = [], dark = false }) {
         </div>
       )}
 
-      {/* Add / Edit Board Modal */}
+      {/* Add / Edit Board Modal (Rendered with z-[9999] so it's always above the map) */}
       {modal && (
         <BoardModal
           board={modal.board || null}
